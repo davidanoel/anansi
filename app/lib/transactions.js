@@ -1,5 +1,5 @@
 import { Transaction } from '@mysten/sui/transactions'
-import { getZkLoginSignature } from '@mysten/zklogin'
+import { getZkLoginSignature } from '@mysten/sui/zklogin'
 import { getSuiClient } from './sui'
 import { getEphemeralKeypair, getZkProof, getMaxEpoch, getSalt, getSession } from './auth'
 import {
@@ -65,6 +65,28 @@ async function executeTransaction(tx) {
 // ============================================================
 // Asset Pool Transactions
 // ============================================================
+
+// Register a new asset type (e.g., NUTMG, COCO, VILLA)
+// Only callable by RegistryAdmin holder
+export async function createAssetType(registryAdminCapId, symbol, name, unit, region, custodianName, custodianAddress) {
+  const tx = new Transaction()
+
+  tx.moveCall({
+    target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::create_asset_type`,
+    arguments: [
+      tx.object(registryAdminCapId),
+      tx.object(REGISTRY_ID),
+      tx.pure.vector('u8', new TextEncoder().encode(symbol)),
+      tx.pure.vector('u8', new TextEncoder().encode(name)),
+      tx.pure.vector('u8', new TextEncoder().encode(unit)),
+      tx.pure.vector('u8', new TextEncoder().encode(region)),
+      tx.pure.vector('u8', new TextEncoder().encode(custodianName)),
+      tx.pure.address(custodianAddress),
+    ],
+  })
+
+  return executeTransaction(tx)
+}
 
 // Create a new lot for an asset type
 export async function createLot(assetTypeId, custodianCapId, receiptHash) {
