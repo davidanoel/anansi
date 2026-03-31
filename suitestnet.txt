@@ -1,0 +1,53 @@
+SUI TESTNET
+Set active environment to testnet
+╭───────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Created new keypair and saved it to keystore.                                                     │
+├────────────────┬──────────────────────────────────────────────────────────────────────────────────┤
+│ alias          │ elegant-chrysoprase                                                              │
+│ address        │ 0x5e8388bacd2da180d38bbeceee2bdd2ad68958747d92f678af59bae8078a46d8               │
+│ keyScheme      │ ed25519                                                                          │
+│ recoveryPhrase │ chuckle strategy yellow destroy cycle animal deputy cruel deer mandate dwarf web │
+╰────────────────┴──────────────────────────────────────────────────────────────────────────────────╯
+
+AFTER PUBLISH TO TESTNET
+
+Owner: Account Address ( 0x5e8388bacd2da180d38bbeceee2bdd2ad68958747d92f678af59bae8078a46d8 )
+
+PACKAGE_ID=0xdd44bb6b168efe26e8b4df958765a5e011b480ebf459452a882ae139ced8b492
+REGISTRY_ID=0x2c2df3cd9ad80bc53c7027277c1933b3a1bc71e4278ec9a516a110ce41cb08e0
+YIELD_ENGINE_ID=0xaedad2f86a20cf0e841d60cd58f2f48004ea5e192d8712d60689bacd9f81e142
+COMPLIANCE_REGISTRY_ID=0xc12535e664320327a2fa058e246ebfb6b1a09fa0c6b2a93d061ea2ca96b916b7
+PLATFORM_ID=0x373192cce254ce936840b73a5c68c41717188e6683c4390ce9ce479a184ce613
+TREASURY_ID=0x8760ea155cc9e6d76f57b6d702c802518c37ec20277245faa335c8f4c34f7de3
+
+OPTIONAL
+UPGRADE_CAP_ID=0xc8b2ee61c6eb85e4a7c5cacb1e17536b6c6220ab9bb823484353f2dbf459ffe1
+YIELD_ADMIN_ID=0x150b869deddf9cd71633cb2573825bc6f620bc671bd6bbb836fab7975dce144a
+REGISTRY_ADMIN_ID=0x8a958e1617cfe4e0a506ff5099932ed46e904abd95f4a3cd1cff671ae519d0e1
+COMPLIANCE_ADMIN_ID=0xcd89d37e2a0fe727d86568332e8b7d6bf1efa67459a7a663ff035d8edae28f47
+SUPER_ADMIN_ID=0x5c44c753f80a724300df6403ab488c7e90c0e527d98c132234f9499826a64baa
+ADMIN_CAP_ID=0x37a43d283f19d9497a1a10b545fabe1cb597d662bfdff45f7329d8d2591f7048
+
+---------------- GOOGLE OAUTH ----------------------
+Client ID
+1047203157854-u26573cgsj5ksrudgr9vsmttlof9iv29.apps.googleusercontent.com
+
+Client Secret
+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
+
+
+------------------ # Shinami (Gas Station + zkLogin Prover)--------------
+usr:atlanticstarr1@hotmail.com
+pwd:<the default>
+api_key:us1_sui_testnet_18e8df7abb2f472bbba85b54b8a4ac28
+same api key above for SHINAMI_GAS_STATION_KEY and SHINAMI_ZKLOGIN_KEY
+
+----------------- PINATA (ipfs) -----------
+usr:atlanticstarr1@hotmail.com
+pwd:<the default>
+gateway:yellow-delicate-tyrannosaurus-226.mypinata.cloud
+api key:9d8017f9ba62ddac0af4
+api secret:68e8f0fc57521b6d0b6a7c7e4a814c42b956cabf1b5da02cabe76017650d57e8
+jwt (secret access token): eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI2OTdiN2JjOC1jZjJjLTQwNzctYmZmMi00OGIyMTkxZjQwNjQiLCJlbWFpbCI6ImF0bGFudGljc3RhcnIxQGhvdG1haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6IjlkODAxN2Y5YmE2MmRkYWMwYWY0Iiwic2NvcGVkS2V5U2VjcmV0IjoiNjhlOGYwZmM1NzUyMWI2ZDBiNmE3YzdlNGE4MTRjNDJiOTU2Y2FiZjFiNWRhMDJjYWJlNzYwMTc2NTBkNTdlOCIsImV4cCI6MTgwNjQ1OTU2Mn0.roJoEwu1AsCBens0TBXknCfbzTR2T5XvrP9WSrGGTbY
+
+

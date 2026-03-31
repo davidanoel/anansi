@@ -1,0 +1,184 @@
+import Database from 'better-sqlite3'
+import { config } from './config.js'
+
+let db = null
+
+export function getDb() {
+  if (!db) {
+    db = new Database(config.dbPath)
+    db.pragma('journal_mode = WAL')
+  }
+  return db
+}
+
+// ============ Lots ============
+
+export function upsertLot(lot) {
+  const db = getDb()
+  db.prepare(`
+    INSERT INTO lots (id, lot_number, asset_type_symbol, status, custodian, created_at)
+    VALUES (?, ?, ?, 0, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      status = COALESCE(excluded.status, status),
+      updated_at = strftime('%s','now') * 1000
+  `).run(lot.id, lot.lot_number, lot.asset_type_symbol, lot.custodian, lot.created_at)
+}
+
+export function updateLotStatus(lotId, status) {
+  getDb().prepare('UPDATE lots SET status = ?, updated_at = strftime(\'%s\',\'now\') * 1000 WHERE id = ?')
+    .run(status, lotId)
+}
+
+export function updateLotDelivery(lotId, units, tokensMinted) {
+  getDb().prepare(`
+    UPDATE lots SET
+      total_units = total_units + ?,
+      total_tokens_minted = total_tokens_minted + ?,
+      delivery_count = delivery_count + 1,
+      updated_at = strftime('%s','now') * 1000
+    WHERE id = ?
+  `).run(units, tokensMinted, lotId)
+}
+
+export function updateLotValuation(lotId, valueUsdc) {
+  getDb().prepare('UPDATE lots SET estimated_value_usdc = ?, updated_at = strftime(\'%s\',\'now\') * 1000 WHERE id = ?')
+    .run(valueUsdc, lotId)
+}
+
+export function getLot(lotId) {
+  return getDb().prepare('SELECT * FROM lots WHERE id = ?').get(lotId)
+}
+
+export function getActiveLots() {
+  return getDb().prepare('SELECT * FROM lots WHERE status < 3 ORDER BY created_at DESC').all()
+}
+
+export function getAllLots() {
+  return getDb().prepare('SELECT * FROM lots ORDER BY created_at DESC').all()
+}
+
+// ============ Deliveries ============
+
+export function insertDelivery(delivery) {
+  getDb().prepare(`
+    INSERT INTO deliveries (lot_id, farmer, units, tokens_minted, grade, tx_digest, timestamp)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(delivery.lot_id, delivery.farmer, delivery.units, delivery.tokens_minted,
+    delivery.grade, delivery.tx_digest, delivery.timestamp)
+}
+
+export function getDeliveriesByLot(lotId) {
+  return getDb().prepare('SELECT * FROM deliveries WHERE lot_id = ? ORDER BY timestamp DESC').all(lotId)
+}
+
+export function getDeliveriesByFarmer(farmer) {
+  return getDb().prepare('SELECT * FROM deliveries WHERE farmer = ? ORDER BY timestamp DESC').all(farmer)
+}
+
+// ============ Token Balances ============
+
+export function updateTokenBalance(address, lotId, delta) {
+  const db = getDb()
+  const existing = db.prepare('SELECT balance FROM token_balances WHERE address = ? AND lot_id = ?')
+    .get(address, lotId)
+
+  if (existing) {
+    db.prepare('UPDATE token_balances SET balance = balance + ?, updated_at = strftime(\'%s\',\'now\') * 1000 WHERE address = ? AND lot_id = ?')
+      .run(delta, address, lotId)
+  } else {
+    db.prepare('INSERT INTO token_balances (address, lot_id, balance, updated_at) VALUES (?, ?, ?, strftime(\'%s\',\'now\') * 1000)')
+      .run(address, lotId, delta)
+  }
+}
+
+export function getBalancesByAddress(address) {
+  return getDb().prepare('SELECT * FROM token_balances WHERE address = ? AND balance > 0').all(address)
+}
+
+export function getBalancesByLot(lotId) {
+  return getDb().prepare('SELECT * FROM token_balances WHERE lot_id = ? AND balance > 0 ORDER BY balance DESC').all(lotId)
+}
+
+// ============ Surplus ============
+
+export function insertSurplusDeposit(deposit) {
+  getDb().prepare(`
+    INSERT INTO surplus_deposits (lot_id, gross_amount, fee_amount, net_amount, tokens_snapshot, tx_digest, timestamp)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(deposit.lot_id, deposit.gross_amount, deposit.fee_amount, deposit.net_amount,
+    deposit.tokens_snapshot, deposit.tx_digest, deposit.timestamp)
+
+  getDb().prepare('UPDATE lots SET total_surplus_deposited = total_surplus_deposited + ? WHERE id = ?')
+    .run(deposit.gross_amount, deposit.lot_id)
+}
+
+export function insertSurplusClaim(claim) {
+  getDb().prepare(`
+    INSERT INTO surplus_claims (lot_id, claimant, tokens_redeemed, usdc_received, tx_digest, timestamp)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(claim.lot_id, claim.claimant, claim.tokens_redeemed, claim.usdc_received,
+    claim.tx_digest, claim.timestamp)
+}
+
+// ============ CaribCoin ============
+
+export function insertBurn(burn) {
+  getDb().prepare(`
+    INSERT INTO carib_burns (amount, burner, total_burned, tx_digest, timestamp)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(burn.amount, burn.burner, burn.total_burned, burn.tx_digest, burn.timestamp)
+}
+
+export function insertFeeCollection(fee) {
+  getDb().prepare(`
+    INSERT INTO fee_collections (lot_id, total_fee, burned, to_treasury, tx_digest, timestamp)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(fee.lot_id, fee.total_fee, fee.burned, fee.to_treasury, fee.tx_digest, fee.timestamp)
+}
+
+export function getTotalBurned() {
+  const row = getDb().prepare('SELECT COALESCE(MAX(total_burned), 0) as total FROM carib_burns').get()
+  return row.total
+}
+
+// ============ Asset Types ============
+
+export function upsertAssetType(assetType) {
+  getDb().prepare(`
+    INSERT INTO asset_types (symbol, name, region, custodian, created_at)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(symbol) DO UPDATE SET name = excluded.name
+  `).run(assetType.symbol, assetType.name, assetType.region, assetType.custodian, assetType.created_at)
+}
+
+export function getAssetTypes() {
+  return getDb().prepare('SELECT * FROM asset_types').all()
+}
+
+// ============ Indexer State ============
+
+export function getCursor(key) {
+  const row = getDb().prepare('SELECT value FROM indexer_state WHERE key = ?').get(key)
+  return row?.value || null
+}
+
+export function setCursor(key, value) {
+  getDb().prepare('INSERT INTO indexer_state (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
+    .run(key, value)
+}
+
+// ============ Stats ============
+
+export function getStats() {
+  const db = getDb()
+  return {
+    totalLots: db.prepare('SELECT COUNT(*) as count FROM lots').get().count,
+    activeLots: db.prepare('SELECT COUNT(*) as count FROM lots WHERE status < 3').get().count,
+    totalDeliveries: db.prepare('SELECT COUNT(*) as count FROM deliveries').get().count,
+    totalUnitsTokenized: db.prepare('SELECT COALESCE(SUM(total_units), 0) as total FROM lots').get().total,
+    totalSurplusDistributed: db.prepare('SELECT COALESCE(SUM(total_surplus_deposited), 0) as total FROM lots').get().total,
+    totalCaribBurned: getTotalBurned(),
+    uniqueFarmers: db.prepare('SELECT COUNT(DISTINCT farmer) as count FROM deliveries').get().count,
+    assetTypes: db.prepare('SELECT COUNT(*) as count FROM asset_types').get().count,
+  }
+}

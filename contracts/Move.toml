@@ -1,0 +1,6 @@
+[package]
+name = "anansi"
+edition = "2024.beta"
+
+[addresses]
+anansi = "0x0"

@@ -1,0 +1,14 @@
+node_modules/
+.next/
+.env
+.env.local
+*.db
+*.db-wal
+*.db-shm
+.vercel
+build/
+dist/
+.DS_Store
+
+# Sui Move build artifacts
+contracts/build/
