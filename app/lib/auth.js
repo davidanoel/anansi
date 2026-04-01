@@ -98,12 +98,17 @@ export async function handleCallback() {
   sessionStorage.setItem(STORAGE_KEYS.JWT, jwt);
   sessionStorage.setItem(STORAGE_KEYS.SALT, salt);
   sessionStorage.setItem(STORAGE_KEYS.ADDRESS, address);
+  const aud =
+    Array.isArray(payload.aud) && payload.aud.length > 0 ? payload.aud[0] : payload.aud;
+
   sessionStorage.setItem(
     STORAGE_KEYS.USER_PROFILE,
     JSON.stringify({
       email: payload.email,
       name: payload.name,
       picture: payload.picture,
+      sub: payload.sub,
+      aud,
     }),
   );
 
@@ -120,14 +125,14 @@ export async function handleCallback() {
 
 // Step 3: Fetch ZK proof from the prover service
 async function fetchZkProof(jwt, salt) {
-  const secretKey = sessionStorage.getItem(STORAGE_KEYS.EPHEMERAL_KEY)
-  const ephemeralKey = Ed25519Keypair.fromSecretKey(secretKey)
-  const randomness = sessionStorage.getItem(STORAGE_KEYS.RANDOMNESS)
-  const maxEpoch = sessionStorage.getItem(STORAGE_KEYS.MAX_EPOCH)
+  const secretKey = sessionStorage.getItem(STORAGE_KEYS.EPHEMERAL_KEY);
+  const ephemeralKey = Ed25519Keypair.fromSecretKey(secretKey);
+  const randomness = sessionStorage.getItem(STORAGE_KEYS.RANDOMNESS);
+  const maxEpoch = sessionStorage.getItem(STORAGE_KEYS.MAX_EPOCH);
 
-  const response = await fetch('/api/zkproof', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  const response = await fetch("/api/zkproof", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       jwt,
       maxEpoch: maxEpoch,
@@ -135,16 +140,16 @@ async function fetchZkProof(jwt, salt) {
       jwtRandomness: randomness,
       salt: salt,
     }),
-  })
+  });
 
   if (!response.ok) {
-    const err = await response.json()
-    throw new Error(err.error || 'Failed to get ZK proof')
+    const err = await response.json();
+    throw new Error(err.error || "Failed to get ZK proof");
   }
 
-  const proof = await response.json()
-  sessionStorage.setItem(STORAGE_KEYS.ZK_PROOF, JSON.stringify(proof))
-  return proof
+  const proof = await response.json();
+  sessionStorage.setItem(STORAGE_KEYS.ZK_PROOF, JSON.stringify(proof));
+  return proof;
 }
 
 // Get the current session (if logged in)
@@ -154,9 +159,14 @@ export function getSession() {
 
   if (!address || !profile) return null;
 
+  const parsed = JSON.parse(profile);
+  if (typeof parsed.sub !== "string" || typeof parsed.aud !== "string") {
+    return null;
+  }
+
   return {
     address,
-    ...JSON.parse(profile),
+    ...parsed,
   };
 }
 

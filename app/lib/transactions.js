@@ -1,5 +1,5 @@
 import { Transaction } from "@mysten/sui/transactions";
-import { getZkLoginSignature } from "@mysten/sui/zklogin";
+import { getZkLoginSignature, genAddressSeed } from "@mysten/sui/zklogin";
 import { getSuiClient } from "./sui";
 import { getEphemeralKeypair, getZkProof, getMaxEpoch, getSalt, getSession } from "./auth";
 import {
@@ -29,26 +29,32 @@ async function executeTransaction(tx) {
     throw new Error("Not authenticated. Please sign in.");
   }
 
-  // Set sender
+  // Convert base64 salt to BigInt
+  const saltBytes = Uint8Array.from(atob(salt), c => c.charCodeAt(0))
+  const saltBigInt = saltBytes.reduce((acc, byte) => (acc << 8n) + BigInt(byte), 0n)
+
+  const addressSeed = genAddressSeed(
+    saltBigInt,
+    'sub',
+    session.sub,
+    session.aud
+  ).toString()
+
   tx.setSender(session.address);
 
-  // Build the transaction
   const bytes = await tx.build({ client });
 
-  // Sign with ephemeral key
   const { signature: ephemeralSig } = await ephemeralKey.signTransaction(bytes);
 
-  // Combine with ZK proof to create zkLogin signature
   const zkLoginSignature = getZkLoginSignature({
     inputs: {
       ...zkProof,
-      addressSeed: salt,
+      addressSeed,
     },
     maxEpoch,
     userSignature: ephemeralSig,
   });
 
-  // Execute
   const result = await client.executeTransactionBlock({
     transactionBlock: bytes,
     signature: zkLoginSignature,

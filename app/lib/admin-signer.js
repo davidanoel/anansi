@@ -64,55 +64,93 @@ export async function getAdminCapId() {
 
 export async function getAllCustodianCaps() {
   const client = getClient();
-  const events = await client.queryEvents({
-    query: { MoveEventType: `${PACKAGE_ID}::asset_pool::CustodianCapIssued` },
-    limit: 100,
-    order: "descending",
-  });
-  // Also check original package events
-  const eventsOld = await client.queryEvents({
-    query: { MoveEventType: `${ORIGINAL_PACKAGE_ID}::asset_pool::CustodianCapIssued` },
-    limit: 100,
-    order: "descending",
-  });
-  const all = [...events.data, ...eventsOld.data];
-  // Dedupe by timestamp
+
+  // Check both event types — create_asset_type emits AssetTypeCreated (with custodian),
+  // issue_custodian_cap emits CustodianCapIssued
+  const [created, issued, issuedOld] = await Promise.all([
+    client.queryEvents({
+      query: { MoveEventType: `${PACKAGE_ID}::asset_pool::AssetTypeCreated` },
+      limit: 100,
+      order: "descending",
+    }),
+    client.queryEvents({
+      query: { MoveEventType: `${PACKAGE_ID}::asset_pool::CustodianCapIssued` },
+      limit: 100,
+      order: "descending",
+    }),
+    ORIGINAL_PACKAGE_ID !== PACKAGE_ID
+      ? client.queryEvents({
+          query: { MoveEventType: `${ORIGINAL_PACKAGE_ID}::asset_pool::CustodianCapIssued` },
+          limit: 100,
+          order: "descending",
+        })
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const caps = [];
   const seen = new Set();
-  return all
-    .filter((e) => {
-      const key = `${e.parsedJson?.asset_type_symbol}-${e.parsedJson?.custodian_address}`;
-      if (seen.has(key)) return false;
+
+  // From AssetTypeCreated events — need to look up the custodian address from the transaction
+  for (const e of created.data) {
+    const tx = await client.getTransactionBlock({
+      digest: e.id.txDigest,
+      options: { showObjectChanges: true },
+    });
+    const capObj = tx.objectChanges?.find(
+      (c) => c.type === "created" && c.objectType?.includes("::asset_pool::CustodianCap"),
+    );
+    if (capObj) {
+      const key = `${e.parsedJson?.symbol}-${capObj.owner?.AddressOwner}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        caps.push({
+          assetTypeSymbol: e.parsedJson?.symbol,
+          custodianAddress: capObj.owner?.AddressOwner,
+          timestamp: Number(e.timestampMs || 0),
+        });
+      }
+    }
+  }
+
+  // From explicit CustodianCapIssued events
+  for (const e of [...issued.data, ...issuedOld.data]) {
+    const key = `${e.parsedJson?.asset_type_symbol}-${e.parsedJson?.custodian_address}`;
+    if (!seen.has(key)) {
       seen.add(key);
-      return true;
-    })
-    .map((e) => ({
-      assetTypeSymbol: e.parsedJson?.asset_type_symbol,
-      custodianAddress: e.parsedJson?.custodian_address,
-      timestamp: Number(e.timestampMs || 0),
-    }));
+      caps.push({
+        assetTypeSymbol: e.parsedJson?.asset_type_symbol,
+        custodianAddress: e.parsedJson?.custodian_address,
+        timestamp: Number(e.timestampMs || 0),
+      });
+    }
+  }
+
+  return caps;
 }
 
 export async function getOwnedAssetTypes() {
   const client = getClient();
 
-  // Query both old and new package events
-  const [eventsNew, eventsOld] = await Promise.all([
-    client.queryEvents({
-      query: { MoveEventType: `${PACKAGE_ID}::asset_pool::AssetTypeCreated` },
-      limit: 50,
-      order: "descending",
-    }),
-    client.queryEvents({
+  const events = await client.queryEvents({
+    query: { MoveEventType: `${PACKAGE_ID}::asset_pool::AssetTypeCreated` },
+    limit: 50,
+    order: "descending",
+  });
+
+  // Only query old package if different
+  let allEvents = [...events.data];
+  if (ORIGINAL_PACKAGE_ID !== PACKAGE_ID) {
+    const eventsOld = await client.queryEvents({
       query: { MoveEventType: `${ORIGINAL_PACKAGE_ID}::asset_pool::AssetTypeCreated` },
       limit: 50,
       order: "descending",
-    }),
-  ]);
+    });
+    allEvents = [...allEvents, ...eventsOld.data];
+  }
 
-  const allEvents = [...eventsNew.data, ...eventsOld.data];
-
-  // Get the actual shared objects by looking at transaction effects
   const assetTypes = [];
+  const seenIds = new Set();
+
   for (const event of allEvents) {
     try {
       const tx = await client.getTransactionBlock({
@@ -122,7 +160,8 @@ export async function getOwnedAssetTypes() {
       const created = tx.objectChanges?.find(
         (c) => c.type === "created" && c.objectType?.includes("::asset_pool::AssetType"),
       );
-      if (created) {
+      if (created && !seenIds.has(created.objectId)) {
+        seenIds.add(created.objectId);
         const obj = await client.getObject({
           id: created.objectId,
           options: { showContent: true },

@@ -27,7 +27,7 @@ export async function POST(request) {
       return NextResponse.json({ error: data.error.message }, { status: 400 });
     }
 
-    return NextResponse.json(data.result);
+    return NextResponse.json(data.result.zkProof);
   } catch (err) {
     console.error("ZK proof route error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
