@@ -28,7 +28,6 @@ This repository contains the full technical stack for Anansi Technology Corporat
 # From repo root
 cd web && npm install && cd ..
 cd app && npm install && cd ..
-cd indexer && npm install && cd ..
 ```
 
 ### 2. Smart Contracts (Sui Move)
@@ -47,9 +46,7 @@ sui client switch --env testnet
 sui client publish --gas-budget 100000000
 ```
 
-After publishing, copy the Package ID and update:
-- `app/lib/constants.js`
-- `indexer/config.js`
+After publishing, copy the Package ID and update `app/.env.local` (see `.env.example`).
 
 ### 3. Landing Site
 
@@ -57,11 +54,6 @@ After publishing, copy the Package ID and update:
 cd web
 npm run dev
 # Open http://localhost:3000
-```
-
-Deploy to Vercel:
-```bash
-npx vercel --prod
 ```
 
 ### 4. Spice Application
@@ -74,13 +66,18 @@ npm run dev
 # Open http://localhost:3001
 ```
 
-### 5. Indexer
+### 5. Optional: Standalone Indexer (Phase 2)
+
+The app queries the Sui blockchain directly — no indexer needed for MVP.
+When you scale to 500+ farmers, deploy the standalone indexer:
 
 ```bash
 cd indexer
+npm install
 cp .env.example .env
-# Fill in Package ID and database config
+node migrate.js
 npm run dev
+# API on http://localhost:4000
 ```
 
 ---
@@ -111,12 +108,16 @@ npm run dev
                            │
               ┌────────────┼────────────┐
               ▼            ▼            ▼
-     ┌──────────────┐ ┌────────┐ ┌──────────┐
-     │  contracts/  │ │ IPFS   │ │ indexer/  │
-     │  Sui Move    │ │(Pinata)│ │ Node.js   │
-     │  on-chain    │ │        │ │ Postgres  │
-     └──────────────┘ └────────┘ └──────────┘
+     ┌──────────────┐ ┌────────┐ ┌──────────────┐
+     │  contracts/  │ │ IPFS   │ │ Sui RPC      │
+     │  Sui Move    │ │(Pinata)│ │ (data layer) │
+     │  on-chain    │ │        │ │              │
+     └──────────────┘ └────────┘ └──────────────┘
 ```
+
+The app queries the Sui blockchain directly via RPC — no separate indexer or database
+needed for MVP. The `indexer/` directory contains a standalone event indexer for
+Phase 2 scaling (500+ farmers, 10+ islands) when RPC queries become slow.
 
 ---
 
