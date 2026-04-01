@@ -20,11 +20,30 @@ export async function POST(request) {
       name: `spice-receipt-${Date.now()}`,
     }))
 
+    const apiKey = process.env.PINATA_API_KEY
+    const secret = process.env.PINATA_SECRET_KEY
+    const jwt = process.env.PINATA_JWT?.trim()
+
+    if (!jwt && (!apiKey || !secret)) {
+      return NextResponse.json(
+        {
+          error:
+            'Pinata not configured: set PINATA_JWT (Bearer), or both PINATA_API_KEY and PINATA_SECRET_KEY',
+        },
+        { status: 500 },
+      )
+    }
+
+    const headers = jwt
+      ? { Authorization: `Bearer ${jwt}` }
+      : {
+          pinata_api_key: apiKey,
+          pinata_secret_api_key: secret,
+        }
+
     const pinataResponse = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.PINATA_API_KEY}`,
-      },
+      headers,
       body: pinataForm,
     })
 
