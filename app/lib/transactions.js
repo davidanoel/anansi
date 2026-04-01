@@ -1,7 +1,7 @@
-import { Transaction } from '@mysten/sui/transactions'
-import { getZkLoginSignature } from '@mysten/sui/zklogin'
-import { getSuiClient } from './sui'
-import { getEphemeralKeypair, getZkProof, getMaxEpoch, getSalt, getSession } from './auth'
+import { Transaction } from "@mysten/sui/transactions";
+import { getZkLoginSignature } from "@mysten/sui/zklogin";
+import { getSuiClient } from "./sui";
+import { getEphemeralKeypair, getZkProof, getMaxEpoch, getSalt, getSession } from "./auth";
 import {
   PACKAGE_ID,
   REGISTRY_ID,
@@ -10,7 +10,7 @@ import {
   PLATFORM_ID,
   CARIB_TREASURY_ID,
   MODULES,
-} from './constants'
+} from "./constants";
 
 // ============================================================
 // Execute a transaction with zkLogin signature
@@ -18,25 +18,25 @@ import {
 // ============================================================
 
 async function executeTransaction(tx) {
-  const client = getSuiClient()
-  const session = getSession()
-  const ephemeralKey = getEphemeralKeypair()
-  const zkProof = getZkProof()
-  const maxEpoch = getMaxEpoch()
-  const salt = getSalt()
+  const client = getSuiClient();
+  const session = getSession();
+  const ephemeralKey = getEphemeralKeypair();
+  const zkProof = getZkProof();
+  const maxEpoch = getMaxEpoch();
+  const salt = getSalt();
 
   if (!session || !ephemeralKey || !zkProof) {
-    throw new Error('Not authenticated. Please sign in.')
+    throw new Error("Not authenticated. Please sign in.");
   }
 
   // Set sender
-  tx.setSender(session.address)
+  tx.setSender(session.address);
 
   // Build the transaction
-  const bytes = await tx.build({ client })
+  const bytes = await tx.build({ client });
 
   // Sign with ephemeral key
-  const { signature: ephemeralSig } = await ephemeralKey.signTransaction(bytes)
+  const { signature: ephemeralSig } = await ephemeralKey.signTransaction(bytes);
 
   // Combine with ZK proof to create zkLogin signature
   const zkLoginSignature = getZkLoginSignature({
@@ -46,7 +46,7 @@ async function executeTransaction(tx) {
     },
     maxEpoch,
     userSignature: ephemeralSig,
-  })
+  });
 
   // Execute
   const result = await client.executeTransactionBlock({
@@ -57,9 +57,9 @@ async function executeTransaction(tx) {
       showEvents: true,
       showObjectChanges: true,
     },
-  })
+  });
 
-  return result
+  return result;
 }
 
 // ============================================================
@@ -68,29 +68,37 @@ async function executeTransaction(tx) {
 
 // Register a new asset type (e.g., NUTMG, COCO, VILLA)
 // Only callable by RegistryAdmin holder
-export async function createAssetType(registryAdminCapId, symbol, name, unit, region, custodianName, custodianAddress) {
-  const tx = new Transaction()
+export async function createAssetType(
+  registryAdminCapId,
+  symbol,
+  name,
+  unit,
+  region,
+  custodianName,
+  custodianAddress,
+) {
+  const tx = new Transaction();
 
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::create_asset_type`,
     arguments: [
       tx.object(registryAdminCapId),
       tx.object(REGISTRY_ID),
-      tx.pure.vector('u8', new TextEncoder().encode(symbol)),
-      tx.pure.vector('u8', new TextEncoder().encode(name)),
-      tx.pure.vector('u8', new TextEncoder().encode(unit)),
-      tx.pure.vector('u8', new TextEncoder().encode(region)),
-      tx.pure.vector('u8', new TextEncoder().encode(custodianName)),
+      tx.pure.vector("u8", new TextEncoder().encode(symbol)),
+      tx.pure.vector("u8", new TextEncoder().encode(name)),
+      tx.pure.vector("u8", new TextEncoder().encode(unit)),
+      tx.pure.vector("u8", new TextEncoder().encode(region)),
+      tx.pure.vector("u8", new TextEncoder().encode(custodianName)),
       tx.pure.address(custodianAddress),
     ],
-  })
+  });
 
-  return executeTransaction(tx)
+  return executeTransaction(tx);
 }
 
 // Create a new lot for an asset type
-export async function createLot(assetTypeId, custodianCapId, receiptHash) {
-  const tx = new Transaction()
+export async function createLot(custodianCapId, assetTypeId, receiptHash) {
+  const tx = new Transaction();
 
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::create_lot`,
@@ -98,17 +106,24 @@ export async function createLot(assetTypeId, custodianCapId, receiptHash) {
       tx.object(custodianCapId),
       tx.object(REGISTRY_ID),
       tx.object(assetTypeId),
-      tx.pure.string(receiptHash),
-      tx.object('0x6'), // Clock object
+      tx.pure.vector("u8", Array.from(new TextEncoder().encode(receiptHash || "new-lot"))),
+      tx.object("0x6"),
     ],
-  })
+  });
 
-  return executeTransaction(tx)
+  return executeTransaction(tx);
 }
 
 // Record a delivery and mint tokens to farmer
-export async function recordDelivery(custodianCapId, lotId, farmerAddress, units, grade, receiptHash) {
-  const tx = new Transaction()
+export async function recordDelivery(
+  custodianCapId,
+  lotId,
+  farmerAddress,
+  units,
+  grade,
+  receiptHash,
+) {
+  const tx = new Transaction();
 
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::record_delivery`,
@@ -119,75 +134,62 @@ export async function recordDelivery(custodianCapId, lotId, farmerAddress, units
       tx.pure.u64(units),
       tx.pure.string(grade),
       tx.pure.string(receiptHash),
-      tx.object('0x6'), // Clock
+      tx.object("0x6"), // Clock
     ],
-  })
+  });
 
-  return executeTransaction(tx)
+  return executeTransaction(tx);
 }
 
 // Update lot valuation
 export async function updateValuation(custodianCapId, lotId, newValueUsdc) {
-  const tx = new Transaction()
+  const tx = new Transaction();
 
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::update_valuation`,
-    arguments: [
-      tx.object(custodianCapId),
-      tx.object(lotId),
-      tx.pure.u64(newValueUsdc),
-    ],
-  })
+    arguments: [tx.object(custodianCapId), tx.object(lotId), tx.pure.u64(newValueUsdc)],
+  });
 
-  return executeTransaction(tx)
+  return executeTransaction(tx);
 }
 
 // Move lot to selling status
 export async function startSelling(custodianCapId, lotId) {
-  const tx = new Transaction()
+  const tx = new Transaction();
 
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::start_selling`,
-    arguments: [
-      tx.object(custodianCapId),
-      tx.object(lotId),
-    ],
-  })
+    arguments: [tx.object(custodianCapId), tx.object(lotId)],
+  });
 
-  return executeTransaction(tx)
+  return executeTransaction(tx);
 }
 
 // Split SpiceTokens (for partial selling)
 export async function splitToken(tokenId, amount) {
-  const tx = new Transaction()
+  const tx = new Transaction();
 
   const newToken = tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::split_token`,
-    arguments: [
-      tx.object(tokenId),
-      tx.pure.u64(amount),
-    ],
-  })
+    arguments: [tx.object(tokenId), tx.pure.u64(amount)],
+  });
 
   // Transfer the new token to sender
-  tx.transferObjects([newToken], tx.pure.address(getSession().address))
+  tx.transferObjects([newToken], tx.pure.address(getSession().address));
 
-  return executeTransaction(tx)
+  return executeTransaction(tx);
 }
 
 // Transfer SpiceTokens to another address
 export async function transferToken(tokenId, recipientAddress) {
-  const tx = new Transaction()
+  const tx = new Transaction();
 
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::transfer_token`,
-    arguments: [
-      tx.object(tokenId),
-      tx.pure.address(recipientAddress),
-    ],
-  })
+    arguments: [tx.object(tokenId), tx.pure.address(recipientAddress)],
+  });
 
-  return executeTransaction(tx)
+  return executeTransaction(tx);
 }
 
 // ============================================================
@@ -196,20 +198,20 @@ export async function transferToken(tokenId, recipientAddress) {
 
 // Deposit surplus USDC for a lot (custodian action)
 export async function depositSurplus(lotId, usdcCoinId) {
-  const tx = new Transaction()
+  const tx = new Transaction();
 
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.YIELD_ENGINE}::deposit_surplus`,
-    typeArguments: ['0x2::sui::SUI'], // Replace with USDC type in production
+    typeArguments: ["0x2::sui::SUI"], // Replace with USDC type in production
     arguments: [
       tx.object(YIELD_ENGINE_ID),
       tx.object(lotId),
       tx.object(usdcCoinId),
-      tx.object('0x6'), // Clock
+      tx.object("0x6"), // Clock
     ],
-  })
+  });
 
-  return executeTransaction(tx)
+  return executeTransaction(tx);
 }
 
 // ============================================================
@@ -218,15 +220,12 @@ export async function depositSurplus(lotId, usdcCoinId) {
 
 // Burn CARIB tokens
 export async function burnCarib(coinId) {
-  const tx = new Transaction()
+  const tx = new Transaction();
 
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.CARIB_COIN}::burn`,
-    arguments: [
-      tx.object(CARIB_TREASURY_ID),
-      tx.object(coinId),
-    ],
-  })
+    arguments: [tx.object(CARIB_TREASURY_ID), tx.object(coinId)],
+  });
 
-  return executeTransaction(tx)
+  return executeTransaction(tx);
 }

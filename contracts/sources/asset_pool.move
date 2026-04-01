@@ -141,6 +141,23 @@ module anansi::asset_pool {
         custodian: String,
     }
 
+    public struct AssetTypeDeactivated has copy, drop {
+        symbol: String,
+    }
+
+    public struct AssetTypeReactivated has copy, drop {
+        symbol: String,
+    }
+
+    public struct CustodianCapIssued has copy, drop {
+        asset_type_symbol: String,
+        custodian_address: address,
+    }
+
+    public struct CustodianCapRevoked has copy, drop {
+        asset_type_symbol: String,
+    }
+
     public struct LotCreated has copy, drop {
         lot_id: ID,
         lot_number: u64,
@@ -206,7 +223,7 @@ module anansi::asset_pool {
         custodian_name: vector<u8>,
         custodian_address: address,
         ctx: &mut TxContext,
-    ): AssetType {
+    ) {
         let symbol_str = string::utf8(symbol);
         let name_str = string::utf8(name);
         let region_str = string::utf8(region);
@@ -228,7 +245,7 @@ module anansi::asset_pool {
             custodian: custodian_str,
         });
 
-        AssetType {
+        let asset_type = AssetType {
             id: object::new(ctx),
             symbol: symbol_str,
             name: name_str,
@@ -236,8 +253,86 @@ module anansi::asset_pool {
             region: region_str,
             custodian: custodian_str,
             active: true,
-        }
+        };
+
+        transfer::share_object(asset_type);
     }
+
+    /// Deactivate an asset type — prevents new lots from being created.
+    /// Existing lots continue to function normally.
+    public fun deactivate_asset_type(
+        _admin: &RegistryAdmin,
+        asset_type: &mut AssetType,
+    ) {
+        asset_type.active = false;
+        event::emit(AssetTypeDeactivated {
+            symbol: asset_type.symbol,
+        });
+    }
+
+    /// Reactivate a previously deactivated asset type.
+    public fun reactivate_asset_type(
+        _admin: &RegistryAdmin,
+        asset_type: &mut AssetType,
+    ) {
+        asset_type.active = true;
+        event::emit(AssetTypeReactivated {
+            symbol: asset_type.symbol,
+        });
+    }
+
+    /// Issue a new CustodianCap for an asset type to a new address.
+    /// Used to assign a new custodian (e.g., new GCNA staff member).
+    /// Does NOT revoke existing caps — call revoke_custodian_cap separately if needed.
+    public fun issue_custodian_cap(
+        _admin: &RegistryAdmin,
+        asset_type: &AssetType,
+        new_custodian: address,
+        ctx: &mut TxContext,
+    ) {
+        let cap = CustodianCap {
+            id: object::new(ctx),
+            asset_type_symbol: asset_type.symbol,
+        };
+
+        event::emit(CustodianCapIssued {
+            asset_type_symbol: asset_type.symbol,
+            custodian_address: new_custodian,
+        });
+
+        transfer::transfer(cap, new_custodian);
+    }
+
+    /// Revoke a custodian cap. The cap holder must send it to be destroyed.
+    /// In practice: admin asks custodian to return cap, or cap is transferred
+    /// to admin first, then destroyed here.
+    public fun revoke_custodian_cap(
+        _admin: &RegistryAdmin,
+        cap: CustodianCap,
+    ) {
+        let symbol = cap.asset_type_symbol;
+        let CustodianCap { id, asset_type_symbol: _ } = cap;
+        object::delete(id);
+
+        event::emit(CustodianCapRevoked {
+            asset_type_symbol: symbol,
+        });
+    }
+
+    /// Transfer a RegistryAdmin to a new owner.
+    public fun transfer_registry_admin(
+        admin: RegistryAdmin,
+        new_owner: address,
+    ) {
+        transfer::transfer(admin, new_owner);
+    }
+
+    // ============ View Functions (AssetType) ============
+
+    public fun asset_type_symbol(at: &AssetType): String { at.symbol }
+    public fun asset_type_name(at: &AssetType): String { at.name }
+    public fun asset_type_region(at: &AssetType): String { at.region }
+    public fun asset_type_active(at: &AssetType): bool { at.active }
 
     // ============ Custodian Functions ============
 
