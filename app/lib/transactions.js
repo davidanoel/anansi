@@ -18,18 +18,18 @@ import {
 // ============================================================
 
 async function executeTransaction(tx) {
-  const client = getSuiClient();
-  const session = getSession();
-  const ephemeralKey = getEphemeralKeypair();
-  const zkProof = getZkProof();
-  const maxEpoch = getMaxEpoch();
-  const salt = getSalt();
+  const client = getSuiClient()
+  const session = getSession()
+  const ephemeralKey = getEphemeralKeypair()
+  const zkProof = getZkProof()
+  const maxEpoch = getMaxEpoch()
+  const salt = getSalt()
 
   if (!session || !ephemeralKey || !zkProof) {
-    throw new Error("Not authenticated. Please sign in.");
+    throw new Error('Not authenticated. Please sign in.')
   }
 
-  // Convert base64 salt to BigInt
+  // Compute the address seed from sub + salt
   const saltBytes = Uint8Array.from(atob(salt), c => c.charCodeAt(0))
   const saltBigInt = saltBytes.reduce((acc, byte) => (acc << 8n) + BigInt(byte), 0n)
 
@@ -40,12 +40,36 @@ async function executeTransaction(tx) {
     session.aud
   ).toString()
 
-  tx.setSender(session.address);
+  tx.setSender(session.address)
 
-  const bytes = await tx.build({ client });
+  // Build the transaction bytes (without gas — Shinami will add it)
+  const txBytes = await tx.build({ client, onlyTransactionKind: true })
+  const txBase64 = btoa(String.fromCharCode(...txBytes))
 
-  const { signature: ephemeralSig } = await ephemeralKey.signTransaction(bytes);
+  // Request gas sponsorship from Shinami via our API route
+  const sponsorResponse = await fetch('/api/sponsor', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      txBytes: txBase64,
+      sender: session.address,
+    }),
+  })
 
+  if (!sponsorResponse.ok) {
+    const err = await sponsorResponse.json()
+    throw new Error(err.error || 'Gas sponsorship failed')
+  }
+
+  const sponsored = await sponsorResponse.json()
+
+  // Decode the sponsored transaction bytes
+  const sponsoredBytes = Uint8Array.from(atob(sponsored.txBytes), c => c.charCodeAt(0))
+
+  // Sign with ephemeral key
+  const { signature: ephemeralSig } = await ephemeralKey.signTransaction(sponsoredBytes)
+
+  // Create zkLogin signature
   const zkLoginSignature = getZkLoginSignature({
     inputs: {
       ...zkProof,
@@ -53,19 +77,20 @@ async function executeTransaction(tx) {
     },
     maxEpoch,
     userSignature: ephemeralSig,
-  });
+  })
 
+  // Execute with both signatures (user zkLogin + sponsor)
   const result = await client.executeTransactionBlock({
-    transactionBlock: bytes,
-    signature: zkLoginSignature,
+    transactionBlock: sponsoredBytes,
+    signature: [zkLoginSignature, sponsored.signature],
     options: {
       showEffects: true,
       showEvents: true,
       showObjectChanges: true,
     },
-  });
+  })
 
-  return result;
+  return result
 }
 
 // ============================================================
