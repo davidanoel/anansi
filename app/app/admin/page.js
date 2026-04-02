@@ -288,6 +288,25 @@ function LotManager({ custodianCaps }) {
     }
   };
 
+  const handleLotAction = async (lotId, action) => {
+    try {
+      const cap = custodianCaps[0];
+      let txResult;
+      if (action === "selling") {
+        txResult = await startSelling(cap.id, lotId);
+      } else if (action === "distributing") {
+        const { startDistributing } = await import("../../lib/transactions");
+        txResult = await startDistributing(cap.id, lotId);
+      } else if (action === "close") {
+        const { closeLot } = await import("../../lib/transactions");
+        txResult = await closeLot(cap.id, lotId);
+      }
+      setTimeout(loadLots, 3000);
+    } catch (err) {
+      alert("Failed: " + err.message);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -353,9 +372,33 @@ function LotManager({ custodianCaps }) {
                   }
                 />
               </div>
-              <p className="text-xs text-anansi-gray font-mono mt-3 pt-3 border-t border-anansi-border truncate">
-                ID: {lot.id}
-              </p>
+              <div className="mt-3 pt-3 border-t border-anansi-border flex items-center justify-between">
+                <p className="text-xs text-anansi-gray font-mono truncate flex-1">ID: {lot.id}</p>
+                {lot.status === 0 && (
+                  <button
+                    onClick={() => handleLotAction(lot.id, "selling")}
+                    className="ml-3 text-xs px-3 py-1 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg hover:bg-yellow-100 transition-colors"
+                  >
+                    Mark as Selling
+                  </button>
+                )}
+                {lot.status === 1 && (
+                  <button
+                    onClick={() => handleLotAction(lot.id, "distributing")}
+                    className="ml-3 text-xs px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                  >
+                    Start Distribution
+                  </button>
+                )}
+                {lot.status === 2 && (
+                  <button
+                    onClick={() => handleLotAction(lot.id, "close")}
+                    className="ml-3 text-xs px-3 py-1 bg-gray-50 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    Close Lot
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
