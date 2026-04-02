@@ -10,6 +10,8 @@ import {
   PLATFORM_ID,
   CARIB_TREASURY_ID,
   MODULES,
+  USDC_TYPE,
+  USDC_DECIMALS,
 } from "./constants";
 
 // ============================================================
@@ -244,19 +246,52 @@ export async function transferToken(tokenId, recipientAddress) {
 // Yield Engine Transactions
 // ============================================================
 
-// Deposit surplus USDC for a lot (custodian action)
-export async function depositSurplus(lotId, usdcCoinId) {
+// Deposit USDC surplus for a lot (custodian action)
+export async function depositSurplus(lotId, usdcAmount) {
+  const client = getSuiClient();
+  const session = getSession();
   const tx = new Transaction();
+
+  // Amount in USDC smallest units (6 decimals)
+  const amountUnits = Math.floor(usdcAmount * 10 ** USDC_DECIMALS);
+
+  // Get custodian's USDC coins
+  const { data: coins } = await client.getCoins({
+    owner: session.address,
+    coinType: USDC_TYPE,
+  });
+
+  if (coins.length === 0) {
+    throw new Error("No USDC found in your wallet. Get testnet USDC from faucet.circle.com");
+  }
+
+  // If we need to merge coins first (user may have multiple USDC objects)
+  if (coins.length > 1) {
+    const primaryCoin = coins[0].coinObjectId;
+    const otherCoins = coins.slice(1).map((c) => tx.object(c.coinObjectId));
+    tx.mergeCoins(tx.object(primaryCoin), otherCoins);
+  }
+
+  // Split the exact amount we need
+  const [depositCoin] = tx.splitCoins(tx.object(coins[0].coinObjectId), [tx.pure.u64(amountUnits)]);
 
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.YIELD_ENGINE}::deposit_surplus`,
-    typeArguments: ["0x2::sui::SUI"], // Replace with USDC type in production
-    arguments: [
-      tx.object(YIELD_ENGINE_ID),
-      tx.object(lotId),
-      tx.object(usdcCoinId),
-      tx.object("0x6"), // Clock
-    ],
+    typeArguments: [USDC_TYPE],
+    arguments: [tx.object(YIELD_ENGINE_ID), tx.object(lotId), depositCoin, tx.object("0x6")],
+  });
+
+  return executeTransaction(tx);
+}
+
+// Claim surplus for a token holding
+export async function claimSurplus(depositId, tokenId, paymentPoolId) {
+  const tx = new Transaction();
+
+  tx.moveCall({
+    target: `${PACKAGE_ID}::${MODULES.YIELD_ENGINE}::claim_surplus`,
+    typeArguments: [USDC_TYPE],
+    arguments: [tx.object(depositId), tx.object(tokenId), tx.object(paymentPoolId)],
   });
 
   return executeTransaction(tx);
