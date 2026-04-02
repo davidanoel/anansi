@@ -90,6 +90,54 @@ async function executeTransaction(tx) {
   return result;
 }
 
+// Execute a transaction WITHOUT gas sponsorship — user pays gas directly.
+// Used for custodian actions that involve user-owned coins (e.g., USDC deposits).
+async function executeTransactionDirect(tx) {
+  const client = getSuiClient();
+  const session = getSession();
+  const ephemeralKey = getEphemeralKeypair();
+  const zkProof = getZkProof();
+  const maxEpoch = getMaxEpoch();
+  const salt = getSalt();
+
+  if (!session || !ephemeralKey || !zkProof) {
+    throw new Error("Not authenticated. Please sign in.");
+  }
+
+  const saltBytes = Uint8Array.from(atob(salt), (c) => c.charCodeAt(0));
+  const saltBigInt = saltBytes.reduce((acc, byte) => (acc << 8n) + BigInt(byte), 0n);
+
+  const addressSeed = genAddressSeed(saltBigInt, "sub", session.sub, session.aud).toString();
+
+  tx.setSender(session.address);
+  tx.setGasBudget(50000000);
+
+  const bytes = await tx.build({ client });
+
+  const { signature: ephemeralSig } = await ephemeralKey.signTransaction(bytes);
+
+  const zkLoginSignature = getZkLoginSignature({
+    inputs: {
+      ...zkProof,
+      addressSeed,
+    },
+    maxEpoch,
+    userSignature: ephemeralSig,
+  });
+
+  const result = await client.executeTransactionBlock({
+    transactionBlock: bytes,
+    signature: zkLoginSignature,
+    options: {
+      showEffects: true,
+      showEvents: true,
+      showObjectChanges: true,
+    },
+  });
+
+  return result;
+}
+
 // ============================================================
 // Asset Pool Transactions
 // ============================================================
@@ -272,26 +320,36 @@ export async function depositSurplus(lotId, usdcAmount) {
     tx.mergeCoins(tx.object(primaryCoin), otherCoins);
   }
 
-  // Split the exact amount we need
-  const [depositCoin] = tx.splitCoins(tx.object(coins[0].coinObjectId), [tx.pure.u64(amountUnits)]);
+  const primaryCoinId = coins[0].coinObjectId;
+  const totalMicro = coins.reduce((s, c) => s + BigInt(c.balance), 0n);
+  if (totalMicro < BigInt(amountUnits)) {
+    throw new Error("USDC balance is less than the amount to deposit");
+  }
 
+  // Pass mutable coin + amount; Move does coin::split internally (avoids by-value Coin PTB).
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.YIELD_ENGINE}::deposit_surplus`,
     typeArguments: [USDC_TYPE],
-    arguments: [tx.object(YIELD_ENGINE_ID), tx.object(lotId), depositCoin, tx.object("0x6")],
+    arguments: [
+      tx.object(YIELD_ENGINE_ID),
+      tx.object(lotId),
+      tx.object(primaryCoinId),
+      tx.pure.u64(amountUnits),
+      tx.object("0x6"),
+    ],
   });
 
-  return executeTransaction(tx);
+  return executeTransactionDirect(tx);
 }
 
-// Claim surplus for a token holding
-export async function claimSurplus(depositId, tokenId, paymentPoolId) {
+// Claim surplus from a deposit
+export async function claimSurplus(depositId, tokenId) {
   const tx = new Transaction();
 
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.YIELD_ENGINE}::claim_surplus`,
     typeArguments: [USDC_TYPE],
-    arguments: [tx.object(depositId), tx.object(tokenId), tx.object(paymentPoolId)],
+    arguments: [tx.object(depositId), tx.object(tokenId)],
   });
 
   return executeTransaction(tx);

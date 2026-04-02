@@ -1,9 +1,9 @@
 /// Yield Engine — Handles surplus distribution from asset sales.
 /// When GCNA sells nutmeg overseas, surplus USDC flows here and gets
-/// distributed pro-rata to SpiceToken holders.
-/// Fees are collected and routed to burn + treasury.
+/// distributed pro-rata to SpiceToken holders via claims.
 module anansi::yield_engine {
     use sui::coin::{Self, Coin};
+    use sui::balance::{Self, Balance};
     use sui::event;
     use sui::clock::Clock;
     use sui::table::{Self, Table};
@@ -20,27 +20,30 @@ module anansi::yield_engine {
         fee_rate_bps: u64,
         /// Percentage of fee that gets burned (rest goes to treasury). In bps.
         burn_rate_bps: u64,
-        /// Total USDC distributed across all lots (cumulative)
+        /// Total distributed across all lots (cumulative)
         total_distributed: u64,
-        /// Total CARIB fees collected (cumulative)
+        /// Total fees collected (cumulative)
         total_fees_collected: u64,
-        /// Total CARIB burned through fees (cumulative)
+        /// Total fees burned (cumulative)
         total_fees_burned: u64,
         /// Treasury address for fee routing
         treasury_address: address,
     }
 
-    /// A surplus deposit waiting to be claimed by token holders.
-    public struct SurplusDeposit has key, store {
+    /// A surplus deposit holding USDC for token holders to claim.
+    /// Shared object — farmers interact with this to claim their share.
+    public struct SurplusDeposit<phantom T> has key {
         id: UID,
         /// Which lot this surplus belongs to
         lot_id: ID,
-        /// Total USDC deposited (after fees)
-        total_usdc: u64,
-        /// Total tokens outstanding at time of deposit (for pro-rata calc)
+        /// The USDC balance available for claims
+        balance: Balance<T>,
+        /// Total amount deposited (for pro-rata calculation)
+        total_amount: u64,
+        /// Total tokens outstanding at time of deposit (snapshot)
         total_tokens_at_snapshot: u64,
-        /// USDC remaining to be claimed
-        remaining_usdc: u64,
+        /// Tracks who has claimed: address => amount claimed
+        claims: Table<address, u64>,
         /// Timestamp
         deposited_at: u64,
     }
@@ -52,11 +55,8 @@ module anansi::yield_engine {
 
     // ============ Constants ============
 
-    /// Default fee: 1% (100 basis points)
     const DEFAULT_FEE_BPS: u64 = 100;
-    /// Default burn rate: 50% of fees (5000 basis points = 50%)
     const DEFAULT_BURN_BPS: u64 = 5000;
-    /// Basis points denominator
     const BPS_DENOMINATOR: u64 = 10000;
 
     // ============ Errors ============
@@ -65,6 +65,8 @@ module anansi::yield_engine {
     const EInsufficientDeposit: u64 = 201;
     const ENoTokensToRedeem: u64 = 202;
     const ELotMismatch: u64 = 203;
+    const EAlreadyClaimed: u64 = 204;
+    const EInsufficientBalance: u64 = 205;
 
     // ============ Events ============
 
@@ -79,8 +81,8 @@ module anansi::yield_engine {
     public struct SurplusClaimed has copy, drop {
         lot_id: ID,
         claimant: address,
-        tokens_redeemed: u64,
-        usdc_received: u64,
+        tokens_held: u64,
+        amount_received: u64,
     }
 
     public struct FeesCollected has copy, drop {
@@ -118,31 +120,34 @@ module anansi::yield_engine {
 
     // ============ Core Functions ============
 
-    /// Deposit surplus USDC for a lot.
-    /// Called by the custodian (e.g., GCNA) after selling the physical commodity.
-    /// 
-    /// In the full version, this would also auto-convert the fee portion to CARIB
-    /// via a DEX swap within the same PTB. For MVP, fees are tracked in USDC
-    /// and CARIB burns happen in a separate transaction.
+    /// Deposit surplus for a lot. Called by custodian after selling the commodity.
+    /// Takes a fee, then holds the net amount in a shared SurplusDeposit
+    /// that token holders can claim from.
     ///
-    /// Note: This uses a generic Coin<T> to allow USDC or any stablecoin.
-    /// In production, T would be constrained to an approved stablecoin type.
+    /// Uses `payment: &mut Coin<T>` + `gross_amount` so the PTB passes a normal mutable
+    /// coin reference (not a by-value `Coin`), avoiding client/network "coin reservation"
+    /// compatibility issues on testnet.
     public fun deposit_surplus<T>(
         engine: &mut YieldEngine,
         lot: &mut Lot,
-        mut payment: Coin<T>,
+        payment: &mut Coin<T>,
+        gross_amount: u64,
         clock: &Clock,
         ctx: &mut TxContext,
     ) {
-        let gross_amount = coin::value(&payment);
         assert!(gross_amount > 0, EInsufficientDeposit);
+        assert!(coin::value(payment) >= gross_amount, EInsufficientDeposit);
+
+        // Pull the deposited slice into an owned coin; remainder stays on `payment`
+        let mut payment = coin::split(payment, gross_amount, ctx);
 
         // Calculate fee
         let fee_amount = (gross_amount * engine.fee_rate_bps) / BPS_DENOMINATOR;
         let net_amount = gross_amount - fee_amount;
 
-        // Split the fee portion
+        // Split the fee portion and send to treasury
         let fee_coin = coin::split(&mut payment, fee_amount, ctx);
+        transfer::public_transfer(fee_coin, engine.treasury_address);
 
         // Record in lot
         asset_pool::record_surplus_deposit(lot, gross_amount);
@@ -151,13 +156,16 @@ module anansi::yield_engine {
         let tokens_snapshot = asset_pool::lot_total_tokens(lot);
         let lot_id = object::id(lot);
 
-        // Create surplus deposit for claiming
-        let deposit = SurplusDeposit {
+        // Convert remaining payment to balance and hold in shared deposit
+        let deposit_balance = coin::into_balance(payment);
+
+        let deposit = SurplusDeposit<T> {
             id: object::new(ctx),
             lot_id,
-            total_usdc: net_amount,
+            balance: deposit_balance,
+            total_amount: net_amount,
             total_tokens_at_snapshot: tokens_snapshot,
-            remaining_usdc: net_amount,
+            claims: table::new(ctx),
             deposited_at: sui::clock::timestamp_ms(clock),
         };
 
@@ -173,54 +181,53 @@ module anansi::yield_engine {
             tokens_snapshot,
         });
 
-        // Transfer fee to treasury address (in MVP, converted to CARIB externally)
-        transfer::public_transfer(fee_coin, engine.treasury_address);
-        
-        // Share the net payment and surplus deposit for claiming
-        transfer::public_transfer(payment, engine.treasury_address); // temporary: hold net for claiming
+        // Share the deposit so token holders can claim
         transfer::share_object(deposit);
     }
 
     /// Claim surplus for a SpiceToken holding.
-    /// The token holder presents their tokens and receives proportional USDC.
-    /// Tokens are NOT consumed — they can receive future surplus distributions too.
-    /// 
-    /// Pro-rata calculation: (token_balance / total_tokens_at_snapshot) * total_usdc
+    /// Each address can claim once per deposit.
+    /// Pro-rata: (token_balance / total_tokens_at_snapshot) * total_amount
     public fun claim_surplus<T>(
-        deposit: &mut SurplusDeposit,
+        deposit: &mut SurplusDeposit<T>,
         token: &SpiceToken,
-        payment_pool: &mut Coin<T>,
         ctx: &mut TxContext,
     ) {
+        let claimant = ctx.sender();
+
+        // Verify token matches this deposit's lot
         assert!(asset_pool::token_lot_id(token) == deposit.lot_id, ELotMismatch);
+
+        // Check not already claimed
+        assert!(!table::contains(&deposit.claims, claimant), EAlreadyClaimed);
 
         let token_balance = asset_pool::token_balance(token);
         assert!(token_balance > 0, ENoTokensToRedeem);
 
         // Pro-rata calculation
-        let share = (deposit.total_usdc * token_balance) / deposit.total_tokens_at_snapshot;
-        assert!(share <= deposit.remaining_usdc, EInsufficientDeposit);
+        let share = (deposit.total_amount * token_balance) / deposit.total_tokens_at_snapshot;
+        assert!(share > 0, ENoTokensToRedeem);
+        assert!(balance::value(&deposit.balance) >= share, EInsufficientBalance);
 
-        deposit.remaining_usdc = deposit.remaining_usdc - share;
+        // Record the claim
+        table::add(&mut deposit.claims, claimant, share);
 
-        // Split the share from the payment pool and send to claimant
-        let payout = coin::split(payment_pool, share, ctx);
+        // Withdraw from balance and send to claimant
+        let payout = coin::from_balance(balance::split(&mut deposit.balance, share), ctx);
 
         event::emit(SurplusClaimed {
             lot_id: deposit.lot_id,
-            claimant: ctx.sender(),
-            tokens_redeemed: token_balance,
-            usdc_received: share,
+            claimant,
+            tokens_held: token_balance,
+            amount_received: share,
         });
 
-        transfer::public_transfer(payout, ctx.sender());
+        transfer::public_transfer(payout, claimant);
     }
 
-    // ============ Fee Management (with CARIB burn) ============
+    // ============ Fee Management ============
 
     /// Burn CARIB tokens as protocol fee.
-    /// Called after fees have been converted to CARIB (via DEX swap in PTB).
-    /// Burns the configured percentage and sends the rest to treasury.
     public fun process_carib_fee(
         engine: &mut YieldEngine,
         carib_treasury: &mut Treasury,
@@ -229,12 +236,9 @@ module anansi::yield_engine {
         ctx: &mut TxContext,
     ) {
         let total_fee = coin::value(&fee_coins);
-
-        // Calculate burn portion
         let burn_amount = (total_fee * engine.burn_rate_bps) / BPS_DENOMINATOR;
         let treasury_amount = total_fee - burn_amount;
 
-        // Split and burn
         let burn_coins = coin::split(&mut fee_coins, burn_amount, ctx);
         carib_coin::burn(carib_treasury, burn_coins, ctx);
 
@@ -247,20 +251,18 @@ module anansi::yield_engine {
             to_treasury: treasury_amount,
         });
 
-        // Send remainder to treasury
         transfer::public_transfer(fee_coins, engine.treasury_address);
     }
 
     // ============ Admin Functions ============
 
-    /// Update fee configuration. Only callable by yield admin.
     public fun update_fees(
         _admin: &YieldAdmin,
         engine: &mut YieldEngine,
         new_fee_rate_bps: u64,
         new_burn_rate_bps: u64,
     ) {
-        assert!(new_fee_rate_bps <= 1000, EInvalidFeeRate); // Max 10%
+        assert!(new_fee_rate_bps <= 1000, EInvalidFeeRate);
         assert!(new_burn_rate_bps <= BPS_DENOMINATOR, EInvalidFeeRate);
 
         engine.fee_rate_bps = new_fee_rate_bps;
@@ -272,7 +274,6 @@ module anansi::yield_engine {
         });
     }
 
-    /// Update the treasury address for fee routing.
     public fun update_treasury_address(
         _admin: &YieldAdmin,
         engine: &mut YieldEngine,
@@ -288,9 +289,9 @@ module anansi::yield_engine {
     public fun total_distributed(engine: &YieldEngine): u64 { engine.total_distributed }
     public fun total_fees_burned(engine: &YieldEngine): u64 { engine.total_fees_burned }
 
-    public fun deposit_remaining(deposit: &SurplusDeposit): u64 { deposit.remaining_usdc }
-    public fun deposit_total(deposit: &SurplusDeposit): u64 { deposit.total_usdc }
-    public fun deposit_lot_id(deposit: &SurplusDeposit): ID { deposit.lot_id }
+    public fun deposit_remaining<T>(deposit: &SurplusDeposit<T>): u64 { balance::value(&deposit.balance) }
+    public fun deposit_total<T>(deposit: &SurplusDeposit<T>): u64 { deposit.total_amount }
+    public fun deposit_lot_id<T>(deposit: &SurplusDeposit<T>): ID { deposit.lot_id }
 
     // ============ Test Helpers ============
 
