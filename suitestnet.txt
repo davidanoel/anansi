@@ -1,17 +1,15 @@
 SUI TESTNET
 Set active environment to testnet
-╭───────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ Created new keypair and saved it to keystore.                                                     │
-├────────────────┬──────────────────────────────────────────────────────────────────────────────────┤
-│ alias          │ elegant-chrysoprase                                                              │
-│ address        │ 0x5e8388bacd2da180d38bbeceee2bdd2ad68958747d92f678af59bae8078a46d8               │
-│ keyScheme      │ ed25519                                                                          │
-│ recoveryPhrase │ chuckle strategy yellow destroy cycle animal deputy cruel deer mandate dwarf web │
-╰────────────────┴──────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Created new keypair and saved it to keystore.                                                   │
+├────────────────┬────────────────────────────────────────────────────────────────────────────────┤
+│ alias          │ busy-felspar                                                                   │
+│ address        │ 0xb4196e2a6faa028ae0b215dacbc1fea9c95781684c0fc2a91b11272a6be2eff7             │
+│ keyScheme      │ ed25519                                                                        │
+│ recoveryPhrase │ noodle sock mountain lunch south ostrich gravity skate split duty blanket hill │
+╰────────────────┴────────────────────────────────────────────────────────────────────────────────╯
 
 AFTER PUBLISH TO TESTNET
-
-Owner: Account Address ( 0x5e8388bacd2da180d38bbeceee2bdd2ad68958747d92f678af59bae8078a46d8 )
 
 NEXT_PUBLIC_PACKAGE_ID=0x5156a2fd46ec39038d42806e011822e2aa500ae4df1bee52a26e00d7c91677ce
 NEXT_PUBLIC_ORIGINAL_PACKAGE_ID=0x5156a2fd46ec39038d42806e011822e2aa500ae4df1bee52a26e00d7c91677ce
@@ -53,7 +51,7 @@ api secret:68e8f0fc57521b6d0b6a7c7e4a814c42b956cabf1b5da02cabe76017650d57e8
 jwt (secret access token): eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI2OTdiN2JjOC1jZjJjLTQwNzctYmZmMi00OGIyMTkxZjQwNjQiLCJlbWFpbCI6ImF0bGFudGljc3RhcnIxQGhvdG1haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6IjlkODAxN2Y5YmE2MmRkYWMwYWY0Iiwic2NvcGVkS2V5U2VjcmV0IjoiNjhlOGYwZmM1NzUyMWI2ZDBiNmE3YzdlNGE4MTRjNDJiOTU2Y2FiZjFiNWRhMDJjYWJlNzYwMTc2NTBkNTdlOCIsImV4cCI6MTgwNjQ1OTU2Mn0.roJoEwu1AsCBens0TBXknCfbzTR2T5XvrP9WSrGGTbY
 
 ------------ TESTING ---------------
-Owner (SPiceBoss):0x5e8388bacd2da180d38bbeceee2bdd2ad68958747d92f678af59bae8078a46d8
+Owner (SPiceBoss):0xb4196e2a6faa028ae0b215dacbc1fea9c95781684c0fc2a91b11272a6be2eff7
 custodian (GCNA): 0x7a584a2f129f2823705bde5d4734cff9c09ae3532c521c332beee1d7d088e588 (david.noel.0306@gmail.com)
 farmer: 0x22c814ddf889307d76b5c568c69374aeaa9b8dabee8e4ccc4f6ad46aef5ff887 (tanomoshiko@gmail.com)
 
