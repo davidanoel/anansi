@@ -1,6 +1,7 @@
 import { SuiClient, getFullnodeUrl } from "@mysten/sui/client";
 import { Transaction } from "@mysten/sui/transactions";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
+import { USDC_TYPE, SUI_NETWORK } from "./constants";
 
 let client = null;
 let keypair = null;
@@ -8,7 +9,7 @@ let keypair = null;
 function getClient() {
   if (!client) {
     client = new SuiClient({
-      url: process.env.NEXT_PUBLIC_SUI_RPC_URL || getFullnodeUrl("testnet"),
+      url: process.env.SUI_RPC_URL || getFullnodeUrl(SUI_NETWORK),
     });
   }
   return client;
@@ -38,6 +39,7 @@ export async function adminExecute(tx) {
     transaction: tx,
     options: { showEffects: true, showObjectChanges: true, showEvents: true },
   });
+  console.log("adminExecute result:", JSON.stringify(result).slice(0, 500));
   return result;
 }
 
@@ -259,4 +261,57 @@ export async function getAdminStats() {
     totalLots: Number(regFields.lot_count || 0),
     totalAssetTypes: Number(regFields.asset_type_count || 0),
   };
+}
+
+// Deposit USDC surplus for a lot (platform admin action)
+export async function adminDepositSurplus(lotId, usdcAmount) {
+  const client = getClient();
+  const address = getAdminAddress();
+
+  console.log("Deposit params:", { lotId, usdcAmount, USDC_TYPE });
+
+  const amountUnits = Math.floor(usdcAmount * 1_000_000);
+
+  const { data: allCoins } = await client.getCoins({
+    owner: address,
+    coinType: USDC_TYPE,
+  });
+
+  // 1. Blacklist the locked coin object from the previous failed runs
+  const LOCKED_COIN_ID = "0xe4987bfd4cf7a199c8178a05b4c58827ffd8c8889e47f38ae3c5cf9065f78cde";
+  const coins = allCoins.filter((c) => c.coinObjectId !== LOCKED_COIN_ID);
+
+  const totalBalance = coins.reduce((sum, c) => sum + Number(c.balance), 0);
+  console.log(`Found ${coins.length} healthy USDC coins. Total balance: ${totalBalance}`);
+
+  if (totalBalance < amountUnits) {
+    throw new Error(`Insufficient unlocked USDC. Have ${totalBalance}, need ${amountUnits}`);
+  }
+
+  const tx = new Transaction();
+
+  const engineArg = tx.object(process.env.NEXT_PUBLIC_YIELD_ENGINE_ID);
+  const lotArg = tx.object(lotId);
+
+  // Find a single healthy coin that is big enough
+  const sufficientCoin = coins.find((c) => Number(c.balance) >= amountUnits);
+  let paymentCoin;
+
+  if (sufficientCoin) {
+    console.log("Using healthy single coin:", sufficientCoin.coinObjectId);
+    paymentCoin = tx.object(sufficientCoin.coinObjectId);
+  } else {
+    console.log("Merging healthy coins to meet required amount...");
+    paymentCoin = tx.object(coins[0].coinObjectId);
+    const otherCoins = coins.slice(1).map((c) => tx.object(c.coinObjectId));
+    tx.mergeCoins(paymentCoin, otherCoins);
+  }
+
+  tx.moveCall({
+    target: `${PACKAGE_ID}::yield_engine::deposit_surplus`,
+    typeArguments: [USDC_TYPE],
+    arguments: [engineArg, lotArg, paymentCoin, tx.pure.u64(amountUnits), tx.object("0x6")],
+  });
+
+  return adminExecute(tx);
 }

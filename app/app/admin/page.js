@@ -253,9 +253,6 @@ function LotManager({ custodianCaps }) {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [result, setResult] = useState(null);
-  const [depositLotId, setDepositLotId] = useState(null);
-  const [depositAmount, setDepositAmount] = useState("");
-  const [depositing, setDepositing] = useState(false);
 
   useEffect(() => {
     loadLots();
@@ -307,23 +304,6 @@ function LotManager({ custodianCaps }) {
       setTimeout(loadLots, 3000);
     } catch (err) {
       alert("Failed: " + err.message);
-    }
-  };
-
-  const handleDeposit = async () => {
-    if (!depositLotId || !depositAmount) return;
-    setDepositing(true);
-    try {
-      const { depositSurplus } = await import("../../lib/transactions");
-      await depositSurplus(depositLotId, parseFloat(depositAmount));
-      setDepositLotId(null);
-      setDepositAmount("");
-      alert("Surplus deposited successfully");
-      setTimeout(loadLots, 3000);
-    } catch (err) {
-      alert("Deposit failed: " + err.message);
-    } finally {
-      setDepositing(false);
     }
   };
 
@@ -414,12 +394,6 @@ function LotManager({ custodianCaps }) {
                   {lot.status === 2 && (
                     <>
                       <button
-                        onClick={() => setDepositLotId(depositLotId === lot.id ? null : lot.id)}
-                        className="ml-2 text-xs px-3 py-1 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100"
-                      >
-                        Deposit Surplus
-                      </button>
-                      <button
                         onClick={() => handleLotAction(lot.id, "close")}
                         className="ml-2 text-xs px-3 py-1 bg-gray-50 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-100"
                       >
@@ -428,31 +402,6 @@ function LotManager({ custodianCaps }) {
                     </>
                   )}
                 </div>
-                {depositLotId === lot.id && (
-                  <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                    <p className="text-sm font-medium mb-2">Deposit USDC surplus</p>
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={depositAmount}
-                        onChange={(e) => setDepositAmount(e.target.value)}
-                        placeholder="Amount in USDC (e.g., 50.00)"
-                        className="flex-1 px-3 py-2 border border-green-300 rounded-lg text-sm"
-                      />
-                      <button
-                        onClick={handleDeposit}
-                        disabled={depositing || !depositAmount}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-green-700"
-                      >
-                        {depositing ? "Depositing..." : "Deposit"}
-                      </button>
-                    </div>
-                    <p className="text-xs text-green-600 mt-1">
-                      1% fee collected. Remainder distributed pro-rata to token holders.
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
           ))}
