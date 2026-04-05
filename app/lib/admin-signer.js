@@ -271,21 +271,16 @@ export async function adminDepositSurplus(lotId, usdcAmount) {
   console.log("Deposit params:", { lotId, usdcAmount, USDC_TYPE });
 
   const amountUnits = Math.floor(usdcAmount * 1_000_000);
+  console.log("Amount units:", amountUnits);
 
-  const { data: allCoins } = await client.getCoins({
+  const { data: coins } = await client.getCoins({
     owner: address,
     coinType: USDC_TYPE,
   });
+  console.log("USDC coins found:", coins.length);
 
-  // 1. Blacklist the locked coin object from the previous failed runs
-  const LOCKED_COIN_ID = "0xe4987bfd4cf7a199c8178a05b4c58827ffd8c8889e47f38ae3c5cf9065f78cde";
-  const coins = allCoins.filter((c) => c.coinObjectId !== LOCKED_COIN_ID);
-
-  const totalBalance = coins.reduce((sum, c) => sum + Number(c.balance), 0);
-  console.log(`Found ${coins.length} healthy USDC coins. Total balance: ${totalBalance}`);
-
-  if (totalBalance < amountUnits) {
-    throw new Error(`Insufficient unlocked USDC. Have ${totalBalance}, need ${amountUnits}`);
+  if (coins.length === 0) {
+    throw new Error("No USDC found in admin wallet");
   }
 
   const tx = new Transaction();
@@ -293,17 +288,13 @@ export async function adminDepositSurplus(lotId, usdcAmount) {
   const engineArg = tx.object(process.env.NEXT_PUBLIC_YIELD_ENGINE_ID);
   const lotArg = tx.object(lotId);
 
-  // Find a single healthy coin that is big enough
-  const sufficientCoin = coins.find((c) => Number(c.balance) >= amountUnits);
-  let paymentCoin;
+  // Define the primary payment coin
+  const paymentCoin = tx.object(coins[0].coinObjectId);
 
-  if (sufficientCoin) {
-    console.log("Using healthy single coin:", sufficientCoin.coinObjectId);
-    paymentCoin = tx.object(sufficientCoin.coinObjectId);
-  } else {
-    console.log("Merging healthy coins to meet required amount...");
-    paymentCoin = tx.object(coins[0].coinObjectId);
+  // Merge additional coins if needed
+  if (coins.length > 1) {
     const otherCoins = coins.slice(1).map((c) => tx.object(c.coinObjectId));
+    // tx.mergeCoins modifies in-place, do not reassign
     tx.mergeCoins(paymentCoin, otherCoins);
   }
 
@@ -313,5 +304,6 @@ export async function adminDepositSurplus(lotId, usdcAmount) {
     arguments: [engineArg, lotArg, paymentCoin, tx.pure.u64(amountUnits), tx.object("0x6")],
   });
 
+  // Let the SDK calculate the gas budget natively
   return adminExecute(tx);
 }
