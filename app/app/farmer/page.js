@@ -90,15 +90,20 @@ export default function FarmerPage() {
             <h2 className="font-bold mb-3">Available Surplus</h2>
             <div className="space-y-3 mb-6">
               {deposits.map((deposit) => {
-                // Find the matching token for this deposit's lot
                 const matchingToken = tokens.find((t) => t.lotId === deposit.lotId);
                 if (!matchingToken) return null;
 
-                // Calculate this farmer's share
+                // Skip if no balance remaining in the deposit
+                if (deposit.remaining === 0) return null;
+
+                // Calculate share
                 const share =
                   deposit.tokensSnapshot > 0
                     ? (deposit.netAmount * matchingToken.balance) / deposit.tokensSnapshot
                     : 0;
+
+                // If share exceeds remaining, farmer likely already claimed
+                if (share > deposit.remaining) return null;
                 const shareUsdc = share / 10 ** USDC_DECIMALS;
 
                 return (

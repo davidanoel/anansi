@@ -260,28 +260,32 @@ export async function getAssetTypeBySymbol(symbol) {
 
 // Get surplus deposits for a specific lot
 export async function getSurplusDeposits(lotId) {
-  const client = getSuiClient()
-  const ORIG = process.env.NEXT_PUBLIC_ORIGINAL_PACKAGE_ID || PACKAGE_ID
+  const client = getSuiClient();
+  const ORIG = process.env.NEXT_PUBLIC_ORIGINAL_PACKAGE_ID || PACKAGE_ID;
 
-  const events = await queryEvents(
-    `${PACKAGE_ID}::yield_engine::SurplusReceived`,
-    null,
-    50
-  )
+  const events = await queryEvents(`${PACKAGE_ID}::yield_engine::SurplusReceived`, null, 50);
 
-  const deposits = []
+  const deposits = [];
   for (const event of events.data) {
-    if (event.parsedJson?.lot_id !== lotId) continue
+    if (event.parsedJson?.lot_id !== lotId) continue;
 
     try {
       const tx = await client.getTransactionBlock({
         digest: event.id.txDigest,
         options: { showObjectChanges: true },
-      })
-      const created = tx.objectChanges?.find(c =>
-        c.type === 'created' && c.objectType?.includes('::yield_engine::SurplusDeposit')
-      )
+      });
+      const created = tx.objectChanges?.find(
+        (c) => c.type === "created" && c.objectType?.includes("::yield_engine::SurplusDeposit"),
+      );
       if (created) {
+        // Fetch the actual deposit object to check remaining balance
+        const depositObj = await client.getObject({
+          id: created.objectId,
+          options: { showContent: true },
+        });
+        const depositFields = depositObj.data?.content?.fields || {};
+        const remaining = Number(depositFields.balance || 0);
+
         deposits.push({
           id: created.objectId,
           lotId: event.parsedJson?.lot_id,
@@ -290,39 +294,35 @@ export async function getSurplusDeposits(lotId) {
           netAmount: Number(event.parsedJson?.net_amount || 0),
           tokensSnapshot: Number(event.parsedJson?.tokens_snapshot || 0),
           timestamp: Number(event.timestampMs || 0),
-        })
+          remaining,
+        });
       }
     } catch (err) {
-      console.error('Failed to fetch surplus deposit:', err)
+      console.error("Failed to fetch surplus deposit:", err);
     }
   }
 
-  return deposits
+  return deposits;
 }
 
 // Get all surplus deposits across all lots for a farmer
 export async function getFarmerSurplusDeposits(farmerTokens) {
-  const allDeposits = []
-  const lotIds = [...new Set(farmerTokens.map(t => t.lotId))]
+  const allDeposits = [];
+  const lotIds = [...new Set(farmerTokens.map((t) => t.lotId))];
 
   for (const lotId of lotIds) {
-    const deposits = await getSurplusDeposits(lotId)
-    allDeposits.push(...deposits)
+    const deposits = await getSurplusDeposits(lotId);
+    allDeposits.push(...deposits);
   }
 
-  return allDeposits
+  return allDeposits;
 }
 
 // Check if an address has already claimed from a deposit
 export async function hasClaimedSurplus(depositId, address) {
-  const events = await queryEvents(
-    `${PACKAGE_ID}::yield_engine::SurplusClaimed`,
-    null,
-    100
-  )
+  const events = await queryEvents(`${PACKAGE_ID}::yield_engine::SurplusClaimed`, null, 100);
 
-  return events.data.some(e =>
-    e.parsedJson?.claimant === address &&
-    e.id?.txDigest // match by looking up the deposit from the tx
-  )
+  return events.data.some(
+    (e) => e.parsedJson?.claimant === address && e.id?.txDigest, // match by looking up the deposit from the tx
+  );
 }
