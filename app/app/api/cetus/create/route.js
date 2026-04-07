@@ -1,20 +1,11 @@
 import Decimal from "decimal.js";
-import { initCetusSDK, TickMath } from "@cetusprotocol/cetus-sui-clmm-sdk";
-import { adminExecute, getAdminAddress } from "../../../../lib/admin-signer";
-import {
-  USDC_TYPE,
-  NUTMEG_TYPE,
-  SUI_NETWORK,
-  USDC_DECIMALS,
-  NUTMEG_DECIMALS,
-} from "../../../../lib/constants";
+import { CetusClmmSDK } from "@cetusprotocol/sui-clmm-sdk";
+import { getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
+import { getAdminAddress, adminExecute } from "../../../../lib/admin-signer";
+import { NUTMEG_TYPE, SUI_NETWORK, SUI_RPC_URL, USDC_TYPE } from "../../../../lib/constants";
 
-const CETUS_TESTNET_FALLBACK = {
-  // Latest CLMM config IDs from Cetus dev docs (testnet).
-  // Can be overridden via env if Cetus rotates again.
-  globalConfigId: "0xc6273f844b4bc258952c4e477697aa12c918c8e08106fac6b934811298c9820a",
-  poolsId: "0x20a086e6fa0741b3ca77d033a65faf0871349b986ddbdde6fa1d85d78a5f4222",
-};
+const COIN_DECIMALS = 6;
+const FULL_RANGE_PARAMS = { is_full_range: true };
 
 export async function POST(req) {
   try {
@@ -26,94 +17,64 @@ export async function POST(req) {
       return Response.json({ error: "Amounts must be greater than zero." }, { status: 400 });
     }
 
-    // 1️⃣ Sort coins lexicographically (Cetus requires ordered pair)
-    let coinTypeA = USDC_TYPE;
-    let coinTypeB = NUTMEG_TYPE;
-    if (coinTypeA > coinTypeB) [coinTypeA, coinTypeB] = [coinTypeB, coinTypeA];
-    const fixAmountA = coinTypeA === USDC_TYPE;
+    const admin = getAdminAddress();
+    const network = SUI_NETWORK === "mainnet" ? "mainnet" : "testnet";
 
-    // 2️⃣ Decimals and initial price
-    const decimalsA = coinTypeA === USDC_TYPE ? USDC_DECIMALS : NUTMEG_DECIMALS;
-    const decimalsB = coinTypeA === USDC_TYPE ? NUTMEG_DECIMALS : USDC_DECIMALS;
+    // Cetus v2 expects coin A to be the lexicographically larger fully-qualified type.
+    const coin_type_a = USDC_TYPE > NUTMEG_TYPE ? USDC_TYPE : NUTMEG_TYPE;
+    const coin_type_b = coin_type_a === USDC_TYPE ? NUTMEG_TYPE : USDC_TYPE;
+    const fix_amount_a = coin_type_a === USDC_TYPE;
 
-    // Price is coinB per coinA (for sorted pair)
-    const initialPrice = fixAmountA
+    const currentPrice = fix_amount_a
       ? new Decimal(nutmegAmount).div(usdcAmount)
       : new Decimal(usdcAmount).div(nutmegAmount);
-    const sqrtPriceX64 = TickMath.priceToSqrtPriceX64(initialPrice, decimalsA, decimalsB);
+    const fixedCoinAmount = fix_amount_a ? usdcAmount : nutmegAmount;
 
-    // 4️⃣ Ticks
-    const sqrtPriceBN = BigInt(sqrtPriceX64.toString());
-    const currentTick =
-      TickMath.sqrtPriceX64ToTickIndex(sqrtPriceBN).toNumber?.() ??
-      Number(TickMath.sqrtPriceX64ToTickIndex(sqrtPriceBN));
-    const tickSpacing = 60;
-    const tickLower = TickMath.getPrevInitializableTickIndex(currentTick, tickSpacing);
-    const tickUpper = TickMath.getNextInitializableTickIndex(currentTick, tickSpacing);
-
-    // 5️⃣ Amounts (human → raw)
-    const rawAmountA = fixAmountA
-      ? BigInt(Math.floor(usdcAmount * 10 ** decimalsA))
-      : BigInt(Math.floor(nutmegAmount * 10 ** decimalsB));
-    const rawAmountB = fixAmountA
-      ? BigInt(Math.floor(nutmegAmount * 10 ** decimalsB))
-      : BigInt(Math.floor(usdcAmount * 10 ** decimalsA));
-
-    // 6️⃣ Fetch real metadata object IDs (required by Cetus create_pool_v2 wrappers)
-    const sdk = initCetusSDK({
-      network: SUI_NETWORK,
-      fullNodeUrl: process.env.SUI_RPC_URL || "https://fullnode.testnet.sui.io",
-      wallet: getAdminAddress(),
+    const sdk = CetusClmmSDK.createSDK({
+      env: network,
+      full_rpc_url: process.env.SUI_RPC_URL || SUI_RPC_URL || getJsonRpcFullnodeUrl(network),
     });
 
-    // Cetus testnet config IDs rotate; allow runtime override to avoid stale SDK defaults.
-    const clmmGlobalConfigId =
-      process.env.CETUS_CLMM_GLOBAL_CONFIG_ID ||
-      (SUI_NETWORK === "testnet" ? CETUS_TESTNET_FALLBACK.globalConfigId : undefined);
-    const clmmPoolsId =
-      process.env.CETUS_CLMM_POOLS_ID ||
-      (SUI_NETWORK === "testnet" ? CETUS_TESTNET_FALLBACK.poolsId : undefined);
-
-    if (clmmGlobalConfigId) sdk.sdkOptions.clmm_pool.config.global_config_id = clmmGlobalConfigId;
-    if (clmmPoolsId) sdk.sdkOptions.clmm_pool.config.pools_id = clmmPoolsId;
-
-    const [metaA, metaB] = await Promise.all([
-      sdk.fullClient.getCoinMetadata({ coinType: coinTypeA }),
-      sdk.fullClient.getCoinMetadata({ coinType: coinTypeB }),
-    ]);
-
-    if (!metaA?.id || !metaB?.id) {
-      throw new Error("Failed to fetch coin metadata object IDs for pool creation.");
+    if (typeof sdk.setSenderAddress === "function") {
+      sdk.setSenderAddress(admin);
+    } else {
+      sdk.senderAddress = admin;
     }
 
-    // 7️⃣ Build pool-create tx via Cetus SDK helper (correct function signature)
-    const tx = await sdk.Pool.createPoolTransactionPayload({
-      coinTypeA,
-      coinTypeB,
-      tick_spacing: tickSpacing,
-      initialize_sqrt_price: sqrtPriceBN.toString(),
-      uri: "",
-      amount_a: rawAmountA.toString(),
-      amount_b: rawAmountB.toString(),
-      fix_amount_a: fixAmountA,
-      tick_lower: tickLower,
-      tick_upper: tickUpper,
-      metadata_a: metaA.id,
-      metadata_b: metaB.id,
+    console.log("Using Cetus V2 SDK to deploy AMM...");
+
+    const calculate_result = await sdk.Pool.calculateCreatePoolWithPrice({
+      tick_spacing: 60,
+      current_price: currentPrice.toString(),
+      coin_amount: new Decimal(fixedCoinAmount).mul(10 ** COIN_DECIMALS).toFixed(0),
+      fix_amount_a,
+      add_mode_params: FULL_RANGE_PARAMS,
+      coin_decimals_a: COIN_DECIMALS,
+      coin_decimals_b: COIN_DECIMALS,
+      price_base_coin: "coin_a",
       slippage: 0.01,
     });
 
-    // 8️⃣ Sign & execute with server-side admin key
-    tx.setGasBudget(100_000_000n); // 0.1 SUI
-    const result = await adminExecute(tx);
+    const txb = await sdk.Pool.createPoolWithPricePayload({
+      tick_spacing: 60,
+      calculate_result,
+      add_mode_params: FULL_RANGE_PARAMS,
+      coin_type_a,
+      coin_type_b,
+      uri: "",
+    });
+
+    txb.setGasBudget(100_000_000n);
+
+    const result = await adminExecute(txb);
 
     return Response.json({
       success: true,
       digest: result.digest,
-      effects: result.effects,
+      message: "Cetus V2 CLMM pool successfully deployed!",
     });
   } catch (error) {
-    console.error("Cetus Create Pool Error:", error);
+    console.error("Cetus V2 Deployment Error:", error);
     return Response.json(
       {
         error: error.message || String(error),

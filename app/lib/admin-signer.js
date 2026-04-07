@@ -2,7 +2,7 @@
 // Server-side admin signer — platform admin transactions
 // ============================================================
 
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client'
+import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from '@mysten/sui/jsonRpc'
 import { Transaction } from '@mysten/sui/transactions'
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519'
 import { USDC_TYPE } from './constants'
@@ -12,8 +12,9 @@ let keypair = null
 
 function getClient() {
   if (!client) {
-    client = new SuiClient({
-      url: process.env.SUI_RPC_URL || getFullnodeUrl(process.env.NEXT_PUBLIC_SUI_NETWORK || 'testnet'),
+    client = new SuiJsonRpcClient({
+      network: process.env.NEXT_PUBLIC_SUI_NETWORK || 'testnet',
+      url: process.env.SUI_RPC_URL || getJsonRpcFullnodeUrl(process.env.NEXT_PUBLIC_SUI_NETWORK || 'testnet'),
     })
   }
   return client

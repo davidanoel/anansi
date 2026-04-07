@@ -1,4 +1,4 @@
-import { SuiClient, getFullnodeUrl } from '@mysten/sui/client'
+import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from '@mysten/sui/jsonRpc'
 import { SUI_NETWORK, SUI_RPC_URL } from './constants'
 
 // Create a singleton Sui client
@@ -6,8 +6,9 @@ let client = null
 
 export function getSuiClient() {
   if (!client) {
-    client = new SuiClient({
-      url: SUI_RPC_URL || getFullnodeUrl(SUI_NETWORK),
+    client = new SuiJsonRpcClient({
+      network: SUI_NETWORK,
+      url: SUI_RPC_URL || getJsonRpcFullnodeUrl(SUI_NETWORK),
     })
   }
   return client

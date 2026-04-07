@@ -8,10 +8,10 @@
     "start": "next start -p 3001"
   },
   "dependencies": {
-    "@cetusprotocol/cetus-sui-clmm-sdk": "^5.4.0",
+    "@cetusprotocol/sui-clmm-sdk": "^1.4.2",
     "@mysten/dapp-kit": "^0.14.0",
     "@mysten/enoki": "^0.4.0",
-    "@mysten/sui": "^1.45.2",
+    "@mysten/sui": "^2.13.2",
     "bn.js": "^5.2.3",
     "decimal.js": "^10.6.0",
     "lucide-react": "^0.383.0",
