@@ -227,94 +227,60 @@ export async function claimSurplus(depositId) {
 // ============================================================
 
 // Sell NUTMEG for USDC (farmer "Sell Early")
-// Requires a NUTMEG/USDC pool on Cetus
+// Server builds the Cetus swap tx, client signs with zkLogin
 export async function sellNutmeg(nutmegAmount) {
-  const client = getSuiClient()
   const session = getSession()
-  const tx = new Transaction()
+  if (!session) throw new Error('Not authenticated. Please sign in.')
 
-  // Convert display amount to smallest units
-  const amountUnits = Math.floor(nutmegAmount * (10 ** NUTMEG_DECIMALS))
-
-  // Get farmer's NUTMEG coins
-  const { data: coins } = await client.getCoins({
-    owner: session.address,
-    coinType: NUTMEG_TYPE,
+  // Server builds the swap transaction
+  const res = await fetch('/api/cetus/swap', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      direction: 'sell',
+      amount: nutmegAmount,
+      senderAddress: session.address,
+    }),
   })
 
-  if (coins.length === 0) {
-    throw new Error('No NUTMEG tokens to sell')
-  }
+  const data = await res.json()
+  if (data.error) throw new Error(data.error)
 
-  // Merge if multiple
-  if (coins.length > 1) {
-    const otherCoins = coins.slice(1).map(c => tx.object(c.coinObjectId))
-    tx.mergeCoins(tx.object(coins[0].coinObjectId), otherCoins)
-  }
+  console.log('Swap quote:', data.quote)
 
-  // Split exact amount to sell
-  const [sellCoin] = tx.splitCoins(tx.object(coins[0].coinObjectId), [tx.pure.u64(amountUnits)])
+  // Deserialize the server-built transaction
+  const txBytes = Uint8Array.from(atob(data.txBytes), c => c.charCodeAt(0))
+  const tx = Transaction.from(txBytes)
 
-  // TODO: Replace with Cetus swap call once pool is created
-  // For now, this is a placeholder that will be wired to Cetus SDK
-  //
-  // The Cetus swap call will look like:
-  // tx.moveCall({
-  //   target: `${CETUS_PACKAGE}::pool_script::swap_a2b`,
-  //   typeArguments: [NUTMEG_TYPE, USDC_TYPE],
-  //   arguments: [
-  //     tx.object(CETUS_POOL_ID),
-  //     sellCoin,
-  //     tx.pure.u64(0),          // min_output (slippage protection)
-  //     tx.object('0x6'),
-  //   ],
-  // })
-
-  throw new Error(
-    'DEX pool not yet configured. Create a NUTMEG/USDC pool on Cetus testnet first. ' +
-    'See docs: https://cetus-1.gitbook.io/cetus-developer-docs'
-  )
+  // Execute with zkLogin (direct — involves user coins)
+  return executeTransactionDirect(tx)
 }
 
 // Buy NUTMEG with USDC (investor action)
+// Server builds the Cetus swap tx, client signs with zkLogin
 export async function buyNutmeg(usdcAmount) {
-  const client = getSuiClient()
   const session = getSession()
-  const tx = new Transaction()
+  if (!session) throw new Error('Not authenticated. Please sign in.')
 
-  const amountUnits = Math.floor(usdcAmount * (10 ** USDC_DECIMALS))
-
-  const { data: coins } = await client.getCoins({
-    owner: session.address,
-    coinType: USDC_TYPE,
+  const res = await fetch('/api/cetus/swap', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      direction: 'buy',
+      amount: usdcAmount,
+      senderAddress: session.address,
+    }),
   })
 
-  if (coins.length === 0) {
-    throw new Error('No USDC found. Get testnet USDC from faucet.circle.com')
-  }
+  const data = await res.json()
+  if (data.error) throw new Error(data.error)
 
-  if (coins.length > 1) {
-    const otherCoins = coins.slice(1).map(c => tx.object(c.coinObjectId))
-    tx.mergeCoins(tx.object(coins[0].coinObjectId), otherCoins)
-  }
+  console.log('Swap quote:', data.quote)
 
-  const [buyCoin] = tx.splitCoins(tx.object(coins[0].coinObjectId), [tx.pure.u64(amountUnits)])
+  const txBytes = Uint8Array.from(atob(data.txBytes), c => c.charCodeAt(0))
+  const tx = Transaction.from(txBytes)
 
-  // TODO: Replace with Cetus swap call once pool is created
-  // tx.moveCall({
-  //   target: `${CETUS_PACKAGE}::pool_script::swap_b2a`,
-  //   typeArguments: [NUTMEG_TYPE, USDC_TYPE],
-  //   arguments: [
-  //     tx.object(CETUS_POOL_ID),
-  //     buyCoin,
-  //     tx.pure.u64(0),
-  //     tx.object('0x6'),
-  //   ],
-  // })
-
-  throw new Error(
-    'DEX pool not yet configured. Create a NUTMEG/USDC pool on Cetus testnet first.'
-  )
+  return executeTransactionDirect(tx)
 }
 
 // ============================================================
