@@ -1,57 +1,44 @@
-/// Yield Engine — Handles surplus distribution from asset sales.
-/// When GCNA sells nutmeg overseas, surplus USDC flows here and gets
-/// distributed pro-rata to SpiceToken holders via claims.
+/// Yield Engine — Surplus distribution for Spice platform.
+/// When a commodity lot sells, surplus USDC is deposited here.
+/// Token holders (Coin<NUTMEG>, Coin<COCOA>, etc.) claim pro-rata.
+///
+/// Two type parameters:
+///   PaymentT — the payment coin (USDC)
+///   CommodityT — the commodity coin (NUTMEG, COCOA) used to prove holdings
 module anansi::yield_engine {
     use sui::coin::{Self, Coin};
     use sui::balance::{Self, Balance};
     use sui::event;
     use sui::clock::Clock;
     use sui::table::{Self, Table};
-    use std::string::String;
-    use anansi::asset_pool::{Self, Lot, SpiceToken};
+    use anansi::asset_pool::{Self, Lot};
     use anansi::carib_coin::{Self, CARIB_COIN, Treasury};
 
     // ============ Objects ============
 
-    /// Global yield engine configuration. Shared object.
     public struct YieldEngine has key {
         id: UID,
-        /// Fee rate in basis points (100 = 1%)
         fee_rate_bps: u64,
-        /// Percentage of fee that gets burned (rest goes to treasury). In bps.
         burn_rate_bps: u64,
-        /// Total distributed across all lots (cumulative)
         total_distributed: u64,
-        /// Total fees collected (cumulative)
         total_fees_collected: u64,
-        /// Total fees burned (cumulative)
         total_fees_burned: u64,
-        /// Treasury address for fee routing
         treasury_address: address,
     }
 
-    /// A surplus deposit holding USDC for token holders to claim.
-    /// Shared object — farmers interact with this to claim their share.
-    public struct SurplusDeposit<phantom T> has key {
+    /// Surplus deposit holding payment coins (USDC) for token holders to claim.
+    /// Shared object. Farmers call claim_surplus with their commodity coin as proof.
+    public struct SurplusDeposit<phantom PaymentT> has key {
         id: UID,
-        /// Which lot this surplus belongs to
         lot_id: ID,
-        /// The USDC balance available for claims
-        balance: Balance<T>,
-        /// Total amount deposited (for pro-rata calculation)
+        balance: Balance<PaymentT>,
         total_amount: u64,
-        /// Total tokens outstanding at time of deposit (snapshot)
         total_tokens_at_snapshot: u64,
-        /// Tracks who has claimed: address => amount claimed
         claims: Table<address, u64>,
-        /// Timestamp
         deposited_at: u64,
     }
 
-    /// Admin capability for yield engine configuration.
-    public struct YieldAdmin has key, store {
-        id: UID,
-    }
+    public struct YieldAdmin has key, store { id: UID }
 
     // ============ Constants ============
 
@@ -64,7 +51,6 @@ module anansi::yield_engine {
     const EInvalidFeeRate: u64 = 200;
     const EInsufficientDeposit: u64 = 201;
     const ENoTokensToRedeem: u64 = 202;
-    const ELotMismatch: u64 = 203;
     const EAlreadyClaimed: u64 = 204;
     const EInsufficientBalance: u64 = 205;
 
@@ -100,7 +86,7 @@ module anansi::yield_engine {
     // ============ Init ============
 
     fun init(ctx: &mut TxContext) {
-        let engine = YieldEngine {
+        transfer::share_object(YieldEngine {
             id: object::new(ctx),
             fee_rate_bps: DEFAULT_FEE_BPS,
             burn_rate_bps: DEFAULT_BURN_BPS,
@@ -108,100 +94,80 @@ module anansi::yield_engine {
             total_fees_collected: 0,
             total_fees_burned: 0,
             treasury_address: ctx.sender(),
-        };
-
-        let admin = YieldAdmin {
-            id: object::new(ctx),
-        };
-
-        transfer::share_object(engine);
-        transfer::transfer(admin, ctx.sender());
+        });
+        transfer::transfer(YieldAdmin { id: object::new(ctx) }, ctx.sender());
     }
 
     // ============ Core Functions ============
 
-    /// Deposit surplus for a lot. Called by custodian after selling the commodity.
-    /// Takes a fee, then holds the net amount in a shared SurplusDeposit
-    /// that token holders can claim from.
-    ///
-    /// Uses `payment: &mut Coin<T>` + `gross_amount` so the PTB passes a normal mutable
-    /// coin reference (not a by-value `Coin`), avoiding client/network "coin reservation"
-    /// compatibility issues on testnet.
-    public fun deposit_surplus<T>(
+    /// Deposit surplus for a lot. Takes &mut Coin (the contract splits internally).
+    /// total_commodity_supply: total Coin<COMMODITY> supply at this moment (read from MintVault).
+    /// This is used for pro-rata snapshot so all holders claim fairly with fungible coins.
+    public fun deposit_surplus<PaymentT>(
         engine: &mut YieldEngine,
         lot: &mut Lot,
-        payment: &mut Coin<T>,
+        payment: &mut Coin<PaymentT>,
         gross_amount: u64,
+        total_commodity_supply: u64,
         clock: &Clock,
         ctx: &mut TxContext,
     ) {
         assert!(gross_amount > 0, EInsufficientDeposit);
         assert!(coin::value(payment) >= gross_amount, EInsufficientDeposit);
+        assert!(total_commodity_supply > 0, ENoTokensToRedeem);
 
-        // Pull the deposited slice into an owned coin; remainder stays on `payment`
-        let mut payment = coin::split(payment, gross_amount, ctx);
+        // Split the deposit amount from the payment coin
+        let mut deposit_coin = coin::split(payment, gross_amount, ctx);
 
-        // Calculate fee
+        // Calculate and extract fee
         let fee_amount = (gross_amount * engine.fee_rate_bps) / BPS_DENOMINATOR;
         let net_amount = gross_amount - fee_amount;
 
-        // Split the fee portion and send to treasury
-        let fee_coin = coin::split(&mut payment, fee_amount, ctx);
+        let fee_coin = coin::split(&mut deposit_coin, fee_amount, ctx);
         transfer::public_transfer(fee_coin, engine.treasury_address);
 
         // Record in lot
         asset_pool::record_surplus_deposit(lot, gross_amount);
 
-        // Get token snapshot for pro-rata calculation
-        let tokens_snapshot = asset_pool::lot_total_tokens(lot);
+        // Use passed total supply for snapshot (not per-lot, since coins are fungible)
+        let tokens_snapshot = total_commodity_supply;
         let lot_id = object::id(lot);
 
-        // Convert remaining payment to balance and hold in shared deposit
-        let deposit_balance = coin::into_balance(payment);
-
-        let deposit = SurplusDeposit<T> {
+        // Hold net amount in shared deposit for claims
+        transfer::share_object(SurplusDeposit<PaymentT> {
             id: object::new(ctx),
             lot_id,
-            balance: deposit_balance,
+            balance: coin::into_balance(deposit_coin),
             total_amount: net_amount,
             total_tokens_at_snapshot: tokens_snapshot,
             claims: table::new(ctx),
             deposited_at: sui::clock::timestamp_ms(clock),
-        };
+        });
 
-        // Update engine stats
         engine.total_distributed = engine.total_distributed + net_amount;
         engine.total_fees_collected = engine.total_fees_collected + fee_amount;
 
         event::emit(SurplusReceived {
-            lot_id,
-            gross_amount,
-            fee_amount,
-            net_amount,
-            tokens_snapshot,
+            lot_id, gross_amount, fee_amount, net_amount, tokens_snapshot,
         });
-
-        // Share the deposit so token holders can claim
-        transfer::share_object(deposit);
     }
 
-    /// Claim surplus for a SpiceToken holding.
-    /// Each address can claim once per deposit.
-    /// Pro-rata: (token_balance / total_tokens_at_snapshot) * total_amount
-    public fun claim_surplus<T>(
-        deposit: &mut SurplusDeposit<T>,
-        token: &SpiceToken,
+    /// Claim surplus. Farmer presents their commodity coin as proof of holdings.
+    /// Pro-rata: (holder_balance / total_tokens_at_snapshot) * total_amount
+    ///
+    /// PaymentT = the payout coin type (USDC)
+    /// CommodityT = the commodity coin type (NUTMEG) — farmer holds this
+    public fun claim_surplus<PaymentT, CommodityT>(
+        deposit: &mut SurplusDeposit<PaymentT>,
+        holder_coin: &Coin<CommodityT>,
         ctx: &mut TxContext,
     ) {
         let claimant = ctx.sender();
 
-        // Verify token matches this deposit's lot
-        assert!(asset_pool::token_lot_id(token) == deposit.lot_id, ELotMismatch);
-
         // Check not already claimed
         assert!(!table::contains(&deposit.claims, claimant), EAlreadyClaimed);
 
-        let token_balance = asset_pool::token_balance(token);
+        let token_balance = coin::value(holder_coin);
         assert!(token_balance > 0, ENoTokensToRedeem);
 
         // Pro-rata calculation
@@ -209,10 +175,10 @@ module anansi::yield_engine {
         assert!(share > 0, ENoTokensToRedeem);
         assert!(balance::value(&deposit.balance) >= share, EInsufficientBalance);
 
-        // Record the claim
+        // Record claim
         table::add(&mut deposit.claims, claimant, share);
 
-        // Withdraw from balance and send to claimant
+        // Pay the claimant
         let payout = coin::from_balance(balance::split(&mut deposit.balance, share), ctx);
 
         event::emit(SurplusClaimed {
@@ -227,7 +193,6 @@ module anansi::yield_engine {
 
     // ============ Fee Management ============
 
-    /// Burn CARIB tokens as protocol fee.
     public fun process_carib_fee(
         engine: &mut YieldEngine,
         carib_treasury: &mut Treasury,
@@ -241,14 +206,10 @@ module anansi::yield_engine {
 
         let burn_coins = coin::split(&mut fee_coins, burn_amount, ctx);
         carib_coin::burn(carib_treasury, burn_coins, ctx);
-
         engine.total_fees_burned = engine.total_fees_burned + burn_amount;
 
         event::emit(FeesCollected {
-            lot_id,
-            total_fee,
-            burned: burn_amount,
-            to_treasury: treasury_amount,
+            lot_id, total_fee, burned: burn_amount, to_treasury: treasury_amount,
         });
 
         transfer::public_transfer(fee_coins, engine.treasury_address);
@@ -257,46 +218,29 @@ module anansi::yield_engine {
     // ============ Admin Functions ============
 
     public fun update_fees(
-        _admin: &YieldAdmin,
-        engine: &mut YieldEngine,
-        new_fee_rate_bps: u64,
-        new_burn_rate_bps: u64,
+        _admin: &YieldAdmin, engine: &mut YieldEngine,
+        new_fee_rate_bps: u64, new_burn_rate_bps: u64,
     ) {
         assert!(new_fee_rate_bps <= 1000, EInvalidFeeRate);
         assert!(new_burn_rate_bps <= BPS_DENOMINATOR, EInvalidFeeRate);
-
         engine.fee_rate_bps = new_fee_rate_bps;
         engine.burn_rate_bps = new_burn_rate_bps;
-
-        event::emit(FeeConfigUpdated {
-            new_fee_rate_bps,
-            new_burn_rate_bps,
-        });
+        event::emit(FeeConfigUpdated { new_fee_rate_bps, new_burn_rate_bps });
     }
 
-    public fun update_treasury_address(
-        _admin: &YieldAdmin,
-        engine: &mut YieldEngine,
-        new_address: address,
-    ) {
+    public fun update_treasury_address(_admin: &YieldAdmin, engine: &mut YieldEngine, new_address: address) {
         engine.treasury_address = new_address;
     }
 
     // ============ View Functions ============
 
     public fun fee_rate(engine: &YieldEngine): u64 { engine.fee_rate_bps }
-    public fun burn_rate(engine: &YieldEngine): u64 { engine.burn_rate_bps }
     public fun total_distributed(engine: &YieldEngine): u64 { engine.total_distributed }
     public fun total_fees_burned(engine: &YieldEngine): u64 { engine.total_fees_burned }
-
     public fun deposit_remaining<T>(deposit: &SurplusDeposit<T>): u64 { balance::value(&deposit.balance) }
     public fun deposit_total<T>(deposit: &SurplusDeposit<T>): u64 { deposit.total_amount }
     public fun deposit_lot_id<T>(deposit: &SurplusDeposit<T>): ID { deposit.lot_id }
 
-    // ============ Test Helpers ============
-
     #[test_only]
-    public fun init_for_testing(ctx: &mut TxContext) {
-        init(ctx);
-    }
+    public fun init_for_testing(ctx: &mut TxContext) { init(ctx); }
 }

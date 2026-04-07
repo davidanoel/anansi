@@ -1,0 +1,12 @@
+📝 Admin Capabilities (Save these for your admin scripts)
+Just as a heads-up, the deployment also minted several AdminCap objects to your publisher address (0x5e83...). You won't need these in your public frontend .env, but you will need these Object IDs for your backend admin scripts:
+
+YieldAdmin: 0x0981aa409f951f394dc723ca751a9898ffd1b97b4d6e1b60882228f6d49ad7d4
+
+Carib AdminCap: 0x87390572a52dfec55128dd5b3d5d3162612c7bef311c64fe52349a8cee156837
+
+ComplianceAdmin: 0x917bc09d367c11447777dceeb67543e43d980375c1ddd104e1531c962db2c8b8
+
+RegistryAdmin: 0xd830f1b77fe771f7383095fcc5de7b3f1e947eca196b127b25b4f1f3761c98eb
+
+Platform SuperAdmin: 0xe77721b377f8e8e12229092cf98d441ebeb86cb78e6d5bcd71deeb63a1bc7b77

@@ -1,290 +1,185 @@
 // ============================================================
 // Data Layer — Queries Sui RPC directly for all platform data.
-// No external indexer needed for MVP. The blockchain IS the database.
-//
-// For scale (500+ farmers, 10+ islands), add Vercel KV caching
-// via the /api/indexer/poll cron job. But this works out of the box.
 // ============================================================
 
-import { getSuiClient, getOwnedObjects, queryEvents } from "./sui";
-import { PACKAGE_ID, ORIGINAL_PACKAGE_ID, REGISTRY_ID, LOT_STATUS } from "./constants";
+import { getSuiClient, getOwnedObjects, queryEvents } from './sui'
+import { PACKAGE_ID, ORIGINAL_PACKAGE_ID, REGISTRY_ID, LOT_STATUS, NUTMEG_TYPE, NUTMEG_DECIMALS, USDC_DECIMALS } from './constants'
 
 // ============ Lots ============
 
-// Get all lots by querying LotCreated events, then fetching each lot object
 export async function getAllLots() {
-  const events = await queryEvents(`${PACKAGE_ID}::asset_pool::LotCreated`);
-  const client = getSuiClient();
+  const client = getSuiClient()
 
+  const events = await queryEvents(`${PACKAGE_ID}::asset_pool::LotCreated`)
+  let allEvents = [...events.data]
+  if (ORIGINAL_PACKAGE_ID !== PACKAGE_ID) {
+    const oldEvents = await queryEvents(`${ORIGINAL_PACKAGE_ID}::asset_pool::LotCreated`)
+    allEvents = [...allEvents, ...oldEvents.data]
+  }
+
+  const seenIds = new Set()
   const lots = await Promise.all(
-    events.data.map(async (event) => {
-      const lotId = event.parsedJson?.lot_id;
-      if (!lotId) return null;
+    allEvents.map(async (event) => {
+      const lotId = event.parsedJson?.lot_id
+      if (!lotId || seenIds.has(lotId)) return null
+      seenIds.add(lotId)
 
       try {
-        const obj = await client.getObject({
-          id: lotId,
-          options: { showContent: true },
-        });
-        const fields = obj.data?.content?.fields || {};
+        const obj = await client.getObject({ id: lotId, options: { showContent: true } })
+        const fields = obj.data?.content?.fields || {}
         return {
           id: lotId,
           lotNumber: Number(fields.lot_number || 0),
-          assetTypeSymbol: fields.asset_type_symbol || "",
+          assetTypeSymbol: fields.asset_type_symbol || '',
           status: Number(fields.status || 0),
-          statusLabel: LOT_STATUS[fields.status] || "Unknown",
+          statusLabel: LOT_STATUS[fields.status] || 'Unknown',
           totalUnits: Number(fields.total_units || 0),
           totalTokensMinted: Number(fields.total_tokens_minted || 0),
           estimatedValueUsdc: Number(fields.estimated_value_usdc || 0),
-          custodian: fields.custodian || "",
+          custodian: fields.custodian || '',
           createdAt: Number(fields.created_at || 0),
           closedAt: Number(fields.closed_at || 0),
           totalSurplusDeposited: Number(fields.total_surplus_deposited || 0),
           totalSurplusDistributed: Number(fields.total_surplus_distributed || 0),
           deliveryCount: Number(fields.delivery_count || 0),
-          receiptHash: fields.receipt_hash || "",
-        };
-      } catch {
-        return null;
-      }
-    }),
-  );
+          receiptHash: fields.receipt_hash || '',
+        }
+      } catch { return null }
+    })
+  )
 
-  return lots.filter(Boolean).sort((a, b) => b.createdAt - a.createdAt);
+  return lots.filter(Boolean).sort((a, b) => b.createdAt - a.createdAt)
 }
 
-// Get active lots only
 export async function getActiveLots() {
-  const lots = await getAllLots();
-  return lots.filter((l) => l.status < 3);
+  return (await getAllLots()).filter(l => l.status < 3)
 }
 
-// Get a single lot by ID
 export async function getLot(lotId) {
-  const client = getSuiClient();
-  const obj = await client.getObject({
-    id: lotId,
-    options: { showContent: true },
-  });
-  const fields = obj.data?.content?.fields;
-  if (!fields) return null;
-
+  const client = getSuiClient()
+  const obj = await client.getObject({ id: lotId, options: { showContent: true } })
+  const fields = obj.data?.content?.fields
+  if (!fields) return null
   return {
     id: lotId,
     lotNumber: Number(fields.lot_number || 0),
-    assetTypeSymbol: fields.asset_type_symbol || "",
+    assetTypeSymbol: fields.asset_type_symbol || '',
     status: Number(fields.status || 0),
-    statusLabel: LOT_STATUS[fields.status] || "Unknown",
+    statusLabel: LOT_STATUS[fields.status] || 'Unknown',
     totalUnits: Number(fields.total_units || 0),
     totalTokensMinted: Number(fields.total_tokens_minted || 0),
     estimatedValueUsdc: Number(fields.estimated_value_usdc || 0),
-    custodian: fields.custodian || "",
     createdAt: Number(fields.created_at || 0),
     deliveryCount: Number(fields.delivery_count || 0),
-    receiptHash: fields.receipt_hash || "",
     totalSurplusDeposited: Number(fields.total_surplus_deposited || 0),
-  };
+  }
 }
 
 // ============ Deliveries ============
 
-// Get recent deliveries across all lots
 export async function getRecentDeliveries(limit = 20) {
-  const events = await queryEvents(`${PACKAGE_ID}::asset_pool::DeliveryRecorded`, null, limit);
-
-  return events.data.map((event) => ({
+  const events = await queryEvents(`${PACKAGE_ID}::asset_pool::DeliveryRecorded`, null, limit)
+  return events.data.map(event => ({
     lotId: event.parsedJson?.lot_id,
     farmer: event.parsedJson?.farmer,
     units: Number(event.parsedJson?.units || 0),
     tokensMinted: Number(event.parsedJson?.tokens_minted || 0),
-    grade: event.parsedJson?.grade || "",
+    grade: event.parsedJson?.grade || '',
     txDigest: event.id?.txDigest,
     timestamp: Number(event.timestampMs || 0),
-  }));
+  }))
 }
 
-// Get deliveries for a specific farmer
 export async function getFarmerDeliveries(farmerAddress) {
-  // Query all delivery events and filter client-side
-  // (Sui doesn't support filtering events by field values directly)
-  const events = await queryEvents(`${PACKAGE_ID}::asset_pool::DeliveryRecorded`, null, 100);
-
-  return events.data
-    .filter((e) => e.parsedJson?.farmer === farmerAddress)
-    .map((event) => ({
+  const events = await queryEvents(`${PACKAGE_ID}::asset_pool::DeliveryRecorded`, null, 100)
+  let allEvents = [...events.data]
+  if (ORIGINAL_PACKAGE_ID !== PACKAGE_ID) {
+    const oldEvents = await queryEvents(`${ORIGINAL_PACKAGE_ID}::asset_pool::DeliveryRecorded`, null, 100)
+    allEvents = [...allEvents, ...oldEvents.data]
+  }
+  return allEvents
+    .filter(e => e.parsedJson?.farmer === farmerAddress)
+    .map(event => ({
       lotId: event.parsedJson?.lot_id,
       units: Number(event.parsedJson?.units || 0),
       tokensMinted: Number(event.parsedJson?.tokens_minted || 0),
-      grade: event.parsedJson?.grade || "",
+      grade: event.parsedJson?.grade || '',
       txDigest: event.id?.txDigest,
       timestamp: Number(event.timestampMs || 0),
-    }));
+    }))
 }
 
-// Get deliveries for a specific lot
-export async function getLotDeliveries(lotId) {
-  const events = await queryEvents(`${PACKAGE_ID}::asset_pool::DeliveryRecorded`, null, 100);
+// ============ Token Balance (Standard Coin<NUTMEG>) ============
 
-  return events.data
-    .filter((e) => e.parsedJson?.lot_id === lotId)
-    .map((event) => ({
-      farmer: event.parsedJson?.farmer,
-      units: Number(event.parsedJson?.units || 0),
-      tokensMinted: Number(event.parsedJson?.tokens_minted || 0),
-      grade: event.parsedJson?.grade || "",
-      txDigest: event.id?.txDigest,
-      timestamp: Number(event.timestampMs || 0),
-    }));
-}
-
-// ============ Tokens ============
-
-// Get all SpiceTokens for an address with parsed fields
-export async function getTokenPortfolio(address) {
-  const client = getSuiClient();
-  const type = `${ORIGINAL_PACKAGE_ID}::asset_pool::SpiceToken`;
-
-  const result = await client.getOwnedObjects({
+// Get NUTMEG balance for an address
+export async function getNutmegBalance(address) {
+  const client = getSuiClient()
+  const balance = await client.getBalance({
     owner: address,
-    filter: { StructType: type },
-    options: { showContent: true },
-  });
-
-  return result.data.map((obj) => {
-    const fields = obj.data?.content?.fields || {};
-    return {
-      id: obj.data?.objectId,
-      lotId: fields.lot_id,
-      assetTypeSymbol: fields.asset_type_symbol || "",
-      lotNumber: Number(fields.lot_number || 0),
-      balance: Number(fields.balance || 0),
-    };
-  });
-}
-
-// ============ Admin Objects ============
-
-// Get RegistryAdmin caps owned by an address
-export async function getRegistryAdmin(address) {
-  const type = `${ORIGINAL_PACKAGE_ID}::asset_pool::RegistryAdmin`;
-  const result = await getOwnedObjects(address, type);
-  return result.length > 0 ? result[0].data?.objectId : null;
-}
-
-// Get CustodianCaps owned by an address
-export async function getCustodianCaps(address) {
-  const type = `${ORIGINAL_PACKAGE_ID}::asset_pool::CustodianCap`;
-  const result = await getOwnedObjects(address, type);
-  return result.map((obj) => ({
-    id: obj.data?.objectId,
-    assetTypeSymbol: obj.data?.content?.fields?.asset_type_symbol || "",
-  }));
-}
-
-// Get AssetType objects (query from creation events)
-export async function getAssetTypes() {
-  const events = await queryEvents(`${PACKAGE_ID}::asset_pool::AssetTypeCreated`, null, 50);
-
-  return events.data.map((event) => ({
-    symbol: event.parsedJson?.symbol,
-    name: event.parsedJson?.name,
-    region: event.parsedJson?.region,
-    custodian: event.parsedJson?.custodian,
-    timestamp: Number(event.timestampMs || 0),
-  }));
-}
-
-// ============ CaribCoin ============
-
-// Get CARIB burn history
-export async function getBurnHistory(limit = 50) {
-  const events = await queryEvents(`${PACKAGE_ID}::carib_coin::TokensBurned`, null, limit);
-
-  return events.data.map((event) => ({
-    amount: Number(event.parsedJson?.amount || 0),
-    burner: event.parsedJson?.burner,
-    totalBurned: Number(event.parsedJson?.total_burned || 0),
-    txDigest: event.id?.txDigest,
-    timestamp: Number(event.timestampMs || 0),
-  }));
-}
-
-// ============ Platform Stats ============
-
-export async function getPlatformStats() {
-  const [lots, deliveries, burns] = await Promise.all([
-    getAllLots().catch(() => []),
-    getRecentDeliveries(100).catch(() => []),
-    getBurnHistory(1).catch(() => []),
-  ]);
-
-  const uniqueFarmers = new Set(deliveries.map((d) => d.farmer)).size;
-
+    coinType: NUTMEG_TYPE,
+  })
   return {
-    totalLots: lots.length,
-    activeLots: lots.filter((l) => l.status < 3).length,
-    totalDeliveries: deliveries.length,
-    totalUnitsTokenized: lots.reduce((sum, l) => sum + l.totalUnits, 0),
-    totalSurplusDistributed: lots.reduce((sum, l) => sum + l.totalSurplusDeposited, 0),
-    totalCaribBurned: burns[0]?.totalBurned || 0,
-    uniqueFarmers,
-    assetTypes: new Set(lots.map((l) => l.assetTypeSymbol)).size,
-  };
+    totalBalance: Number(balance.totalBalance || 0),
+    displayBalance: Number(balance.totalBalance || 0) / (10 ** NUTMEG_DECIMALS),
+    coinObjectCount: balance.coinObjectCount || 0,
+  }
 }
 
-// Get AssetType object by symbol
-export async function getAssetTypeBySymbol(symbol) {
-  const client = getSuiClient();
-  const ORIG = process.env.NEXT_PUBLIC_ORIGINAL_PACKAGE_ID || PACKAGE_ID;
-
-  const [eventsNew, eventsOld] = await Promise.all([
-    queryEvents(`${PACKAGE_ID}::asset_pool::AssetTypeCreated`, null, 50),
-    queryEvents(`${ORIG}::asset_pool::AssetTypeCreated`, null, 50),
-  ]);
-
-  const allEvents = [...eventsNew.data, ...eventsOld.data];
-  const match = allEvents.find((e) => e.parsedJson?.symbol === symbol);
-  if (!match) return null;
-
-  const tx = await client.getTransactionBlock({
-    digest: match.id.txDigest,
-    options: { showObjectChanges: true },
-  });
-
-  const created = tx.objectChanges?.find(
-    (c) => c.type === "created" && c.objectType?.includes("::asset_pool::AssetType"),
-  );
-
-  return created?.objectId || null;
+// Get USDC balance for an address
+export async function getUsdcBalance(address) {
+  const client = getSuiClient()
+  const { USDC_TYPE } = await import('./constants')
+  const balance = await client.getBalance({
+    owner: address,
+    coinType: USDC_TYPE,
+  })
+  return {
+    totalBalance: Number(balance.totalBalance || 0),
+    displayBalance: Number(balance.totalBalance || 0) / (10 ** USDC_DECIMALS),
+  }
 }
 
-// Get surplus deposits for a specific lot
-export async function getSurplusDeposits(lotId) {
-  const client = getSuiClient();
-  const ORIG = process.env.NEXT_PUBLIC_ORIGINAL_PACKAGE_ID || PACKAGE_ID;
+// Get all NUTMEG coin objects (needed for surplus claims and DEX swaps)
+export async function getNutmegCoins(address) {
+  const client = getSuiClient()
+  const { data } = await client.getCoins({
+    owner: address,
+    coinType: NUTMEG_TYPE,
+  })
+  return data
+}
 
-  const events = await queryEvents(`${PACKAGE_ID}::yield_engine::SurplusReceived`, null, 50);
+// ============ Surplus Deposits ============
 
-  const deposits = [];
-  for (const event of events.data) {
-    if (event.parsedJson?.lot_id !== lotId) continue;
+// Get all surplus deposits (fungible coins = all deposits are relevant to all holders)
+export async function getAllSurplusDeposits() {
+  const client = getSuiClient()
 
+  const events = await queryEvents(`${PACKAGE_ID}::yield_engine::SurplusReceived`, null, 50)
+  let allEvents = [...events.data]
+  if (ORIGINAL_PACKAGE_ID !== PACKAGE_ID) {
+    const oldEvents = await queryEvents(`${ORIGINAL_PACKAGE_ID}::yield_engine::SurplusReceived`, null, 50)
+    allEvents = [...allEvents, ...oldEvents.data]
+  }
+
+  const deposits = []
+  for (const event of allEvents) {
     try {
       const tx = await client.getTransactionBlock({
         digest: event.id.txDigest,
         options: { showObjectChanges: true },
-      });
-      const created = tx.objectChanges?.find(
-        (c) => c.type === "created" && c.objectType?.includes("::yield_engine::SurplusDeposit"),
-      );
+      })
+      const created = tx.objectChanges?.find(c =>
+        c.type === 'created' && c.objectType?.includes('::yield_engine::SurplusDeposit')
+      )
       if (created) {
-        // Fetch the actual deposit object to check remaining balance
+        // Fetch actual object to check remaining balance
         const depositObj = await client.getObject({
           id: created.objectId,
           options: { showContent: true },
-        });
-        const depositFields = depositObj.data?.content?.fields || {};
-        const remaining = Number(depositFields.balance || 0);
+        })
+        const fields = depositObj.data?.content?.fields || {}
+        const remaining = Number(fields.balance || 0)
 
         deposits.push({
           id: created.objectId,
@@ -295,34 +190,95 @@ export async function getSurplusDeposits(lotId) {
           tokensSnapshot: Number(event.parsedJson?.tokens_snapshot || 0),
           timestamp: Number(event.timestampMs || 0),
           remaining,
-        });
+        })
       }
     } catch (err) {
-      console.error("Failed to fetch surplus deposit:", err);
+      console.error('Failed to fetch surplus deposit:', err)
     }
   }
 
-  return deposits;
+  return deposits
 }
 
-// Get all surplus deposits across all lots for a farmer
-export async function getFarmerSurplusDeposits(farmerTokens) {
-  const allDeposits = [];
-  const lotIds = [...new Set(farmerTokens.map((t) => t.lotId))];
+// ============ Asset Types ============
 
-  for (const lotId of lotIds) {
-    const deposits = await getSurplusDeposits(lotId);
-    allDeposits.push(...deposits);
+export async function getAssetTypeBySymbol(symbol) {
+  const client = getSuiClient()
+  const events = await queryEvents(`${PACKAGE_ID}::asset_pool::AssetTypeCreated`, null, 50)
+  let allEvents = [...events.data]
+  if (ORIGINAL_PACKAGE_ID !== PACKAGE_ID) {
+    const oldEvents = await queryEvents(`${ORIGINAL_PACKAGE_ID}::asset_pool::AssetTypeCreated`, null, 50)
+    allEvents = [...allEvents, ...oldEvents.data]
   }
-
-  return allDeposits;
+  const match = allEvents.find(e => e.parsedJson?.symbol === symbol)
+  if (!match) return null
+  const tx = await client.getTransactionBlock({
+    digest: match.id.txDigest, options: { showObjectChanges: true },
+  })
+  const created = tx.objectChanges?.find(c =>
+    c.type === 'created' && c.objectType?.includes('::asset_pool::AssetType')
+  )
+  return created?.objectId || null
 }
 
-// Check if an address has already claimed from a deposit
-export async function hasClaimedSurplus(depositId, address) {
-  const events = await queryEvents(`${PACKAGE_ID}::yield_engine::SurplusClaimed`, null, 100);
+export async function getAssetTypes() {
+  const events = await queryEvents(`${PACKAGE_ID}::asset_pool::AssetTypeCreated`, null, 50)
+  return events.data.map(event => ({
+    symbol: event.parsedJson?.symbol,
+    name: event.parsedJson?.name,
+    region: event.parsedJson?.region,
+    custodian: event.parsedJson?.custodian,
+    timestamp: Number(event.timestampMs || 0),
+  }))
+}
 
-  return events.data.some(
-    (e) => e.parsedJson?.claimant === address && e.id?.txDigest, // match by looking up the deposit from the tx
-  );
+// ============ Admin Objects ============
+
+export async function getRegistryAdmin(address) {
+  const type = `${ORIGINAL_PACKAGE_ID}::asset_pool::RegistryAdmin`
+  const result = await getOwnedObjects(address, type)
+  return result.length > 0 ? result[0].data?.objectId : null
+}
+
+export async function getCustodianCaps(address) {
+  const type = `${ORIGINAL_PACKAGE_ID}::asset_pool::CustodianCap`
+  const result = await getOwnedObjects(address, type)
+  return result.map(obj => ({
+    id: obj.data?.objectId,
+    assetTypeSymbol: obj.data?.content?.fields?.asset_type_symbol || '',
+  }))
+}
+
+// ============ CaribCoin ============
+
+export async function getBurnHistory(limit = 50) {
+  const events = await queryEvents(`${PACKAGE_ID}::carib_coin::TokensBurned`, null, limit)
+  return events.data.map(event => ({
+    amount: Number(event.parsedJson?.amount || 0),
+    burner: event.parsedJson?.burner,
+    totalBurned: Number(event.parsedJson?.total_burned || 0),
+    txDigest: event.id?.txDigest,
+    timestamp: Number(event.timestampMs || 0),
+  }))
+}
+
+// ============ Platform Stats ============
+
+export async function getPlatformStats() {
+  const [lots, deliveries, burns] = await Promise.all([
+    getAllLots().catch(() => []),
+    getRecentDeliveries(100).catch(() => []),
+    getBurnHistory(1).catch(() => []),
+  ])
+  const uniqueFarmers = new Set(deliveries.map(d => d.farmer)).size
+  return {
+    totalLots: lots.length,
+    activeLots: lots.filter(l => l.status < 3).length,
+    totalDeliveries: deliveries.length,
+    totalUnitsTokenized: lots.reduce((sum, l) => sum + l.totalUnits, 0),
+    totalSurplusDistributed: lots.reduce((sum, l) => sum + l.totalSurplusDeposited, 0),
+    totalCaribBurned: burns[0]?.totalBurned || 0,
+    uniqueFarmers,
+    assetTypes: new Set(lots.map(l => l.assetTypeSymbol)).size,
+  }
 }

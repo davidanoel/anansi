@@ -1,372 +1,331 @@
-import { Transaction } from "@mysten/sui/transactions";
-import { getZkLoginSignature, genAddressSeed } from "@mysten/sui/zklogin";
-import { getSuiClient } from "./sui";
-import { getEphemeralKeypair, getZkProof, getMaxEpoch, getSalt, getSession } from "./auth";
+import { Transaction } from '@mysten/sui/transactions'
+import { getZkLoginSignature, genAddressSeed } from '@mysten/sui/zklogin'
+import { getSuiClient } from './sui'
+import { getEphemeralKeypair, getZkProof, getMaxEpoch, getSalt, getSession } from './auth'
 import {
   PACKAGE_ID,
   REGISTRY_ID,
   YIELD_ENGINE_ID,
-  COMPLIANCE_ID,
-  PLATFORM_ID,
   CARIB_TREASURY_ID,
+  NUTMEG_MINT_VAULT_ID,
   MODULES,
   USDC_TYPE,
   USDC_DECIMALS,
-} from "./constants";
+  NUTMEG_TYPE,
+  NUTMEG_DECIMALS,
+} from './constants'
 
 // ============================================================
-// Execute a transaction with zkLogin signature
-// All gas is sponsored by Anansi (via Shinami or custom gas station)
+// zkLogin Signature Helpers
 // ============================================================
 
-async function executeTransaction(tx) {
-  const client = getSuiClient();
-  const session = getSession();
-  const ephemeralKey = getEphemeralKeypair();
-  const zkProof = getZkProof();
-  const maxEpoch = getMaxEpoch();
-  const salt = getSalt();
+function buildZkLoginParams() {
+  const session = getSession()
+  const ephemeralKey = getEphemeralKeypair()
+  const zkProof = getZkProof()
+  const maxEpoch = getMaxEpoch()
+  const salt = getSalt()
 
   if (!session || !ephemeralKey || !zkProof) {
-    throw new Error("Not authenticated. Please sign in.");
+    throw new Error('Not authenticated. Please sign in.')
   }
 
-  // Compute the address seed from sub + salt
-  const saltBytes = Uint8Array.from(atob(salt), (c) => c.charCodeAt(0));
-  const saltBigInt = saltBytes.reduce((acc, byte) => (acc << 8n) + BigInt(byte), 0n);
+  const saltBytes = Uint8Array.from(atob(salt), c => c.charCodeAt(0))
+  const saltBigInt = saltBytes.reduce((acc, byte) => (acc << 8n) + BigInt(byte), 0n)
 
-  const addressSeed = genAddressSeed(saltBigInt, "sub", session.sub, session.aud).toString();
+  const addressSeed = genAddressSeed(
+    saltBigInt, 'sub', session.sub, session.aud
+  ).toString()
 
-  tx.setSender(session.address);
+  return { session, ephemeralKey, zkProof, maxEpoch, addressSeed }
+}
 
-  // Build the transaction bytes (without gas — Shinami will add it)
-  const txBytes = await tx.build({ client, onlyTransactionKind: true });
-  const txBase64 = btoa(String.fromCharCode(...txBytes));
+// ============================================================
+// Transaction Execution
+// ============================================================
 
-  // Request gas sponsorship from Shinami via our API route
-  const sponsorResponse = await fetch("/api/sponsor", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      txBytes: txBase64,
-      sender: session.address,
-    }),
-  });
+// Execute WITH Shinami gas sponsorship (default for all user actions)
+async function executeTransaction(tx) {
+  const client = getSuiClient()
+  const { session, ephemeralKey, zkProof, maxEpoch, addressSeed } = buildZkLoginParams()
+
+  tx.setSender(session.address)
+  const txBytes = await tx.build({ client, onlyTransactionKind: true })
+  const txBase64 = btoa(String.fromCharCode(...txBytes))
+
+  const sponsorResponse = await fetch('/api/sponsor', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ txBytes: txBase64, sender: session.address }),
+  })
 
   if (!sponsorResponse.ok) {
-    const err = await sponsorResponse.json();
-    throw new Error(err.error || "Gas sponsorship failed");
+    const err = await sponsorResponse.json()
+    throw new Error(err.error || 'Gas sponsorship failed')
   }
 
-  const sponsored = await sponsorResponse.json();
+  const sponsored = await sponsorResponse.json()
+  const sponsoredBytes = Uint8Array.from(atob(sponsored.txBytes), c => c.charCodeAt(0))
+  const { signature: ephemeralSig } = await ephemeralKey.signTransaction(sponsoredBytes)
 
-  // Decode the sponsored transaction bytes
-  const sponsoredBytes = Uint8Array.from(atob(sponsored.txBytes), (c) => c.charCodeAt(0));
-
-  // Sign with ephemeral key
-  const { signature: ephemeralSig } = await ephemeralKey.signTransaction(sponsoredBytes);
-
-  // Create zkLogin signature
   const zkLoginSignature = getZkLoginSignature({
-    inputs: {
-      ...zkProof,
-      addressSeed,
-    },
+    inputs: { ...zkProof, addressSeed },
     maxEpoch,
     userSignature: ephemeralSig,
-  });
+  })
 
-  // Execute with both signatures (user zkLogin + sponsor)
-  const result = await client.executeTransactionBlock({
+  return client.executeTransactionBlock({
     transactionBlock: sponsoredBytes,
     signature: [zkLoginSignature, sponsored.signature],
-    options: {
-      showEffects: true,
-      showEvents: true,
-      showObjectChanges: true,
-    },
-  });
-
-  return result;
+    options: { showEffects: true, showEvents: true, showObjectChanges: true },
+  })
 }
 
-// Execute a transaction WITHOUT gas sponsorship — user pays gas directly.
-// Used for custodian actions that involve user-owned coins (e.g., USDC deposits).
+// Execute WITHOUT sponsorship — for transactions involving user-owned coins
 async function executeTransactionDirect(tx) {
-  const client = getSuiClient();
-  const session = getSession();
-  const ephemeralKey = getEphemeralKeypair();
-  const zkProof = getZkProof();
-  const maxEpoch = getMaxEpoch();
-  const salt = getSalt();
+  const client = getSuiClient()
+  const { session, ephemeralKey, zkProof, maxEpoch, addressSeed } = buildZkLoginParams()
 
-  if (!session || !ephemeralKey || !zkProof) {
-    throw new Error("Not authenticated. Please sign in.");
-  }
+  tx.setSender(session.address)
+  tx.setGasBudget(50000000)
 
-  const saltBytes = Uint8Array.from(atob(salt), (c) => c.charCodeAt(0));
-  const saltBigInt = saltBytes.reduce((acc, byte) => (acc << 8n) + BigInt(byte), 0n);
-
-  const addressSeed = genAddressSeed(saltBigInt, "sub", session.sub, session.aud).toString();
-
-  tx.setSender(session.address);
-  tx.setGasBudget(50000000);
-
-  const bytes = await tx.build({ client });
-
-  const { signature: ephemeralSig } = await ephemeralKey.signTransaction(bytes);
+  const bytes = await tx.build({ client })
+  const { signature: ephemeralSig } = await ephemeralKey.signTransaction(bytes)
 
   const zkLoginSignature = getZkLoginSignature({
-    inputs: {
-      ...zkProof,
-      addressSeed,
-    },
+    inputs: { ...zkProof, addressSeed },
     maxEpoch,
     userSignature: ephemeralSig,
-  });
+  })
 
-  const result = await client.executeTransactionBlock({
+  return client.executeTransactionBlock({
     transactionBlock: bytes,
     signature: zkLoginSignature,
-    options: {
-      showEffects: true,
-      showEvents: true,
-      showObjectChanges: true,
-    },
-  });
-
-  return result;
+    options: { showEffects: true, showEvents: true, showObjectChanges: true },
+  })
 }
 
 // ============================================================
-// Asset Pool Transactions
+// Lot Lifecycle (Custodian actions)
 // ============================================================
 
-// Register a new asset type (e.g., NUTMG, COCO, VILLA)
-// Only callable by RegistryAdmin holder
-export async function createAssetType(
-  registryAdminCapId,
-  symbol,
-  name,
-  unit,
-  region,
-  custodianName,
-  custodianAddress,
-) {
-  const tx = new Transaction();
-
-  tx.moveCall({
-    target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::create_asset_type`,
-    arguments: [
-      tx.object(registryAdminCapId),
-      tx.object(REGISTRY_ID),
-      tx.pure.vector("u8", new TextEncoder().encode(symbol)),
-      tx.pure.vector("u8", new TextEncoder().encode(name)),
-      tx.pure.vector("u8", new TextEncoder().encode(unit)),
-      tx.pure.vector("u8", new TextEncoder().encode(region)),
-      tx.pure.vector("u8", new TextEncoder().encode(custodianName)),
-      tx.pure.address(custodianAddress),
-    ],
-  });
-
-  return executeTransaction(tx);
-}
-
-// Create a new lot for an asset type
 export async function createLot(custodianCapId, assetTypeId, receiptHash) {
-  const tx = new Transaction();
-
+  const tx = new Transaction()
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::create_lot`,
     arguments: [
       tx.object(custodianCapId),
       tx.object(REGISTRY_ID),
       tx.object(assetTypeId),
-      tx.pure.vector("u8", Array.from(new TextEncoder().encode(receiptHash || "new-lot"))),
-      tx.object("0x6"),
+      tx.pure.vector('u8', Array.from(new TextEncoder().encode(receiptHash || 'new-lot'))),
+      tx.object('0x6'),
     ],
-  });
-
-  return executeTransaction(tx);
+  })
+  return executeTransaction(tx)
 }
 
-// Record a delivery and mint tokens to farmer
-export async function recordDelivery(
-  custodianCapId,
-  lotId,
-  farmerAddress,
-  units,
-  grade,
-  receiptHash,
-) {
-  const tx = new Transaction();
-
+// Record delivery and mint Coin<NUTMEG> to farmer
+// Calls nutmeg::record_delivery which internally calls asset_pool::record_delivery
+export async function recordDelivery(custodianCapId, lotId, farmerAddress, units, grade, receiptHash) {
+  const tx = new Transaction()
   tx.moveCall({
-    target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::record_delivery`,
+    target: `${PACKAGE_ID}::nutmeg::record_delivery`,
     arguments: [
+      tx.object(NUTMEG_MINT_VAULT_ID),
       tx.object(custodianCapId),
       tx.object(lotId),
       tx.pure.address(farmerAddress),
       tx.pure.u64(units),
-      tx.pure.string(grade),
-      tx.pure.string(receiptHash),
-      tx.object("0x6"), // Clock
+      tx.pure.vector('u8', Array.from(new TextEncoder().encode(grade))),
+      tx.pure.vector('u8', Array.from(new TextEncoder().encode(receiptHash || ''))),
+      tx.object('0x6'),
     ],
-  });
-
-  return executeTransaction(tx);
+  })
+  return executeTransaction(tx)
 }
 
-// Update lot valuation
 export async function updateValuation(custodianCapId, lotId, newValueUsdc) {
-  const tx = new Transaction();
-
+  const tx = new Transaction()
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::update_valuation`,
     arguments: [tx.object(custodianCapId), tx.object(lotId), tx.pure.u64(newValueUsdc)],
-  });
-
-  return executeTransaction(tx);
+  })
+  return executeTransaction(tx)
 }
 
-// Move lot to selling status
 export async function startSelling(custodianCapId, lotId) {
-  const tx = new Transaction();
-
+  const tx = new Transaction()
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::start_selling`,
     arguments: [tx.object(custodianCapId), tx.object(lotId)],
-  });
-
-  return executeTransaction(tx);
+  })
+  return executeTransaction(tx)
 }
 
 export async function startDistributing(custodianCapId, lotId) {
-  const tx = new Transaction();
-
+  const tx = new Transaction()
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::start_distributing`,
     arguments: [tx.object(custodianCapId), tx.object(lotId)],
-  });
-
-  return executeTransaction(tx);
+  })
+  return executeTransaction(tx)
 }
 
 export async function closeLot(custodianCapId, lotId) {
-  const tx = new Transaction();
-
+  const tx = new Transaction()
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::close_lot`,
-    arguments: [tx.object(custodianCapId), tx.object(lotId), tx.object("0x6")],
-  });
-
-  return executeTransaction(tx);
-}
-
-// Split SpiceTokens (for partial selling)
-export async function splitToken(tokenId, amount) {
-  const tx = new Transaction();
-
-  const newToken = tx.moveCall({
-    target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::split_token`,
-    arguments: [tx.object(tokenId), tx.pure.u64(amount)],
-  });
-
-  // Transfer the new token to sender
-  tx.transferObjects([newToken], tx.pure.address(getSession().address));
-
-  return executeTransaction(tx);
-}
-
-// Transfer SpiceTokens to another address
-export async function transferToken(tokenId, recipientAddress) {
-  const tx = new Transaction();
-
-  tx.moveCall({
-    target: `${PACKAGE_ID}::${MODULES.ASSET_POOL}::transfer_token`,
-    arguments: [tx.object(tokenId), tx.pure.address(recipientAddress)],
-  });
-
-  return executeTransaction(tx);
+    arguments: [tx.object(custodianCapId), tx.object(lotId), tx.object('0x6')],
+  })
+  return executeTransaction(tx)
 }
 
 // ============================================================
-// Yield Engine Transactions
+// Surplus Claims (Farmer action)
 // ============================================================
 
-// Deposit USDC surplus for a lot (custodian action)
-export async function depositSurplus(lotId, usdcAmount) {
-  const client = getSuiClient();
-  const session = getSession();
-  const tx = new Transaction();
+// Claim surplus USDC from a SurplusDeposit.
+// Farmer presents their Coin<NUTMEG> as proof of holdings.
+// Two type params: PaymentT (USDC), CommodityT (NUTMEG)
+export async function claimSurplus(depositId) {
+  const client = getSuiClient()
+  const session = getSession()
+  const tx = new Transaction()
 
-  // Amount in USDC smallest units (6 decimals)
-  const amountUnits = Math.floor(usdcAmount * 10 ** USDC_DECIMALS);
-
-  // Get custodian's USDC coins
-  const { data: coins } = await client.getCoins({
+  // Get farmer's NUTMEG coins and merge into one
+  const { data: nutmegCoins } = await client.getCoins({
     owner: session.address,
-    coinType: USDC_TYPE,
-  });
+    coinType: NUTMEG_TYPE,
+  })
 
-  if (coins.length === 0) {
-    throw new Error("No USDC found in your wallet. Get testnet USDC from faucet.circle.com");
+  if (nutmegCoins.length === 0) {
+    throw new Error('No NUTMEG tokens found in your wallet')
   }
 
-  // If we need to merge coins first (user may have multiple USDC objects)
-  if (coins.length > 1) {
-    const primaryCoin = coins[0].coinObjectId;
-    const otherCoins = coins.slice(1).map((c) => tx.object(c.coinObjectId));
-    tx.mergeCoins(tx.object(primaryCoin), otherCoins);
+  // Merge if multiple coin objects
+  if (nutmegCoins.length > 1) {
+    const otherCoins = nutmegCoins.slice(1).map(c => tx.object(c.coinObjectId))
+    tx.mergeCoins(tx.object(nutmegCoins[0].coinObjectId), otherCoins)
   }
-
-  const primaryCoinId = coins[0].coinObjectId;
-  const totalMicro = coins.reduce((s, c) => s + BigInt(c.balance), 0n);
-  if (totalMicro < BigInt(amountUnits)) {
-    throw new Error("USDC balance is less than the amount to deposit");
-  }
-
-  // Pass mutable coin + amount; Move does coin::split internally (avoids by-value Coin PTB).
-  tx.moveCall({
-    target: `${PACKAGE_ID}::${MODULES.YIELD_ENGINE}::deposit_surplus`,
-    typeArguments: [USDC_TYPE],
-    arguments: [
-      tx.object(YIELD_ENGINE_ID),
-      tx.object(lotId),
-      tx.object(primaryCoinId),
-      tx.pure.u64(amountUnits),
-      tx.object("0x6"),
-    ],
-  });
-
-  return executeTransactionDirect(tx);
-}
-
-// Claim surplus from a deposit
-export async function claimSurplus(depositId, tokenId) {
-  const tx = new Transaction();
 
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.YIELD_ENGINE}::claim_surplus`,
-    typeArguments: [USDC_TYPE],
-    arguments: [tx.object(depositId), tx.object(tokenId)],
-  });
+    typeArguments: [USDC_TYPE, NUTMEG_TYPE],
+    arguments: [
+      tx.object(depositId),
+      tx.object(nutmegCoins[0].coinObjectId),
+    ],
+  })
 
-  return executeTransaction(tx);
+  // Use sponsored execution — no user coins are spent (just referenced)
+  return executeTransaction(tx)
 }
 
 // ============================================================
-// CaribCoin Transactions
+// DEX Swap — Sell Early / Buy NUTMEG
+// Routes through Cetus Protocol on Sui
 // ============================================================
 
-// Burn CARIB tokens
-export async function burnCarib(coinId) {
-  const tx = new Transaction();
+// Sell NUTMEG for USDC (farmer "Sell Early")
+// Requires a NUTMEG/USDC pool on Cetus
+export async function sellNutmeg(nutmegAmount) {
+  const client = getSuiClient()
+  const session = getSession()
+  const tx = new Transaction()
 
+  // Convert display amount to smallest units
+  const amountUnits = Math.floor(nutmegAmount * (10 ** NUTMEG_DECIMALS))
+
+  // Get farmer's NUTMEG coins
+  const { data: coins } = await client.getCoins({
+    owner: session.address,
+    coinType: NUTMEG_TYPE,
+  })
+
+  if (coins.length === 0) {
+    throw new Error('No NUTMEG tokens to sell')
+  }
+
+  // Merge if multiple
+  if (coins.length > 1) {
+    const otherCoins = coins.slice(1).map(c => tx.object(c.coinObjectId))
+    tx.mergeCoins(tx.object(coins[0].coinObjectId), otherCoins)
+  }
+
+  // Split exact amount to sell
+  const [sellCoin] = tx.splitCoins(tx.object(coins[0].coinObjectId), [tx.pure.u64(amountUnits)])
+
+  // TODO: Replace with Cetus swap call once pool is created
+  // For now, this is a placeholder that will be wired to Cetus SDK
+  //
+  // The Cetus swap call will look like:
+  // tx.moveCall({
+  //   target: `${CETUS_PACKAGE}::pool_script::swap_a2b`,
+  //   typeArguments: [NUTMEG_TYPE, USDC_TYPE],
+  //   arguments: [
+  //     tx.object(CETUS_POOL_ID),
+  //     sellCoin,
+  //     tx.pure.u64(0),          // min_output (slippage protection)
+  //     tx.object('0x6'),
+  //   ],
+  // })
+
+  throw new Error(
+    'DEX pool not yet configured. Create a NUTMEG/USDC pool on Cetus testnet first. ' +
+    'See docs: https://cetus-1.gitbook.io/cetus-developer-docs'
+  )
+}
+
+// Buy NUTMEG with USDC (investor action)
+export async function buyNutmeg(usdcAmount) {
+  const client = getSuiClient()
+  const session = getSession()
+  const tx = new Transaction()
+
+  const amountUnits = Math.floor(usdcAmount * (10 ** USDC_DECIMALS))
+
+  const { data: coins } = await client.getCoins({
+    owner: session.address,
+    coinType: USDC_TYPE,
+  })
+
+  if (coins.length === 0) {
+    throw new Error('No USDC found. Get testnet USDC from faucet.circle.com')
+  }
+
+  if (coins.length > 1) {
+    const otherCoins = coins.slice(1).map(c => tx.object(c.coinObjectId))
+    tx.mergeCoins(tx.object(coins[0].coinObjectId), otherCoins)
+  }
+
+  const [buyCoin] = tx.splitCoins(tx.object(coins[0].coinObjectId), [tx.pure.u64(amountUnits)])
+
+  // TODO: Replace with Cetus swap call once pool is created
+  // tx.moveCall({
+  //   target: `${CETUS_PACKAGE}::pool_script::swap_b2a`,
+  //   typeArguments: [NUTMEG_TYPE, USDC_TYPE],
+  //   arguments: [
+  //     tx.object(CETUS_POOL_ID),
+  //     buyCoin,
+  //     tx.pure.u64(0),
+  //     tx.object('0x6'),
+  //   ],
+  // })
+
+  throw new Error(
+    'DEX pool not yet configured. Create a NUTMEG/USDC pool on Cetus testnet first.'
+  )
+}
+
+// ============================================================
+// CaribCoin
+// ============================================================
+
+export async function burnCarib(coinId) {
+  const tx = new Transaction()
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.CARIB_COIN}::burn`,
     arguments: [tx.object(CARIB_TREASURY_ID), tx.object(coinId)],
-  });
-
-  return executeTransaction(tx);
+  })
+  return executeTransaction(tx)
 }
