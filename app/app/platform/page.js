@@ -15,72 +15,39 @@ export default function PlatformPage() {
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6 bg-anansi-cream">
-        <div className="max-w-sm w-full">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-b from-anansi-black to-anansi-red mx-auto" />
-          <h1 className="text-2xl font-bold text-center mt-6">Platform Admin</h1>
-          <p className="text-anansi-gray text-sm text-center mt-2 mb-8">
-            Anansi Technology Corporation
-          </p>
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-anansi-cream">
+        <div className="max-w-sm w-full animate-fade-in">
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-anansi-red to-anansi-black mx-auto shadow-elevated" />
+          <h1 className="font-display text-display-sm text-center mt-6">Platform Admin</h1>
+          <p className="text-anansi-muted text-sm text-center mt-2 mb-8">Anansi Technology Corporation</p>
           <form onSubmit={handleLogin} className="space-y-4">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Platform admin key"
-              className="w-full px-4 py-3 border border-anansi-border rounded-lg text-sm font-mono"
-              autoFocus
-            />
-            <button
-              type="submit"
-              disabled={!password}
-              className="w-full py-3 bg-anansi-black text-white rounded-lg font-medium text-sm disabled:opacity-50 hover:bg-anansi-red transition-colors"
-            >
-              Sign in
-            </button>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+              placeholder="Platform admin key" className="input-field font-mono text-center" autoFocus />
+            <button type="submit" disabled={!password} className="btn-primary w-full">Sign in</button>
           </form>
         </div>
+        <p className="text-[11px] text-anansi-muted mt-12">Miami, FL · Anansi Technology Corporation</p>
       </div>
     );
   }
 
-  return (
-    <PlatformDashboard
-      platformKey={platformKey}
-      onLogout={() => {
-        setAuthenticated(false);
-        setPlatformKey("");
-      }}
-    />
-  );
+  return <PlatformDashboard platformKey={platformKey} onLogout={() => { setAuthenticated(false); setPlatformKey(""); }} />;
 }
 
 function PlatformDashboard({ platformKey, onLogout }) {
   const [tab, setTab] = useState("assets");
   const [stats, setStats] = useState(null);
 
-  const api = useCallback(
-    async (path, options = {}) => {
-      const res = await fetch(`/api/platform/${path}`, {
-        ...options,
-        headers: {
-          "Content-Type": "application/json",
-          "x-platform-key": platformKey,
-          ...options.headers,
-        },
-      });
-      if (res.status === 401) {
-        onLogout();
-        throw new Error("Unauthorized");
-      }
-      return res.json();
-    },
-    [platformKey, onLogout],
-  );
+  const api = useCallback(async (path, options = {}) => {
+    const res = await fetch(`/api/platform/${path}`, {
+      ...options,
+      headers: { "Content-Type": "application/json", "x-platform-key": platformKey, ...options.headers },
+    });
+    if (res.status === 401) { onLogout(); throw new Error("Unauthorized"); }
+    return res.json();
+  }, [platformKey, onLogout]);
 
-  useEffect(() => {
-    api("stats").then(setStats).catch(console.error);
-  }, [api]);
+  useEffect(() => { api("stats").then(setStats).catch(console.error); }, [api]);
 
   const tabs = [
     { id: "assets", label: "Asset Types" },
@@ -91,50 +58,33 @@ function PlatformDashboard({ platformKey, onLogout }) {
 
   return (
     <div className="min-h-screen bg-anansi-cream">
-      <header className="sticky top-0 z-50 bg-anansi-red text-white">
+      <header className="sticky top-0 z-50 bg-anansi-black/95 backdrop-blur-md border-b border-white/5">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="font-bold tracking-tight">ANANSI PLATFORM</span>
-            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">Admin</span>
+            <div className="w-6 h-6 rounded bg-gradient-to-br from-anansi-red to-anansi-accent" />
+            <span className="font-display text-white text-lg tracking-tight">Anansi</span>
+            <span className="badge bg-anansi-red/20 text-anansi-red ring-0 text-[10px]">Platform</span>
           </div>
           <div className="flex items-center gap-4">
-            {stats && (
-              <span className="text-xs text-white/70 font-mono hidden sm:block">
-                {stats.adminAddress?.slice(0, 8)}...{stats.adminAddress?.slice(-4)}
-              </span>
-            )}
-            <button onClick={onLogout} className="text-xs text-white/70 hover:text-white">
-              Sign out
-            </button>
+            {stats && <span className="text-[11px] text-gray-500 font-mono hidden sm:block">{stats.adminAddress?.slice(0, 8)}···{stats.adminAddress?.slice(-4)}</span>}
+            <button onClick={onLogout} className="text-xs text-gray-500 hover:text-white transition-colors">Sign out</button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Stats bar */}
+      <div className="max-w-6xl mx-auto px-6 py-8 animate-fade-in">
         {stats && (
-          <div className="grid grid-cols-4 gap-4 mb-8">
-            <StatCard label="Admin Address" value={`${stats.adminAddress?.slice(0, 10)}...`} />
-            <StatCard label="Asset Types" value={stats.assetTypes} />
-            <StatCard label="Total Lots" value={stats.totalLots} />
-            <StatCard label="Total Asset Types" value={stats.totalAssetTypes} />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="card p-4"><p className="stat-label">Admin</p><p className="stat-value font-mono text-xs">{stats.adminAddress?.slice(0, 12)}…</p></div>
+            <div className="card p-4"><p className="stat-label">Asset Types</p><p className="stat-value text-lg">{stats.assetTypes}</p></div>
+            <div className="card p-4"><p className="stat-label">Total Lots</p><p className="stat-value text-lg">{stats.totalLots}</p></div>
+            <div className="card p-4"><p className="stat-label">Network</p><p className="stat-value">{process.env.NEXT_PUBLIC_SUI_NETWORK || "testnet"}</p></div>
           </div>
         )}
 
-        {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-anansi-light rounded-lg p-1">
           {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                tab === t.id
-                  ? "bg-white text-anansi-black shadow-sm"
-                  : "text-anansi-gray hover:text-anansi-black"
-              }`}
-            >
-              {t.label}
-            </button>
+            <button key={t.id} onClick={() => setTab(t.id)} className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${tab === t.id ? "bg-white text-anansi-black shadow-card" : "text-anansi-muted hover:text-anansi-black"}`}>{t.label}</button>
           ))}
         </div>
 
@@ -147,236 +97,82 @@ function PlatformDashboard({ platformKey, onLogout }) {
   );
 }
 
-// ============================================================
-// Asset Types Panel
-// ============================================================
-
 function AssetTypesPanel({ api }) {
-  const [assetTypes, setAssetTypes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
-    symbol: "",
-    name: "",
-    unit: "kg",
-    region: "",
-    custodianName: "",
-    custodianAddress: "",
-  });
-  const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState(null);
+  const [assetTypes, setAssetTypes] = useState([]); const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false); const [submitting, setSubmitting] = useState(false); const [result, setResult] = useState(null);
+  const [form, setForm] = useState({ symbol: "", name: "", unit: "kg", region: "", custodianName: "", custodianAddress: "" });
 
   const loadAssetTypes = useCallback(async () => {
-    try {
-      const data = await api("asset-types");
-      setAssetTypes(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    try { setAssetTypes(Array.isArray(await api("asset-types")) ? await api("asset-types") : []); } catch {} finally { setLoading(false); }
   }, [api]);
-
-  useEffect(() => {
-    loadAssetTypes();
-  }, [loadAssetTypes]);
+  useEffect(() => { loadAssetTypes(); }, [loadAssetTypes]);
 
   const handleCreate = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setResult(null);
+    e.preventDefault(); setSubmitting(true); setResult(null);
     try {
-      const data = await api("asset-types", {
-        method: "POST",
-        body: JSON.stringify(form),
-      });
+      const data = await api("asset-types", { method: "POST", body: JSON.stringify(form) });
       if (data.error) throw new Error(data.error);
-      setResult({ success: true, data });
-      setForm({
-        symbol: "",
-        name: "",
-        unit: "kg",
-        region: "",
-        custodianName: "",
-        custodianAddress: "",
-      });
-      setShowForm(false);
+      setResult({ success: true, data }); setForm({ symbol: "", name: "", unit: "kg", region: "", custodianName: "", custodianAddress: "" }); setShowForm(false);
       setTimeout(loadAssetTypes, 3000);
-    } catch (err) {
-      setResult({ success: false, error: err.message });
-    } finally {
-      setSubmitting(false);
-    }
+    } catch (err) { setResult({ success: false, error: err.message }); }
+    finally { setSubmitting(false); }
   };
 
   const handleToggle = async (assetTypeId, currentlyActive) => {
-    try {
-      await api("asset-types", {
-        method: "PATCH",
-        body: JSON.stringify({
-          assetTypeId,
-          action: currentlyActive ? "deactivate" : "reactivate",
-        }),
-      });
-      setTimeout(loadAssetTypes, 2000);
-    } catch (err) {
-      alert("Failed: " + err.message);
-    }
+    try { await api("asset-types", { method: "PATCH", body: JSON.stringify({ assetTypeId, action: currentlyActive ? "deactivate" : "reactivate" }) }); setTimeout(loadAssetTypes, 2000); }
+    catch (err) { alert("Failed: " + err.message); }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-bold text-lg">Asset Types</h2>
-          <p className="text-sm text-anansi-gray">
-            Register and manage tokenizable Caribbean assets.
-          </p>
-        </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-anansi-black text-white rounded-lg text-sm hover:bg-anansi-red transition-colors"
-        >
-          {showForm ? "Cancel" : "+ New Asset Type"}
-        </button>
+        <div><h2 className="font-semibold text-lg">Asset Types</h2><p className="text-sm text-anansi-muted">Register and manage tokenizable Caribbean assets.</p></div>
+        <button onClick={() => setShowForm(!showForm)} className="btn-primary">{showForm ? "Cancel" : "+ New Asset Type"}</button>
       </div>
 
       {showForm && (
-        <div className="p-6 border-2 border-anansi-red/30 bg-white rounded-xl">
+        <div className="card p-6 border-anansi-red/20 animate-scale-in">
           <h3 className="font-semibold mb-1">Register New Asset Type</h3>
-          <p className="text-sm text-anansi-gray mb-4">
-            This creates a new tokenizable asset and issues a CustodianCap to the specified address.
-            That custodian can then create lots and record deliveries from the Spice app.
-          </p>
+          <p className="text-sm text-anansi-muted mb-5">Creates an on-chain asset type and issues a CustodianCap to the specified address.</p>
           <form onSubmit={handleCreate} className="grid md:grid-cols-2 gap-4">
-            <Field
-              label="Symbol"
-              value={form.symbol}
-              onChange={(v) => setForm((p) => ({ ...p, symbol: v }))}
-              placeholder="NUTMG"
-              help="Short ticker (e.g., NUTMG, COCO, VILLA)"
-              required
-            />
-            <Field
-              label="Full Name"
-              value={form.name}
-              onChange={(v) => setForm((p) => ({ ...p, name: v }))}
-              placeholder="Grenada Nutmeg"
-              required
-            />
-            <Field
-              label="Unit"
-              value={form.unit}
-              onChange={(v) => setForm((p) => ({ ...p, unit: v }))}
-              placeholder="kg"
-              help="kg, sqft, barrel, unit"
-              required
-            />
-            <Field
-              label="Region"
-              value={form.region}
-              onChange={(v) => setForm((p) => ({ ...p, region: v }))}
-              placeholder="Grenada"
-              required
-            />
-            <Field
-              label="Custodian Name"
-              value={form.custodianName}
-              onChange={(v) => setForm((p) => ({ ...p, custodianName: v }))}
-              placeholder="GCNA"
-              help="Organization with physical custody"
-              required
-            />
-            <Field
-              label="Custodian Address"
-              value={form.custodianAddress}
-              onChange={(v) => setForm((p) => ({ ...p, custodianAddress: v }))}
-              placeholder="0x..."
-              help="Sui address of the custodian (GCNA staff's zkLogin address)"
-              mono
-              required
-            />
-            <div className="md:col-span-2 flex gap-3">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-6 py-2.5 bg-anansi-red text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-red-700 transition-colors"
-              >
+            <Field label="Symbol" value={form.symbol} onChange={(v) => setForm((p) => ({ ...p, symbol: v }))} placeholder="NUTMG" help="Short ticker" />
+            <Field label="Full Name" value={form.name} onChange={(v) => setForm((p) => ({ ...p, name: v }))} placeholder="Grenada Nutmeg" />
+            <Field label="Unit" value={form.unit} onChange={(v) => setForm((p) => ({ ...p, unit: v }))} placeholder="kg" help="kg, sqft, barrel" />
+            <Field label="Region" value={form.region} onChange={(v) => setForm((p) => ({ ...p, region: v }))} placeholder="Grenada" />
+            <Field label="Custodian Name" value={form.custodianName} onChange={(v) => setForm((p) => ({ ...p, custodianName: v }))} placeholder="GCNA" help="Organization with physical custody" />
+            <Field label="Custodian Address" value={form.custodianAddress} onChange={(v) => setForm((p) => ({ ...p, custodianAddress: v }))} placeholder="0x..." help="Sui address (zkLogin)" mono />
+            <div className="md:col-span-2">
+              <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-anansi-red text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-anansi-red-light transition-colors active:scale-[0.98]">
                 {submitting ? "Creating on-chain..." : "Create Asset Type"}
               </button>
             </div>
           </form>
-          {result && (
-            <div
-              className={`mt-4 p-3 rounded-lg text-sm ${result.success ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}
-            >
-              {result.success ? (
-                <div>
-                  <p className="font-medium">Asset type created on-chain.</p>
-                  <p className="font-mono text-xs mt-1">Tx: {result.data?.digest}</p>
-                  {result.data?.objects?.map((obj, i) => (
-                    <p key={i} className="font-mono text-xs mt-1">
-                      {obj.type}: {obj.id}
-                    </p>
-                  ))}
-                </div>
-              ) : (
-                `Error: ${result.error}`
-              )}
-            </div>
-          )}
+          {result && <ResultBanner result={result} successMsg={<><span className="font-medium">Asset type created.</span> <span className="font-mono text-xs">Tx: {result.data?.digest}</span></>} />}
         </div>
       )}
 
-      {loading ? (
-        <p className="text-anansi-gray text-sm py-4">Loading from chain...</p>
-      ) : assetTypes.length === 0 ? (
-        <div className="text-center py-16 border border-anansi-border rounded-xl bg-white">
-          <p className="text-4xl mb-3">🌿</p>
-          <p className="font-semibold">No asset types registered</p>
-          <p className="text-anansi-gray text-sm mt-1">
-            Click "+ New Asset Type" to register your first Caribbean asset.
-          </p>
-        </div>
-      ) : (
+      {loading ? <div className="space-y-3">{[1,2].map(i => <div key={i} className="card p-5 h-24 animate-pulse" />)}</div>
+      : assetTypes.length === 0 ? <EmptyState icon="package" title="No asset types registered" subtitle="Click "+ New Asset Type" to register your first Caribbean asset." />
+      : (
         <div className="space-y-3">
           {assetTypes.map((at) => (
-            <div key={at.id} className="p-5 border border-anansi-border rounded-xl bg-white">
+            <div key={at.id} className="card p-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-xl font-bold">{at.symbol}</span>
-                  <span
-                    className={`text-xs font-mono px-2 py-0.5 rounded-full ${
-                      at.active ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
-                    }`}
-                  >
-                    {at.active ? "Active" : "Inactive"}
-                  </span>
+                  <span className="text-lg font-bold">{at.symbol}</span>
+                  <span className={`badge ${at.active ? "badge-open" : "bg-red-50 text-red-700 ring-1 ring-red-600/10"}`}>{at.active ? "Active" : "Inactive"}</span>
                 </div>
-                <button
-                  onClick={() => handleToggle(at.id, at.active)}
-                  className={`text-xs px-3 py-1 rounded-lg border transition-colors ${
-                    at.active
-                      ? "border-red-200 text-red-600 hover:bg-red-50"
-                      : "border-green-200 text-green-600 hover:bg-green-50"
-                  }`}
-                >
+                <button onClick={() => handleToggle(at.id, at.active)} className={`text-xs px-3 py-1 rounded-lg border transition-colors ${at.active ? "border-red-200 text-red-600 hover:bg-red-50" : "border-emerald-200 text-emerald-600 hover:bg-emerald-50"}`}>
                   {at.active ? "Deactivate" : "Reactivate"}
                 </button>
               </div>
               <p className="text-sm text-anansi-gray mt-2">{at.name}</p>
-              <div className="flex gap-6 mt-3 text-xs text-anansi-gray">
-                <span>
-                  Region: <strong className="text-anansi-black">{at.region}</strong>
-                </span>
-                <span>
-                  Unit: <strong className="text-anansi-black">{at.unit}</strong>
-                </span>
-                <span>
-                  Custodian: <strong className="text-anansi-black">{at.custodian}</strong>
-                </span>
+              <div className="flex gap-6 mt-3 text-xs text-anansi-muted">
+                <span>Region: <strong className="text-anansi-black">{at.region}</strong></span>
+                <span>Unit: <strong className="text-anansi-black">{at.unit}</strong></span>
+                <span>Custodian: <strong className="text-anansi-black">{at.custodian}</strong></span>
               </div>
-              <p className="text-xs font-mono text-anansi-gray/60 mt-2">ID: {at.id}</p>
+              <p className="text-[10px] font-mono text-anansi-muted mt-2">{at.id}</p>
             </div>
           ))}
         </div>
@@ -385,147 +181,70 @@ function AssetTypesPanel({ api }) {
   );
 }
 
-// ============================================================
-// Custodians Panel
-// ============================================================
-
 function CustodiansPanel({ api }) {
-  const [custodians, setCustodians] = useState([]);
-  const [assetTypes, setAssetTypes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ assetTypeId: "", custodianAddress: "" });
-  const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState(null);
+  const [custodians, setCustodians] = useState([]); const [assetTypes, setAssetTypes] = useState([]); const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false); const [form, setForm] = useState({ assetTypeId: "", custodianAddress: "" });
+  const [submitting, setSubmitting] = useState(false); const [result, setResult] = useState(null);
 
   useEffect(() => {
-    Promise.all([api("custodians"), api("asset-types")])
-      .then(([c, a]) => {
-        setCustodians(Array.isArray(c) ? c : []);
-        setAssetTypes(Array.isArray(a) ? a : []);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    Promise.all([api("custodians"), api("asset-types")]).then(([c, a]) => { setCustodians(Array.isArray(c) ? c : []); setAssetTypes(Array.isArray(a) ? a : []); })
+    .catch(console.error).finally(() => setLoading(false));
   }, [api]);
 
   const handleIssue = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setResult(null);
+    e.preventDefault(); setSubmitting(true); setResult(null);
     try {
-      const data = await api("custodians", {
-        method: "POST",
-        body: JSON.stringify(form),
-      });
+      const data = await api("custodians", { method: "POST", body: JSON.stringify(form) });
       if (data.error) throw new Error(data.error);
-      setResult({ success: true, digest: data.digest });
-      setForm({ assetTypeId: "", custodianAddress: "" });
-      setShowForm(false);
-      // Reload
-      const c = await api("custodians");
-      setCustodians(Array.isArray(c) ? c : []);
-    } catch (err) {
-      setResult({ success: false, error: err.message });
-    } finally {
-      setSubmitting(false);
-    }
+      setResult({ success: true, digest: data.digest }); setForm({ assetTypeId: "", custodianAddress: "" }); setShowForm(false);
+      setCustodians(Array.isArray(await api("custodians")) ? await api("custodians") : []);
+    } catch (err) { setResult({ success: false, error: err.message }); }
+    finally { setSubmitting(false); }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-bold text-lg">Custodians</h2>
-          <p className="text-sm text-anansi-gray">
-            Manage who can create lots and record deliveries.
-          </p>
-        </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-anansi-black text-white rounded-lg text-sm hover:bg-anansi-red transition-colors"
-        >
-          {showForm ? "Cancel" : "+ Issue Custodian Cap"}
-        </button>
+        <div><h2 className="font-semibold text-lg">Custodians</h2><p className="text-sm text-anansi-muted">Manage who can create lots and record deliveries.</p></div>
+        <button onClick={() => setShowForm(!showForm)} className="btn-primary">{showForm ? "Cancel" : "+ Issue Cap"}</button>
       </div>
 
       {showForm && (
-        <div className="p-6 border-2 border-anansi-red/30 bg-white rounded-xl">
+        <div className="card p-6 border-anansi-red/20 animate-scale-in">
           <h3 className="font-semibold mb-4">Issue New Custodian Capability</h3>
           <form onSubmit={handleIssue} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Asset Type</label>
-              <select
-                value={form.assetTypeId}
-                onChange={(e) => setForm((p) => ({ ...p, assetTypeId: e.target.value }))}
-                className="w-full px-3 py-2 border border-anansi-border rounded-lg text-sm"
-                required
-              >
+              <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">Asset Type</label>
+              <select value={form.assetTypeId} onChange={(e) => setForm((p) => ({ ...p, assetTypeId: e.target.value }))} className="input-field" required>
                 <option value="">Select asset type...</option>
-                {assetTypes.map((at) => (
-                  <option key={at.id} value={at.id}>
-                    {at.symbol} — {at.name}
-                  </option>
-                ))}
+                {assetTypes.map((at) => <option key={at.id} value={at.id}>{at.symbol} — {at.name}</option>)}
               </select>
             </div>
-            <Field
-              label="Custodian Address"
-              value={form.custodianAddress}
-              onChange={(v) => setForm((p) => ({ ...p, custodianAddress: v }))}
-              placeholder="0x..."
-              help="The Sui address of the new custodian (e.g., GCNA staff's zkLogin address)"
-              mono
-              required
-            />
-            <button
-              type="submit"
-              disabled={submitting || !form.assetTypeId || !form.custodianAddress}
-              className="px-6 py-2.5 bg-anansi-red text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-red-700 transition-colors"
-            >
+            <Field label="Custodian Address" value={form.custodianAddress} onChange={(v) => setForm((p) => ({ ...p, custodianAddress: v }))} placeholder="0x..." help="Sui address of the new custodian" mono />
+            <button type="submit" disabled={submitting || !form.assetTypeId || !form.custodianAddress} className="px-6 py-2.5 bg-anansi-red text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-anansi-red-light transition-colors active:scale-[0.98]">
               {submitting ? "Issuing on-chain..." : "Issue Custodian Cap"}
             </button>
           </form>
-          {result && (
-            <div
-              className={`mt-4 p-3 rounded-lg text-sm ${result.success ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}
-            >
-              {result.success
-                ? `Custodian cap issued. Tx: ${result.digest}`
-                : `Error: ${result.error}`}
-            </div>
-          )}
+          {result && <ResultBanner result={result} successMsg={`Custodian cap issued. Tx: ${result.digest}`} />}
         </div>
       )}
 
-      {loading ? (
-        <p className="text-anansi-gray text-sm py-4">Loading...</p>
-      ) : custodians.length === 0 ? (
-        <div className="text-center py-16 border border-anansi-border rounded-xl bg-white">
-          <p className="text-4xl mb-3">👤</p>
-          <p className="font-semibold">No custodians assigned</p>
-          <p className="text-anansi-gray text-sm mt-1">
-            Custodians are created automatically when you register an asset type, or you can issue
-            additional caps above.
-          </p>
-        </div>
-      ) : (
-        <div className="border border-anansi-border rounded-xl bg-white overflow-hidden">
+      {loading ? <div className="card p-5 h-24 animate-pulse" />
+      : custodians.length === 0 ? <EmptyState icon="user" title="No custodians assigned" subtitle="Custodians are created automatically with asset types, or issue additional caps above." />
+      : (
+        <div className="card overflow-hidden">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-anansi-border bg-anansi-light">
-                <th className="text-left px-4 py-3 font-medium">Asset Type</th>
-                <th className="text-left px-4 py-3 font-medium">Custodian Address</th>
-                <th className="text-left px-4 py-3 font-medium">Issued</th>
-              </tr>
-            </thead>
+            <thead><tr className="border-b border-anansi-border bg-anansi-light/50">
+              <th className="text-left px-5 py-3 stat-label font-medium">Asset Type</th>
+              <th className="text-left px-5 py-3 stat-label font-medium">Custodian Address</th>
+              <th className="text-left px-5 py-3 stat-label font-medium">Issued</th>
+            </tr></thead>
             <tbody>
               {custodians.map((c, i) => (
-                <tr key={i} className="border-b border-anansi-border last:border-0">
-                  <td className="px-4 py-3 font-semibold">{c.assetTypeSymbol}</td>
-                  <td className="px-4 py-3 font-mono text-xs">{c.custodianAddress}</td>
-                  <td className="px-4 py-3 text-xs text-anansi-gray">
-                    {c.timestamp ? new Date(c.timestamp).toLocaleDateString() : "—"}
-                  </td>
+                <tr key={i} className="border-b border-anansi-border last:border-0 hover:bg-anansi-light/30 transition-colors">
+                  <td className="px-5 py-3 font-semibold">{c.assetTypeSymbol}</td>
+                  <td className="px-5 py-3 font-mono text-xs">{c.custodianAddress}</td>
+                  <td className="px-5 py-3 text-xs text-anansi-muted">{c.timestamp ? new Date(c.timestamp).toLocaleDateString() : "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -536,149 +255,94 @@ function CustodiansPanel({ api }) {
   );
 }
 
-// ============================================================
-// Deposits Panel
-// ============================================================
 function DepositsPanel({ api }) {
-  const [lotId, setLotId] = useState("");
-  const [amount, setAmount] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState(null);
-
+  const [lotId, setLotId] = useState(""); const [amount, setAmount] = useState("");
+  const [submitting, setSubmitting] = useState(false); const [result, setResult] = useState(null);
   const handleDeposit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setResult(null);
+    e.preventDefault(); setSubmitting(true); setResult(null);
     try {
-      const data = await api("deposit", {
-        method: "POST",
-        body: JSON.stringify({ lotId, amount: parseFloat(amount) }),
-      });
+      const data = await api("deposit", { method: "POST", body: JSON.stringify({ lotId, amount: parseFloat(amount) }) });
       if (data.error) throw new Error(data.error);
-      setResult({ success: true, digest: data.digest });
-      setAmount("");
-    } catch (err) {
-      setResult({ success: false, error: err.message });
-    } finally {
-      setSubmitting(false);
-    }
+      setResult({ success: true, digest: data.digest }); setAmount("");
+    } catch (err) { setResult({ success: false, error: err.message }); }
+    finally { setSubmitting(false); }
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="font-bold text-lg">Surplus Deposits</h2>
-        <p className="text-sm text-anansi-gray">
-          Deposit USDC surplus for a lot after commodity sale. The platform admin wallet holds the
-          USDC and deposits it on-chain. 1% fee is collected, remainder is claimable by token
-          holders.
-        </p>
-      </div>
+      <div><h2 className="font-semibold text-lg">Surplus Deposits</h2><p className="text-sm text-anansi-muted">Deposit USDC surplus for a lot after commodity sale. 1% fee, remainder claimable by all NUTMEG holders pro-rata.</p></div>
 
-      <div className="p-6 border-2 border-green-200 bg-white rounded-xl">
+      <div className="card p-6 border-emerald-200">
         <h3 className="font-semibold mb-4">Deposit USDC Surplus</h3>
         <form onSubmit={handleDeposit} className="space-y-4">
-          <Field
-            label="Lot ID"
-            value={lotId}
-            onChange={setLotId}
-            placeholder="0x..."
-            help="The lot that was sold. Find this in the GCNA admin dashboard under Manage Lots."
-            mono
-            required
-          />
-          <Field
-            label="USDC Amount"
-            value={amount}
-            onChange={setAmount}
-            placeholder="50.00"
-            type="number"
-            help="Total surplus in USDC. 1% fee will be deducted. Remainder distributed to token holders."
-            required
-          />
-          <button
-            type="submit"
-            disabled={submitting || !lotId || !amount}
-            className="px-6 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-green-700 transition-colors"
-          >
-            {submitting ? "Depositing on-chain..." : "Deposit Surplus"}
+          <Field label="Lot ID" value={lotId} onChange={setLotId} placeholder="0x..." help="The lot that was sold. Find in GCNA admin → Manage Lots." mono />
+          <Field label="USDC Amount" value={amount} onChange={setAmount} placeholder="50.00" type="number" help="Total surplus. 1% fee deducted. Remainder distributed to all NUTMEG holders based on balance at time of claim." />
+          <button type="submit" disabled={submitting || !lotId || !amount} className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-emerald-700 transition-colors active:scale-[0.98]">
+            {submitting ? <span className="flex items-center gap-2"><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />Depositing...</span> : "Deposit Surplus"}
           </button>
         </form>
-        {result && (
-          <div
-            className={`mt-4 p-3 rounded-lg text-sm ${result.success ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}
-          >
-            {result.success
-              ? `Surplus deposited. Farmers can now claim their share. Tx: ${result.digest?.slice(0, 20)}...`
-              : `Error: ${result.error}`}
-          </div>
-        )}
+        {result && <ResultBanner result={result} successMsg={`Surplus deposited. Farmers can now claim. Tx: ${result.digest?.slice(0, 24)}…`} />}
       </div>
 
-      <div className="p-4 bg-anansi-light rounded-xl border border-anansi-border text-sm text-anansi-gray">
-        <p className="font-semibold text-anansi-black mb-1">How surplus deposits work</p>
-        <ol className="list-decimal list-inside space-y-1">
-          <li>GCNA sells the nutmeg lot overseas and receives payment.</li>
-          <li>GCNA transfers the surplus USDC to the platform admin wallet.</li>
-          <li>You deposit it here — the contract takes a 1% fee and holds the rest.</li>
-          <li>Farmers see "Available Surplus" in their app and tap Claim.</li>
-          <li>Each farmer receives their pro-rata share based on tokens held.</li>
-        </ol>
+      <div className="card p-5">
+        <h3 className="font-semibold text-sm mb-3">How surplus distribution works</h3>
+        <div className="space-y-3">
+          {[
+            "GCNA sells the nutmeg lot and receives payment.",
+            "Surplus USDC is transferred to the platform admin wallet.",
+            "You deposit it here — 1% fee collected, rest held for claims.",
+            "Any NUTMEG holder can claim their pro-rata share.",
+            "Share = (holder balance / total NUTMEG supply) × surplus pool.",
+          ].map((text, i) => (
+            <div key={i} className="flex gap-3 items-start">
+              <span className="text-xs font-mono text-anansi-muted font-medium mt-0.5">0{i + 1}</span>
+              <p className="text-sm text-anansi-gray leading-relaxed">{text}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-// ============================================================
-// Overview Panel
-// ============================================================
-
 function OverviewPanel({ stats }) {
   return (
     <div className="space-y-6">
-      <h2 className="font-bold text-lg">Platform Overview</h2>
-
-      <div className="p-6 border border-anansi-border rounded-xl bg-white">
-        <h3 className="font-semibold mb-4">How the roles work</h3>
-        <div className="space-y-4 text-sm">
-          <RoleRow
-            role="Platform Admin (You)"
-            path="/platform"
-            description="Create asset types, assign custodians, manage platform settings. Signed server-side with CLI keypair."
-            color="bg-anansi-red"
-          />
-          <RoleRow
-            role="Custodian (GCNA Staff)"
-            path="/admin"
-            description="Create lots, record deliveries, manage lot lifecycle, trigger distributions. Signs in with zkLogin (Google)."
-            color="bg-anansi-black"
-          />
-          <RoleRow
-            role="Farmer"
-            path="/farmer"
-            description="View token balances, withdraw, claim surplus. Signs in with zkLogin (Google). Zero crypto knowledge needed."
-            color="bg-green-600"
-          />
-          <RoleRow
-            role="Buyer"
-            path="/buyer"
-            description="Browse active lots, buy tokens, track portfolio and yields. Signs in with zkLogin (Google)."
-            color="bg-blue-600"
-          />
+      <h2 className="font-semibold text-lg">Platform Overview</h2>
+      <div className="card p-6">
+        <h3 className="font-semibold mb-5">Role architecture</h3>
+        <div className="space-y-4">
+          {[
+            { role: "Platform Admin (You)", path: "/platform", desc: "Create asset types, assign custodians, deposit surplus. Server-side CLI keypair.", color: "bg-anansi-red" },
+            { role: "Custodian (GCNA Staff)", path: "/admin", desc: "Create lots, record deliveries, manage lot lifecycle. zkLogin (Google).", color: "bg-anansi-black" },
+            { role: "Farmer", path: "/farmer", desc: "View balances, sell early on DEX, claim surplus. zkLogin (Google).", color: "bg-emerald-600" },
+            { role: "Buyer", path: "/buyer", desc: "Buy NUTMEG tokens, track portfolio. zkLogin (Google).", color: "bg-blue-600" },
+          ].map((r, i) => (
+            <div key={i} className="flex gap-3">
+              <div className={`w-1.5 rounded-full ${r.color} shrink-0`} />
+              <div>
+                <p className="text-sm font-semibold">{r.role} <span className="font-mono text-xs text-anansi-muted">{r.path}</span></p>
+                <p className="text-sm text-anansi-gray">{r.desc}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-
-      <div className="p-6 border border-anansi-border rounded-xl bg-white">
+      <div className="card p-6">
         <h3 className="font-semibold mb-4">Environment</h3>
-        <div className="space-y-2 text-sm font-mono">
-          <EnvRow label="Admin Address" value={stats?.adminAddress} />
-          <EnvRow label="Asset Types" value={stats?.assetTypes} />
-          <EnvRow label="Total Lots" value={stats?.totalLots} />
-          <EnvRow
-            label="Package"
-            value={process.env.NEXT_PUBLIC_PACKAGE_ID?.slice(0, 16) + "..."}
-          />
-          <EnvRow label="Network" value={process.env.NEXT_PUBLIC_SUI_NETWORK || "testnet"} />
+        <div className="space-y-2 text-sm">
+          {[
+            ["Admin", stats?.adminAddress],
+            ["Asset Types", stats?.assetTypes],
+            ["Lots", stats?.totalLots],
+            ["Package", (process.env.NEXT_PUBLIC_PACKAGE_ID || "").slice(0, 20) + "…"],
+            ["Network", process.env.NEXT_PUBLIC_SUI_NETWORK || "testnet"],
+          ].map(([label, value], i) => (
+            <div key={i} className="flex justify-between py-1.5 border-b border-anansi-border last:border-0">
+              <span className="text-anansi-muted">{label}</span>
+              <span className="font-mono text-xs">{value ?? "—"}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -689,53 +353,36 @@ function OverviewPanel({ stats }) {
 // Shared Components
 // ============================================================
 
-function StatCard({ label, value }) {
-  return (
-    <div className="p-4 border border-anansi-border rounded-xl bg-white">
-      <p className="text-xs text-anansi-gray">{label}</p>
-      <p className="text-lg font-bold mt-1">
-        {typeof value === "string" ? value : String(value ?? "—")}
-      </p>
-    </div>
-  );
-}
-
-function Field({ label, value, onChange, placeholder, type = "text", mono, help, required }) {
+function Field({ label, value, onChange, placeholder, type = "text", mono, help }) {
   return (
     <div>
-      <label className="block text-sm font-medium mb-1">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        required={required}
-        className={`w-full px-3 py-2 border border-anansi-border rounded-lg text-sm ${mono ? "font-mono text-xs" : ""}`}
-      />
-      {help && <p className="text-xs text-anansi-gray mt-1">{help}</p>}
+      <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">{label}</label>
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={`input-field ${mono ? "font-mono text-xs" : ""}`} />
+      {help && <p className="text-xs text-anansi-muted mt-1">{help}</p>}
     </div>
   );
 }
 
-function RoleRow({ role, path, description, color }) {
+function ResultBanner({ result, successMsg }) {
   return (
-    <div className="flex gap-3">
-      <div className={`w-2 rounded-full ${color} shrink-0`} />
-      <div>
-        <p className="font-semibold">
-          {role} <span className="font-mono text-xs text-anansi-gray">{path}</span>
-        </p>
-        <p className="text-anansi-gray">{description}</p>
+    <div className={`mt-4 p-4 rounded-lg text-sm ${result.success ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-800 border border-red-200"}`}>
+      {result.success ? (typeof successMsg === 'string' ? successMsg : successMsg) : `Error: ${result.error}`}
+    </div>
+  );
+}
+
+function EmptyState({ icon, title, subtitle }) {
+  const icons = {
+    package: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />,
+    user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
+  };
+  return (
+    <div className="card text-center py-16">
+      <div className="w-12 h-12 rounded-full bg-anansi-light flex items-center justify-center mx-auto">
+        <svg className="w-6 h-6 text-anansi-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">{icons[icon]}</svg>
       </div>
-    </div>
-  );
-}
-
-function EnvRow({ label, value }) {
-  return (
-    <div className="flex justify-between">
-      <span className="text-anansi-gray">{label}</span>
-      <span>{value ?? "—"}</span>
+      <p className="text-sm font-medium mt-3">{title}</p>
+      <p className="text-xs text-anansi-muted mt-1">{subtitle}</p>
     </div>
   );
 }

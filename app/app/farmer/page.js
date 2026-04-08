@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../components/AuthProvider'
 import AppNav from '../../components/AppNav'
-import { getNutmegBalance, getUsdcBalance, getFarmerDeliveries, getAllSurplusDeposits } from '../../lib/data'
+import { getNutmegBalance, getUsdcBalance, getFarmerDeliveries, getAllSurplusDeposits, getClaimedDepositIds } from '../../lib/data'
 import { claimSurplus, sellNutmeg } from '../../lib/transactions'
 import { USDC_DECIMALS, NUTMEG_DECIMALS } from '../../lib/constants'
 
@@ -13,6 +13,7 @@ export default function FarmerPage() {
   const [usdc, setUsdc] = useState({ displayBalance: 0 })
   const [deliveries, setDeliveries] = useState([])
   const [deposits, setDeposits] = useState([])
+  const [claimedLotIds, setClaimedLotIds] = useState(new Set())
   const [loading, setLoading] = useState(true)
   const [claiming, setClaiming] = useState(null)
   const [sellAmount, setSellAmount] = useState('')
@@ -22,16 +23,18 @@ export default function FarmerPage() {
   async function loadData() {
     if (!user?.address) return
     try {
-      const [n, u, d, s] = await Promise.all([
+      const [n, u, d, s, claimed] = await Promise.all([
         getNutmegBalance(user.address),
         getUsdcBalance(user.address),
         getFarmerDeliveries(user.address),
         getAllSurplusDeposits().catch(() => []),
+        getClaimedDepositIds(user.address).catch(() => new Set()),
       ])
       setNutmeg(n)
       setUsdc(u)
       setDeliveries(d)
       setDeposits(s)
+      setClaimedLotIds(claimed)
     } catch (err) {
       console.error('Failed to load farmer data:', err)
     } finally {
@@ -50,6 +53,7 @@ export default function FarmerPage() {
     } catch (err) {
       if (err.message?.includes('EAlreadyClaimed') || err.message?.includes('204')) {
         alert('You have already claimed this surplus.')
+        await loadData() // Refresh to hide the card
       } else { alert('Claim failed: ' + err.message) }
     } finally { setClaiming(null) }
   }
@@ -81,6 +85,17 @@ export default function FarmerPage() {
 
   const unitPrice = 0.55
   const totalValue = nutmeg.displayBalance * unitPrice
+
+  // Filter deposits: remove fully drained ones AND ones this farmer already claimed
+  const claimableDeposits = deposits.filter(deposit => {
+    if (deposit.remaining === 0) return false
+    if (claimedLotIds.has(deposit.lotId)) return false
+    if (nutmeg.totalBalance <= 0) return false
+    const myShare = deposit.tokensSnapshot > 0
+      ? (deposit.netAmount * nutmeg.totalBalance) / deposit.tokensSnapshot
+      : 0
+    return myShare > 0 && myShare <= deposit.remaining
+  })
 
   return (
     <>
@@ -114,7 +129,6 @@ export default function FarmerPage() {
             </div>
           </div>
 
-          {/* Quick actions */}
           {nutmeg.displayBalance > 0 && (
             <div className="mt-5 pt-4 border-t border-white/10">
               <button
@@ -177,16 +191,12 @@ export default function FarmerPage() {
         )}
 
         {/* Surplus Claims */}
-        {deposits.length > 0 && nutmeg.totalBalance > 0 && (
+        {claimableDeposits.length > 0 && (
           <div className="mt-6">
             <p className="section-title">Available surplus</p>
             <div className="space-y-3">
-              {deposits.map(deposit => {
-                if (deposit.remaining === 0) return null
-                const myShare = deposit.tokensSnapshot > 0
-                  ? (deposit.netAmount * nutmeg.totalBalance) / deposit.tokensSnapshot
-                  : 0
-                if (myShare <= 0 || myShare > deposit.remaining) return null
+              {claimableDeposits.map(deposit => {
+                const myShare = (deposit.netAmount * nutmeg.totalBalance) / deposit.tokensSnapshot
                 const shareUsdc = myShare / (10 ** USDC_DECIMALS)
 
                 return (
@@ -195,7 +205,7 @@ export default function FarmerPage() {
                       <div>
                         <p className="text-lg font-bold text-emerald-800">${shareUsdc.toFixed(2)}</p>
                         <p className="text-xs text-emerald-600 mt-0.5">
-                          {nutmeg.displayBalance.toLocaleString()} NUTMEG held · Pool: ${(deposit.remaining / (10 ** USDC_DECIMALS)).toFixed(2)} remaining
+                          Your share · {nutmeg.displayBalance.toLocaleString()} of {(deposit.tokensSnapshot / (10 ** NUTMEG_DECIMALS)).toLocaleString()} total NUTMEG
                         </p>
                       </div>
                       <button

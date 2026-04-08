@@ -282,3 +282,22 @@ export async function getPlatformStats() {
     assetTypes: new Set(lots.map(l => l.assetTypeSymbol)).size,
   }
 }
+
+// Get deposit lot_ids that this address has already claimed
+export async function getClaimedDepositIds(address) {
+  const events = await queryEvents(`${PACKAGE_ID}::yield_engine::SurplusClaimed`, null, 100)
+  let allEvents = [...events.data]
+  if (ORIGINAL_PACKAGE_ID !== PACKAGE_ID) {
+    const oldEvents = await queryEvents(`${ORIGINAL_PACKAGE_ID}::yield_engine::SurplusClaimed`, null, 100)
+    allEvents = [...allEvents, ...oldEvents.data]
+  }
+
+  // Build a Set of lot_ids this address has claimed
+  const claimedLotIds = new Set()
+  for (const event of allEvents) {
+    if (event.parsedJson?.claimant === address) {
+      claimedLotIds.add(event.parsedJson?.lot_id)
+    }
+  }
+  return claimedLotIds
+}
