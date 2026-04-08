@@ -11,89 +11,138 @@ export default function HomePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-anansi-red border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-anansi-gray mt-4 text-sm">Loading Spice...</p>
+        <div className="text-center animate-fade-in">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-anansi-black to-anansi-red mx-auto" />
+          <div className="w-6 h-6 border-2 border-anansi-red border-t-transparent rounded-full animate-spin mx-auto mt-6" />
         </div>
       </div>
     )
   }
 
-  // Not logged in — show login screen
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-6">
-        <div className="max-w-sm w-full text-center">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-b from-anansi-black to-anansi-red mx-auto" />
-          <h1 className="text-2xl font-bold mt-6">Spice</h1>
-          <p className="text-anansi-gray text-sm mt-2 mb-8">
-            Real-world asset tokenization for the Caribbean.
-            Sign in to manage deliveries, view your tokens, or explore the marketplace.
-          </p>
-          <button
-            onClick={startLogin}
-            className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white border border-anansi-border rounded-lg hover:border-anansi-black transition-colors"
-          >
-            <GoogleIcon />
-            <span className="font-medium">Sign in with Google</span>
-          </button>
-          <p className="text-xs text-anansi-gray mt-6">
-            No wallet or crypto experience needed. Your Google account is all you need.
-          </p>
-        </div>
-      </div>
-    )
-  }
+  if (!user) return <LoginScreen />
 
-  // Logged in — show role selection / dashboard
   return (
     <>
       <AppNav />
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        <h1 className="text-2xl font-bold">Welcome, {user.name?.split(' ')[0]}</h1>
-        <p className="text-anansi-gray mt-1 mb-8">Choose how you want to participate today.</p>
+      <div className="max-w-4xl mx-auto px-6 py-12 animate-fade-in">
+        <div className="mb-10">
+          <p className="section-title">Dashboard</p>
+          <h1 className="text-display-sm font-display">
+            Welcome back, {user.name?.split(' ')[0]}
+          </h1>
+          <p className="text-anansi-gray mt-2">
+            Choose how you want to participate today.
+          </p>
+        </div>
 
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-3 gap-5">
           <RoleCard
             href="/admin"
             title="GCNA Admin"
-            description="Record deliveries, manage lots, trigger distributions. For GCNA receiving station staff."
-            icon="📋"
+            subtitle="Custodian"
+            description="Record deliveries, manage lots, and trigger distributions."
+            gradient="from-amber-500/10 to-orange-500/5"
+            delay="stagger-1"
           />
           <RoleCard
             href="/farmer"
             title="Farmer"
-            description="View your deliveries, check token balances, withdraw funds, claim surplus."
-            icon="🌿"
+            subtitle="Token holder"
+            description="View deliveries, check balances, sell early, or claim surplus."
+            gradient="from-emerald-500/10 to-green-500/5"
+            delay="stagger-2"
           />
           <RoleCard
             href="/buyer"
             title="Marketplace"
-            description="Browse active lots, buy SpiceTokens, track your portfolio and yields."
-            icon="🌍"
+            subtitle="Investor"
+            description="Buy NUTMEG tokens, track your portfolio, and earn yield."
+            gradient="from-blue-500/10 to-indigo-500/5"
+            delay="stagger-3"
           />
         </div>
 
-        <div className="mt-8 p-4 bg-anansi-light rounded-lg border border-anansi-border">
-          <p className="text-xs text-anansi-gray">
-            <span className="font-semibold text-anansi-black">Your Spice address: </span>
-            <span className="font-mono">{user.address}</span>
-          </p>
+        <div className="mt-10 card p-5 flex items-center justify-between">
+          <div>
+            <p className="stat-label">Your Spice address</p>
+            <p className="font-mono text-xs mt-1 text-anansi-black">{user.address}</p>
+          </div>
+          <button
+            onClick={() => navigator.clipboard.writeText(user.address)}
+            className="btn-ghost text-xs"
+          >
+            Copy
+          </button>
         </div>
       </div>
     </>
   )
 }
 
-function RoleCard({ href, title, description, icon }) {
+function LoginScreen() {
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* Hero */}
+      <div className="flex-1 flex items-center justify-center px-6">
+        <div className="max-w-md w-full text-center animate-fade-in">
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-anansi-black to-anansi-red mx-auto shadow-elevated" />
+
+          <h1 className="font-display text-display mt-8">
+            Spice
+          </h1>
+          <p className="text-lg text-anansi-gray mt-2 font-display italic">
+            Real-world commodities, tokenized
+          </p>
+
+          <p className="text-sm text-anansi-muted mt-6 mb-8 max-w-sm mx-auto leading-relaxed">
+            The first platform turning Caribbean agricultural exports into tradeable digital assets.
+            Built on Sui. No wallet needed.
+          </p>
+
+          <button
+            onClick={startLogin}
+            className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-white border border-anansi-border rounded-xl hover:border-anansi-black hover:shadow-card-hover transition-all duration-200 group"
+          >
+            <GoogleIcon />
+            <span className="font-medium text-sm">Sign in with Google</span>
+            <svg className="w-4 h-4 text-anansi-muted group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <p className="text-xs text-anansi-muted mt-5">
+            No wallet or crypto experience needed.
+          </p>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="pb-8 text-center">
+        <p className="text-[11px] text-anansi-muted">
+          By Anansi Technology Corporation · Miami, FL
+        </p>
+      </footer>
+    </div>
+  )
+}
+
+function RoleCard({ href, title, subtitle, description, gradient, delay }) {
   return (
     <Link
       href={href}
-      className="block p-6 border border-anansi-border rounded-xl hover:border-anansi-red transition-all hover:shadow-sm"
+      className={`card-hover block p-6 group animate-slide-up ${delay}`}
     >
-      <span className="text-3xl">{icon}</span>
-      <h3 className="font-bold mt-3">{title}</h3>
-      <p className="text-sm text-anansi-gray mt-1">{description}</p>
+      <div className={`w-full h-24 rounded-lg bg-gradient-to-br ${gradient} mb-4 flex items-end p-3`}>
+        <span className="text-xs font-medium text-anansi-muted uppercase tracking-wider">{subtitle}</span>
+      </div>
+      <h3 className="font-semibold text-lg group-hover:text-anansi-red transition-colors">{title}</h3>
+      <p className="text-sm text-anansi-gray mt-1 leading-relaxed">{description}</p>
+      <div className="mt-4 flex items-center gap-1 text-xs text-anansi-muted group-hover:text-anansi-red transition-colors">
+        <span>Open</span>
+        <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
     </Link>
   )
 }

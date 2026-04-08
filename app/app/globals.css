@@ -2,8 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap');
 
 html { scroll-behavior: smooth; }
-body { -webkit-font-smoothing: antialiased; }
+body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 ::selection { background-color: #7A0F14; color: white; }
+
+/* Subtle grain texture on body */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.015;
+  z-index: 9999;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+@layer base {
+  h1, h2, h3 {
+    font-feature-settings: 'ss01' on, 'ss02' on;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-5 py-2.5 bg-anansi-black text-white rounded-lg text-sm font-medium 
+           hover:bg-anansi-red transition-all duration-200 disabled:opacity-50 
+           disabled:hover:bg-anansi-black active:scale-[0.98];
+  }
+  .btn-secondary {
+    @apply px-5 py-2.5 bg-white text-anansi-black border border-anansi-border rounded-lg 
+           text-sm font-medium hover:border-anansi-black transition-all duration-200 
+           disabled:opacity-50 active:scale-[0.98];
+  }
+  .btn-ghost {
+    @apply px-4 py-2 text-sm text-anansi-gray hover:text-anansi-black transition-colors;
+  }
+  .card {
+    @apply bg-white border border-anansi-border rounded-xl shadow-card 
+           transition-all duration-200;
+  }
+  .card-hover {
+    @apply card hover:shadow-card-hover hover:border-anansi-border-dark;
+  }
+  .input-field {
+    @apply w-full px-4 py-2.5 bg-white border border-anansi-border rounded-lg text-sm
+           placeholder:text-anansi-muted focus:outline-none focus:border-anansi-black 
+           focus:ring-1 focus:ring-anansi-black/10 transition-all duration-200;
+  }
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  .badge-open { @apply bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10; }
+  .badge-selling { @apply bg-amber-50 text-amber-700 ring-1 ring-amber-600/10; }
+  .badge-distributing { @apply bg-blue-50 text-blue-700 ring-1 ring-blue-600/10; }
+  .badge-closed { @apply bg-gray-100 text-gray-600 ring-1 ring-gray-500/10; }
+
+  .section-title {
+    @apply text-xs font-semibold uppercase tracking-wider text-anansi-muted mb-4;
+  }
+
+  .stat-label {
+    @apply text-xs text-anansi-muted;
+  }
+  .stat-value {
+    @apply text-sm font-semibold text-anansi-black mt-0.5;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D1CFC8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94928D; }
+
+/* Staggered animations */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
