@@ -1,4 +1,4 @@
-import { verifyPlatformAdmin } from '../../../../lib/platform-auth'
+import { verifyPlatformAuth } from '../../../../lib/platform-auth'
 import {
   adminVerifyUser,
   adminFreezeUser,
@@ -10,8 +10,8 @@ import {
 
 // GET — list verified users + compliance state
 export async function GET(req) {
-  const authError = verifyPlatformAdmin(req)
-  if (authError) return authError
+  const authError = verifyPlatformAuth(req)
+  if (authError) return Response.json({ error: authError.error }, { status: authError.status })
 
   try {
     const [state, users] = await Promise.all([
@@ -26,8 +26,8 @@ export async function GET(req) {
 
 // POST — verify user, freeze, unfreeze, or toggle enforcement
 export async function POST(req) {
-  const authError = verifyPlatformAdmin(req)
-  if (authError) return authError
+  const authError = verifyPlatformAuth(req)
+  if (authError) return Response.json({ error: authError.error }, { status: authError.status })
 
   try {
     const body = await req.json()
