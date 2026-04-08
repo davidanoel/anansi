@@ -52,6 +52,7 @@ function PlatformDashboard({ platformKey, onLogout }) {
   const tabs = [
     { id: "assets", label: "Asset Types" },
     { id: "custodians", label: "Custodians" },
+    { id: "compliance", label: "Compliance" },
     { id: "deposits", label: "Surplus Deposits" },
     { id: "overview", label: "Overview" },
   ];
@@ -90,6 +91,7 @@ function PlatformDashboard({ platformKey, onLogout }) {
 
         {tab === "assets" && <AssetTypesPanel api={api} />}
         {tab === "custodians" && <CustodiansPanel api={api} />}
+        {tab === "compliance" && <CompliancePanel api={api} />}
         {tab === "deposits" && <DepositsPanel api={api} />}
         {tab === "overview" && <OverviewPanel stats={stats} />}
       </div>
@@ -251,6 +253,296 @@ function CustodiansPanel({ api }) {
               </table>
             </div>
           )}
+    </div>
+  );
+}
+
+function CompliancePanel({ api }) {
+  const [users, setUsers] = useState([]);
+  const [state, setState] = useState({ userCount: 0, enforcementEnabled: false });
+  const [loading, setLoading] = useState(true);
+
+  // Verify form
+  const [showVerify, setShowVerify] = useState(false);
+  const [verifyForm, setVerifyForm] = useState({
+    userAddress: '', jurisdiction: 'GD', providerRef: '', role: 0,
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState(null);
+
+  // Freeze form
+  const [freezeAddress, setFreezeAddress] = useState('');
+  const [freezeReason, setFreezeReason] = useState('');
+  const [freezing, setFreezing] = useState(null);
+
+  const loadCompliance = useCallback(async () => {
+    try {
+      const data = await api('compliance');
+      setState({ userCount: data.userCount || 0, enforcementEnabled: data.enforcementEnabled || false });
+      setUsers(Array.isArray(data.users) ? data.users : []);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
+  }, [api]);
+
+  useEffect(() => { loadCompliance(); }, [loadCompliance]);
+
+  const handleVerify = async (e) => {
+    e.preventDefault(); setSubmitting(true); setResult(null);
+    try {
+      const data = await api('compliance', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'verify', ...verifyForm }),
+      });
+      if (data.error) throw new Error(data.error);
+      setResult({ success: true, digest: data.digest });
+      setVerifyForm({ userAddress: '', jurisdiction: 'GD', providerRef: '', role: 0 });
+      setShowVerify(false);
+      setTimeout(loadCompliance, 3000);
+    } catch (err) { setResult({ success: false, error: err.message }); }
+    finally { setSubmitting(false); }
+  };
+
+  const handleFreeze = async (address) => {
+    const reason = prompt('Reason for freeze (regulatory hold, suspicious activity, etc.):');
+    if (!reason) return;
+    setFreezing(address);
+    try {
+      await api('compliance', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'freeze', userAddress: address, reason }),
+      });
+      setTimeout(loadCompliance, 2000);
+    } catch (err) { alert('Freeze failed: ' + err.message); }
+    finally { setFreezing(null); }
+  };
+
+  const handleUnfreeze = async (address) => {
+    setFreezing(address);
+    try {
+      await api('compliance', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'unfreeze', userAddress: address }),
+      });
+      setTimeout(loadCompliance, 2000);
+    } catch (err) { alert('Unfreeze failed: ' + err.message); }
+    finally { setFreezing(null); }
+  };
+
+  const handleToggleEnforcement = async () => {
+    try {
+      await api('compliance', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'set_enforcement', enabled: !state.enforcementEnabled }),
+      });
+      setTimeout(loadCompliance, 2000);
+    } catch (err) { alert('Toggle failed: ' + err.message); }
+  };
+
+  const roleLabels = { 0: 'Buyer', 1: 'Farmer', 2: 'Custodian', 3: 'Admin' };
+  const jurisdictions = [
+    { code: 'GD', name: 'Grenada' },
+    { code: 'TT', name: 'Trinidad & Tobago' },
+    { code: 'BB', name: 'Barbados' },
+    { code: 'JM', name: 'Jamaica' },
+    { code: 'US', name: 'United States' },
+    { code: 'GB', name: 'United Kingdom' },
+    { code: 'EU', name: 'European Union' },
+    { code: 'OTHER', name: 'Other' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header + stats */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-semibold text-lg">Compliance</h2>
+          <p className="text-sm text-anansi-muted">KYC verification, freeze controls, and enforcement settings.</p>
+        </div>
+        <button onClick={() => setShowVerify(!showVerify)} className="btn-primary">
+          {showVerify ? 'Cancel' : '+ Verify User'}
+        </button>
+      </div>
+
+      {/* Enforcement toggle + stats */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="card p-4">
+          <p className="stat-label">Verified Users</p>
+          <p className="stat-value text-lg">{state.userCount}</p>
+        </div>
+        <div className="card p-4">
+          <p className="stat-label">Enforcement</p>
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`badge ${state.enforcementEnabled ? 'badge-open' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/10'}`}>
+              {state.enforcementEnabled ? 'Active' : 'Disabled'}
+            </span>
+          </div>
+        </div>
+        <div className="card p-4 flex items-center justify-center">
+          <button
+            onClick={handleToggleEnforcement}
+            className={`text-sm font-medium px-4 py-2 rounded-lg border transition-colors ${state.enforcementEnabled
+                ? 'border-amber-200 text-amber-700 hover:bg-amber-50'
+                : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
+              }`}
+          >
+            {state.enforcementEnabled ? 'Disable Enforcement' : 'Enable Enforcement'}
+          </button>
+        </div>
+      </div>
+
+      {/* Verify form */}
+      {showVerify && (
+        <div className="card p-6 border-anansi-red/20 animate-scale-in">
+          <h3 className="font-semibold mb-1">Verify New User</h3>
+          <p className="text-sm text-anansi-muted mb-5">
+            Register a user as KYC-verified. This is called after off-chain KYC completion.
+          </p>
+          <form onSubmit={handleVerify} className="grid md:grid-cols-2 gap-4">
+            <Field
+              label="User Address"
+              value={verifyForm.userAddress}
+              onChange={(v) => setVerifyForm(p => ({ ...p, userAddress: v }))}
+              placeholder="0x..."
+              help="The user's Sui / zkLogin address"
+              mono
+            />
+            <div>
+              <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">Jurisdiction</label>
+              <select
+                value={verifyForm.jurisdiction}
+                onChange={(e) => setVerifyForm(p => ({ ...p, jurisdiction: e.target.value }))}
+                className="input-field"
+              >
+                {jurisdictions.map(j => (
+                  <option key={j.code} value={j.code}>{j.code} — {j.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">Role</label>
+              <select
+                value={verifyForm.role}
+                onChange={(e) => setVerifyForm(p => ({ ...p, role: parseInt(e.target.value) }))}
+                className="input-field"
+              >
+                <option value={0}>Buyer</option>
+                <option value={1}>Farmer</option>
+                <option value={2}>Custodian</option>
+                <option value={3}>Admin</option>
+              </select>
+            </div>
+            <Field
+              label="KYC Provider Ref"
+              value={verifyForm.providerRef}
+              onChange={(v) => setVerifyForm(p => ({ ...p, providerRef: v }))}
+              placeholder="KYC-12345"
+              help="External reference from KYC provider (optional)"
+            />
+            <div className="md:col-span-2">
+              <button
+                type="submit"
+                disabled={submitting || !verifyForm.userAddress}
+                className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-emerald-700 transition-colors active:scale-[0.98]"
+              >
+                {submitting ? 'Verifying on-chain...' : 'Verify User'}
+              </button>
+            </div>
+          </form>
+          {result && (
+            <div className={`mt-4 p-4 rounded-lg text-sm ${result.success ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+              {result.success ? `User verified on-chain. Tx: ${result.digest?.slice(0, 24)}…` : `Error: ${result.error}`}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* User list */}
+      {loading ? (
+        <div className="card p-5 h-32 animate-pulse" />
+      ) : users.length === 0 ? (
+        <div className="card text-center py-16">
+          <div className="w-12 h-12 rounded-full bg-anansi-light flex items-center justify-center mx-auto">
+            <svg className="w-6 h-6 text-anansi-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium mt-3">No verified users</p>
+          <p className="text-xs text-anansi-muted mt-1">Click "+ Verify User" to register the first KYC-verified user.</p>
+        </div>
+      ) : (
+        <div className="card overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-anansi-border bg-anansi-light/50">
+                <th className="text-left px-5 py-3 stat-label font-medium">Address</th>
+                <th className="text-left px-5 py-3 stat-label font-medium">Jurisdiction</th>
+                <th className="text-left px-5 py-3 stat-label font-medium">Role</th>
+                <th className="text-left px-5 py-3 stat-label font-medium">Status</th>
+                <th className="text-left px-5 py-3 stat-label font-medium">Verified</th>
+                <th className="text-right px-5 py-3 stat-label font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u, i) => (
+                <tr key={i} className="border-b border-anansi-border last:border-0 hover:bg-anansi-light/30 transition-colors">
+                  <td className="px-5 py-3 font-mono text-xs">{u.address?.slice(0, 8)}···{u.address?.slice(-6)}</td>
+                  <td className="px-5 py-3">
+                    <span className="badge bg-blue-50 text-blue-700 ring-1 ring-blue-600/10">{u.jurisdiction}</span>
+                  </td>
+                  <td className="px-5 py-3">{u.roleLabel}</td>
+                  <td className="px-5 py-3">
+                    {u.frozen
+                      ? <span className="badge bg-red-50 text-red-700 ring-1 ring-red-600/10">Frozen</span>
+                      : <span className="badge badge-open">Active</span>
+                    }
+                  </td>
+                  <td className="px-5 py-3 text-xs text-anansi-muted">
+                    {u.verifiedAt ? new Date(u.verifiedAt).toLocaleDateString() : '—'}
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    {u.frozen ? (
+                      <button
+                        onClick={() => handleUnfreeze(u.address)}
+                        disabled={freezing === u.address}
+                        className="text-xs px-3 py-1 rounded-lg border border-emerald-200 text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-50"
+                      >
+                        {freezing === u.address ? '...' : 'Unfreeze'}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleFreeze(u.address)}
+                        disabled={freezing === u.address}
+                        className="text-xs px-3 py-1 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                      >
+                        {freezing === u.address ? '...' : 'Freeze'}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Info */}
+      <div className="card p-5">
+        <h3 className="font-semibold text-sm mb-3">How compliance works</h3>
+        <div className="space-y-3">
+          {[
+            'Users complete KYC through an external provider (Sumsub, Onfido, etc.).',
+            'After verification, the platform admin registers them on-chain here.',
+            'When enforcement is enabled, only verified + non-frozen addresses can transact.',
+            'Frozen addresses cannot claim surplus, sell tokens, or make purchases.',
+            'Enforcement can be disabled for testnet or early-stage development.',
+          ].map((text, i) => (
+            <div key={i} className="flex gap-3 items-start">
+              <span className="text-xs font-mono text-anansi-muted font-medium mt-0.5">0{i + 1}</span>
+              <p className="text-sm text-anansi-gray leading-relaxed">{text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

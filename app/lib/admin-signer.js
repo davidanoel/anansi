@@ -286,3 +286,147 @@ export async function getAdminStats() {
     totalAssetTypes: Number(regFields.asset_type_count || 0),
   }
 }
+
+// ============================================================
+// Compliance — KYC verification, freeze/unfreeze, enforcement
+// ============================================================
+
+const COMPLIANCE_ID = process.env.NEXT_PUBLIC_COMPLIANCE_ID
+
+// Get ComplianceAdmin capability ID
+export async function getComplianceAdminId() {
+  const client = getClient()
+  const type = `${ORIGINAL_PACKAGE_ID}::compliance::ComplianceAdmin`
+  const result = await client.getOwnedObjects({
+    owner: getAdminAddress(),
+    filter: { StructType: type },
+    options: { showContent: true },
+  })
+  return result.data?.[0]?.data?.objectId || null
+}
+
+// Verify a user (register KYC)
+export async function adminVerifyUser(userAddress, jurisdiction, providerRef, role) {
+  const adminCapId = await getComplianceAdminId()
+  if (!adminCapId) throw new Error('ComplianceAdmin capability not found')
+
+  const tx = new Transaction()
+  tx.moveCall({
+    target: `${PACKAGE_ID}::compliance::verify_user`,
+    arguments: [
+      tx.object(adminCapId),
+      tx.object(COMPLIANCE_ID),
+      tx.pure.address(userAddress),
+      tx.pure.vector('u8', Array.from(new TextEncoder().encode(jurisdiction))),
+      tx.pure.vector('u8', Array.from(new TextEncoder().encode(providerRef || ''))),
+      tx.pure.u8(role),
+      tx.pure.u64(Date.now()),
+    ],
+  })
+  return adminExecute(tx)
+}
+
+// Freeze a user
+export async function adminFreezeUser(userAddress, reason) {
+  const adminCapId = await getComplianceAdminId()
+  if (!adminCapId) throw new Error('ComplianceAdmin capability not found')
+
+  const tx = new Transaction()
+  tx.moveCall({
+    target: `${PACKAGE_ID}::compliance::freeze_user`,
+    arguments: [
+      tx.object(adminCapId),
+      tx.object(COMPLIANCE_ID),
+      tx.pure.address(userAddress),
+      tx.pure.vector('u8', Array.from(new TextEncoder().encode(reason))),
+    ],
+  })
+  return adminExecute(tx)
+}
+
+// Unfreeze a user
+export async function adminUnfreezeUser(userAddress) {
+  const adminCapId = await getComplianceAdminId()
+  if (!adminCapId) throw new Error('ComplianceAdmin capability not found')
+
+  const tx = new Transaction()
+  tx.moveCall({
+    target: `${PACKAGE_ID}::compliance::unfreeze_user`,
+    arguments: [
+      tx.object(adminCapId),
+      tx.object(COMPLIANCE_ID),
+      tx.pure.address(userAddress),
+    ],
+  })
+  return adminExecute(tx)
+}
+
+// Toggle enforcement on/off
+export async function adminSetEnforcement(enabled) {
+  const adminCapId = await getComplianceAdminId()
+  if (!adminCapId) throw new Error('ComplianceAdmin capability not found')
+
+  const tx = new Transaction()
+  tx.moveCall({
+    target: `${PACKAGE_ID}::compliance::set_enforcement`,
+    arguments: [
+      tx.object(adminCapId),
+      tx.object(COMPLIANCE_ID),
+      tx.pure.bool(enabled),
+    ],
+  })
+  return adminExecute(tx)
+}
+
+// Get compliance registry state
+export async function getComplianceState() {
+  const client = getClient()
+  const obj = await client.getObject({
+    id: COMPLIANCE_ID,
+    options: { showContent: true },
+  })
+  const fields = obj.data?.content?.fields || {}
+  return {
+    userCount: Number(fields.user_count || 0),
+    enforcementEnabled: fields.enforcement_enabled || false,
+  }
+}
+
+// Get verified users from events
+export async function getVerifiedUsers() {
+  const client = getClient()
+  const { queryEvents } = await import('./sui')
+
+  const events = await queryEvents(`${PACKAGE_ID}::compliance::UserVerified`, null, 100)
+  let allEvents = [...events.data]
+  if (ORIGINAL_PACKAGE_ID !== PACKAGE_ID) {
+    const oldEvents = await queryEvents(`${ORIGINAL_PACKAGE_ID}::compliance::UserVerified`, null, 100)
+    allEvents = [...allEvents, ...oldEvents.data]
+  }
+
+  // Also check for frozen events
+  const frozenEvents = await queryEvents(`${PACKAGE_ID}::compliance::UserFrozen`, null, 100)
+  const unfrozenEvents = await queryEvents(`${PACKAGE_ID}::compliance::UserUnfrozen`, null, 100)
+
+  const frozenSet = new Set()
+  for (const e of frozenEvents.data) frozenSet.add(e.parsedJson?.user)
+  for (const e of unfrozenEvents.data) frozenSet.delete(e.parsedJson?.user)
+
+  const roleLabels = { 0: 'Buyer', 1: 'Farmer', 2: 'Custodian', 3: 'Admin' }
+  const seenUsers = new Map()
+
+  for (const event of allEvents) {
+    const user = event.parsedJson?.user
+    if (!user || seenUsers.has(user)) continue
+    seenUsers.set(user, {
+      address: user,
+      jurisdiction: event.parsedJson?.jurisdiction || '',
+      role: Number(event.parsedJson?.role || 0),
+      roleLabel: roleLabels[event.parsedJson?.role] || 'Buyer',
+      frozen: frozenSet.has(user),
+      verifiedAt: Number(event.timestampMs || 0),
+    })
+  }
+
+  return Array.from(seenUsers.values())
+}
