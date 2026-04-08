@@ -395,18 +395,24 @@ export async function getComplianceState() {
 // Get verified users from events
 export async function getVerifiedUsers() {
   const client = getClient()
-  const { queryEvents } = await import('./sui')
 
-  const events = await queryEvents(`${PACKAGE_ID}::compliance::UserVerified`, null, 100)
+  async function queryEventsServer(eventType, limit = 100) {
+    return client.queryEvents({
+      query: { MoveEventType: eventType },
+      limit,
+      order: 'descending',
+    })
+  }
+
+  const events = await queryEventsServer(`${PACKAGE_ID}::compliance::UserVerified`)
   let allEvents = [...events.data]
   if (ORIGINAL_PACKAGE_ID !== PACKAGE_ID) {
-    const oldEvents = await queryEvents(`${ORIGINAL_PACKAGE_ID}::compliance::UserVerified`, null, 100)
+    const oldEvents = await queryEventsServer(`${ORIGINAL_PACKAGE_ID}::compliance::UserVerified`)
     allEvents = [...allEvents, ...oldEvents.data]
   }
 
-  // Also check for frozen events
-  const frozenEvents = await queryEvents(`${PACKAGE_ID}::compliance::UserFrozen`, null, 100)
-  const unfrozenEvents = await queryEvents(`${PACKAGE_ID}::compliance::UserUnfrozen`, null, 100)
+  const frozenEvents = await queryEventsServer(`${PACKAGE_ID}::compliance::UserFrozen`)
+  const unfrozenEvents = await queryEventsServer(`${PACKAGE_ID}::compliance::UserUnfrozen`)
 
   const frozenSet = new Set()
   for (const e of frozenEvents.data) frozenSet.add(e.parsedJson?.user)
