@@ -103,7 +103,7 @@ function AssetTypesPanel({ api }) {
   const [form, setForm] = useState({ symbol: "", name: "", unit: "kg", region: "", custodianName: "", custodianAddress: "" });
 
   const loadAssetTypes = useCallback(async () => {
-    try { setAssetTypes(Array.isArray(await api("asset-types")) ? await api("asset-types") : []); } catch {} finally { setLoading(false); }
+    try { setAssetTypes(Array.isArray(await api("asset-types")) ? await api("asset-types") : []); } catch { } finally { setLoading(false); }
   }, [api]);
   useEffect(() => { loadAssetTypes(); }, [loadAssetTypes]);
 
@@ -151,32 +151,32 @@ function AssetTypesPanel({ api }) {
         </div>
       )}
 
-      {loading ? <div className="space-y-3">{[1,2].map(i => <div key={i} className="card p-5 h-24 animate-pulse" />)}</div>
-      : assetTypes.length === 0 ? <EmptyState icon="package" title="No asset types registered" subtitle="Click "+ New Asset Type" to register your first Caribbean asset." />
-      : (
-        <div className="space-y-3">
-          {assetTypes.map((at) => (
-            <div key={at.id} className="card p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-lg font-bold">{at.symbol}</span>
-                  <span className={`badge ${at.active ? "badge-open" : "bg-red-50 text-red-700 ring-1 ring-red-600/10"}`}>{at.active ? "Active" : "Inactive"}</span>
+      {loading ? <div className="space-y-3">{[1, 2].map(i => <div key={i} className="card p-5 h-24 animate-pulse" />)}</div>
+        : assetTypes.length === 0 ? <EmptyState icon="package" title="No asset types registered" subtitle={`Click "+ New Asset Type" to register your first Caribbean asset.`} />
+          : (
+            <div className="space-y-3">
+              {assetTypes.map((at) => (
+                <div key={at.id} className="card p-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg font-bold">{at.symbol}</span>
+                      <span className={`badge ${at.active ? "badge-open" : "bg-red-50 text-red-700 ring-1 ring-red-600/10"}`}>{at.active ? "Active" : "Inactive"}</span>
+                    </div>
+                    <button onClick={() => handleToggle(at.id, at.active)} className={`text-xs px-3 py-1 rounded-lg border transition-colors ${at.active ? "border-red-200 text-red-600 hover:bg-red-50" : "border-emerald-200 text-emerald-600 hover:bg-emerald-50"}`}>
+                      {at.active ? "Deactivate" : "Reactivate"}
+                    </button>
+                  </div>
+                  <p className="text-sm text-anansi-gray mt-2">{at.name}</p>
+                  <div className="flex gap-6 mt-3 text-xs text-anansi-muted">
+                    <span>Region: <strong className="text-anansi-black">{at.region}</strong></span>
+                    <span>Unit: <strong className="text-anansi-black">{at.unit}</strong></span>
+                    <span>Custodian: <strong className="text-anansi-black">{at.custodian}</strong></span>
+                  </div>
+                  <p className="text-[10px] font-mono text-anansi-muted mt-2">{at.id}</p>
                 </div>
-                <button onClick={() => handleToggle(at.id, at.active)} className={`text-xs px-3 py-1 rounded-lg border transition-colors ${at.active ? "border-red-200 text-red-600 hover:bg-red-50" : "border-emerald-200 text-emerald-600 hover:bg-emerald-50"}`}>
-                  {at.active ? "Deactivate" : "Reactivate"}
-                </button>
-              </div>
-              <p className="text-sm text-anansi-gray mt-2">{at.name}</p>
-              <div className="flex gap-6 mt-3 text-xs text-anansi-muted">
-                <span>Region: <strong className="text-anansi-black">{at.region}</strong></span>
-                <span>Unit: <strong className="text-anansi-black">{at.unit}</strong></span>
-                <span>Custodian: <strong className="text-anansi-black">{at.custodian}</strong></span>
-              </div>
-              <p className="text-[10px] font-mono text-anansi-muted mt-2">{at.id}</p>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          )}
     </div>
   );
 }
@@ -188,7 +188,7 @@ function CustodiansPanel({ api }) {
 
   useEffect(() => {
     Promise.all([api("custodians"), api("asset-types")]).then(([c, a]) => { setCustodians(Array.isArray(c) ? c : []); setAssetTypes(Array.isArray(a) ? a : []); })
-    .catch(console.error).finally(() => setLoading(false));
+      .catch(console.error).finally(() => setLoading(false));
   }, [api]);
 
   const handleIssue = async (e) => {
@@ -230,27 +230,27 @@ function CustodiansPanel({ api }) {
       )}
 
       {loading ? <div className="card p-5 h-24 animate-pulse" />
-      : custodians.length === 0 ? <EmptyState icon="user" title="No custodians assigned" subtitle="Custodians are created automatically with asset types, or issue additional caps above." />
-      : (
-        <div className="card overflow-hidden">
-          <table className="w-full text-sm">
-            <thead><tr className="border-b border-anansi-border bg-anansi-light/50">
-              <th className="text-left px-5 py-3 stat-label font-medium">Asset Type</th>
-              <th className="text-left px-5 py-3 stat-label font-medium">Custodian Address</th>
-              <th className="text-left px-5 py-3 stat-label font-medium">Issued</th>
-            </tr></thead>
-            <tbody>
-              {custodians.map((c, i) => (
-                <tr key={i} className="border-b border-anansi-border last:border-0 hover:bg-anansi-light/30 transition-colors">
-                  <td className="px-5 py-3 font-semibold">{c.assetTypeSymbol}</td>
-                  <td className="px-5 py-3 font-mono text-xs">{c.custodianAddress}</td>
-                  <td className="px-5 py-3 text-xs text-anansi-muted">{c.timestamp ? new Date(c.timestamp).toLocaleDateString() : "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+        : custodians.length === 0 ? <EmptyState icon="user" title="No custodians assigned" subtitle="Custodians are created automatically with asset types, or issue additional caps above." />
+          : (
+            <div className="card overflow-hidden">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-anansi-border bg-anansi-light/50">
+                  <th className="text-left px-5 py-3 stat-label font-medium">Asset Type</th>
+                  <th className="text-left px-5 py-3 stat-label font-medium">Custodian Address</th>
+                  <th className="text-left px-5 py-3 stat-label font-medium">Issued</th>
+                </tr></thead>
+                <tbody>
+                  {custodians.map((c, i) => (
+                    <tr key={i} className="border-b border-anansi-border last:border-0 hover:bg-anansi-light/30 transition-colors">
+                      <td className="px-5 py-3 font-semibold">{c.assetTypeSymbol}</td>
+                      <td className="px-5 py-3 font-mono text-xs">{c.custodianAddress}</td>
+                      <td className="px-5 py-3 text-xs text-anansi-muted">{c.timestamp ? new Date(c.timestamp).toLocaleDateString() : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
     </div>
   );
 }
