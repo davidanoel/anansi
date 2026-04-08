@@ -8,6 +8,7 @@
     "start": "next start -p 3001"
   },
   "dependencies": {
+    "@cetusprotocol/aggregator-sdk": "^1.4.8",
     "@cetusprotocol/sui-clmm-sdk": "^1.4.2",
     "@mysten/dapp-kit": "^0.14.0",
     "@mysten/enoki": "^0.4.0",

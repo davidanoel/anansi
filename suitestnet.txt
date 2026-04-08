@@ -36,7 +36,7 @@ Owner (platform admin):0x5e8388bacd2da180d38bbeceee2bdd2ad68958747d92f678af59bae
 custodian (GCNA): 0x7a584a2f129f2823705bde5d4734cff9c09ae3532c521c332beee1d7d088e588 (david.noel.0306@gmail.com)
 farmer: 0x22c814ddf889307d76b5c568c69374aeaa9b8dabee8e4ccc4f6ad46aef5ff887 (tanomoshiko@gmail.com)
 
------------ POOL CREATED (USDC/NUTMG) ----------
+----------- TESTNET POOL CREATED (USDC/NUTMG) ----------
 https://suiscan.xyz/testnet/tx/8hAnds2UYaRwgULmufKziuEc4UXFibq4WW453knjJbx9
 # Cetus V2 Pool ID
 POOL_ID=0x0966038be54c0971880ac85f7536636a461725726c1b4cf270295b9188ba8d5e
