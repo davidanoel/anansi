@@ -1,6 +1,9 @@
 {
   "name": "spice-app",
   "version": "0.1.0",
+  "overrides": {
+    "@mysten/sui": "2.15.0"
+  },
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
@@ -12,7 +15,7 @@
     "@cetusprotocol/sui-clmm-sdk": "^1.4.2",
     "@mysten/dapp-kit": "^0.14.0",
     "@mysten/enoki": "^0.4.0",
-    "@mysten/sui": "^2.13.2",
+    "@mysten/sui": "2.15.0",
     "bn.js": "^5.2.3",
     "decimal.js": "^10.6.0",
     "lucide-react": "^0.383.0",
