@@ -7,13 +7,17 @@ export async function POST(request) {
   if (authError) return NextResponse.json({ error: authError.error }, { status: authError.status })
 
   try {
-    const { lotId, amount } = await request.json()
+    const { lotId, amount, tokenSymbol } = await request.json()
 
     if (!lotId || !amount) {
       return NextResponse.json({ error: 'Missing lotId or amount' }, { status: 400 })
     }
 
-    const result = await adminDepositSurplus(lotId, parseFloat(amount))
+    if (!tokenSymbol) {
+      return NextResponse.json({ error: 'Missing tokenSymbol' }, { status: 400 })
+    }
+
+    const result = await adminDepositSurplus(lotId, parseFloat(amount), tokenSymbol)
 
     return NextResponse.json({
       success: true,

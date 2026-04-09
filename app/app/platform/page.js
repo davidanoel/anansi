@@ -19,35 +19,67 @@ export default function PlatformPage() {
         <div className="max-w-sm w-full animate-fade-in">
           <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-anansi-red to-anansi-black mx-auto shadow-elevated" />
           <h1 className="font-display text-display-sm text-center mt-6">Platform Admin</h1>
-          <p className="text-anansi-muted text-sm text-center mt-2 mb-8">Anansi Technology Corporation</p>
+          <p className="text-anansi-muted text-sm text-center mt-2 mb-8">
+            Anansi Technology Corporation
+          </p>
           <form onSubmit={handleLogin} className="space-y-4">
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              placeholder="Platform admin key" className="input-field font-mono text-center" autoFocus />
-            <button type="submit" disabled={!password} className="btn-primary w-full">Sign in</button>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Platform admin key"
+              className="input-field font-mono text-center"
+              autoFocus
+            />
+            <button type="submit" disabled={!password} className="btn-primary w-full">
+              Sign in
+            </button>
           </form>
         </div>
-        <p className="text-[11px] text-anansi-muted mt-12">Miami, FL · Anansi Technology Corporation</p>
+        <p className="text-[11px] text-anansi-muted mt-12">
+          Miami, FL · Anansi Technology Corporation
+        </p>
       </div>
     );
   }
 
-  return <PlatformDashboard platformKey={platformKey} onLogout={() => { setAuthenticated(false); setPlatformKey(""); }} />;
+  return (
+    <PlatformDashboard
+      platformKey={platformKey}
+      onLogout={() => {
+        setAuthenticated(false);
+        setPlatformKey("");
+      }}
+    />
+  );
 }
 
 function PlatformDashboard({ platformKey, onLogout }) {
   const [tab, setTab] = useState("assets");
   const [stats, setStats] = useState(null);
 
-  const api = useCallback(async (path, options = {}) => {
-    const res = await fetch(`/api/platform/${path}`, {
-      ...options,
-      headers: { "Content-Type": "application/json", "x-platform-key": platformKey, ...options.headers },
-    });
-    if (res.status === 401) { onLogout(); throw new Error("Unauthorized"); }
-    return res.json();
-  }, [platformKey, onLogout]);
+  const api = useCallback(
+    async (path, options = {}) => {
+      const res = await fetch(`/api/platform/${path}`, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          "x-platform-key": platformKey,
+          ...options.headers,
+        },
+      });
+      if (res.status === 401) {
+        onLogout();
+        throw new Error("Unauthorized");
+      }
+      return res.json();
+    },
+    [platformKey, onLogout],
+  );
 
-  useEffect(() => { api("stats").then(setStats).catch(console.error); }, [api]);
+  useEffect(() => {
+    api("stats").then(setStats).catch(console.error);
+  }, [api]);
 
   const tabs = [
     { id: "assets", label: "Asset Types" },
@@ -64,11 +96,22 @@ function PlatformDashboard({ platformKey, onLogout }) {
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 rounded bg-gradient-to-br from-anansi-red to-anansi-accent" />
             <span className="font-display text-white text-lg tracking-tight">Anansi</span>
-            <span className="badge bg-anansi-red/20 text-anansi-red ring-0 text-[10px]">Platform</span>
+            <span className="badge bg-anansi-red/20 text-anansi-red ring-0 text-[10px]">
+              Platform
+            </span>
           </div>
           <div className="flex items-center gap-4">
-            {stats && <span className="text-[11px] text-gray-500 font-mono hidden sm:block">{stats.adminAddress?.slice(0, 8)}···{stats.adminAddress?.slice(-4)}</span>}
-            <button onClick={onLogout} className="text-xs text-gray-500 hover:text-white transition-colors">Sign out</button>
+            {stats && (
+              <span className="text-[11px] text-gray-500 font-mono hidden sm:block">
+                {stats.adminAddress?.slice(0, 8)}···{stats.adminAddress?.slice(-4)}
+              </span>
+            )}
+            <button
+              onClick={onLogout}
+              className="text-xs text-gray-500 hover:text-white transition-colors"
+            >
+              Sign out
+            </button>
           </div>
         </div>
       </header>
@@ -76,16 +119,34 @@ function PlatformDashboard({ platformKey, onLogout }) {
       <div className="max-w-6xl mx-auto px-6 py-8 animate-fade-in">
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="card p-4"><p className="stat-label">Admin</p><p className="stat-value font-mono text-xs">{stats.adminAddress?.slice(0, 12)}…</p></div>
-            <div className="card p-4"><p className="stat-label">Asset Types</p><p className="stat-value text-lg">{stats.assetTypes}</p></div>
-            <div className="card p-4"><p className="stat-label">Total Lots</p><p className="stat-value text-lg">{stats.totalLots}</p></div>
-            <div className="card p-4"><p className="stat-label">Network</p><p className="stat-value">{process.env.NEXT_PUBLIC_SUI_NETWORK || "testnet"}</p></div>
+            <div className="card p-4">
+              <p className="stat-label">Admin</p>
+              <p className="stat-value font-mono text-xs">{stats.adminAddress?.slice(0, 12)}…</p>
+            </div>
+            <div className="card p-4">
+              <p className="stat-label">Asset Types</p>
+              <p className="stat-value text-lg">{stats.assetTypes}</p>
+            </div>
+            <div className="card p-4">
+              <p className="stat-label">Total Lots</p>
+              <p className="stat-value text-lg">{stats.totalLots}</p>
+            </div>
+            <div className="card p-4">
+              <p className="stat-label">Network</p>
+              <p className="stat-value">{process.env.NEXT_PUBLIC_SUI_NETWORK || "testnet"}</p>
+            </div>
           </div>
         )}
 
         <div className="flex gap-1 mb-6 bg-anansi-light rounded-lg p-1">
           {tabs.map((t) => (
-            <button key={t.id} onClick={() => setTab(t.id)} className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${tab === t.id ? "bg-white text-anansi-black shadow-card" : "text-anansi-muted hover:text-anansi-black"}`}>{t.label}</button>
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${tab === t.id ? "bg-white text-anansi-black shadow-card" : "text-anansi-muted hover:text-anansi-black"}`}
+            >
+              {t.label}
+            </button>
           ))}
         </div>
 
@@ -100,115 +161,260 @@ function PlatformDashboard({ platformKey, onLogout }) {
 }
 
 function AssetTypesPanel({ api }) {
-  const [assetTypes, setAssetTypes] = useState([]); const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false); const [submitting, setSubmitting] = useState(false); const [result, setResult] = useState(null);
-  const [form, setForm] = useState({ symbol: "", name: "", unit: "kg", region: "", custodianName: "", custodianAddress: "" });
+  const [assetTypes, setAssetTypes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState(null);
+  const [form, setForm] = useState({
+    symbol: "",
+    name: "",
+    unit: "kg",
+    region: "",
+    custodianName: "",
+    custodianAddress: "",
+  });
 
   const loadAssetTypes = useCallback(async () => {
-    try { setAssetTypes(Array.isArray(await api("asset-types")) ? await api("asset-types") : []); } catch { } finally { setLoading(false); }
+    try {
+      setAssetTypes(Array.isArray(await api("asset-types")) ? await api("asset-types") : []);
+    } catch {
+    } finally {
+      setLoading(false);
+    }
   }, [api]);
-  useEffect(() => { loadAssetTypes(); }, [loadAssetTypes]);
+  useEffect(() => {
+    loadAssetTypes();
+  }, [loadAssetTypes]);
 
   const handleCreate = async (e) => {
-    e.preventDefault(); setSubmitting(true); setResult(null);
+    e.preventDefault();
+    setSubmitting(true);
+    setResult(null);
     try {
       const data = await api("asset-types", { method: "POST", body: JSON.stringify(form) });
       if (data.error) throw new Error(data.error);
-      setResult({ success: true, data }); setForm({ symbol: "", name: "", unit: "kg", region: "", custodianName: "", custodianAddress: "" }); setShowForm(false);
+      setResult({ success: true, data });
+      setForm({
+        symbol: "",
+        name: "",
+        unit: "kg",
+        region: "",
+        custodianName: "",
+        custodianAddress: "",
+      });
+      setShowForm(false);
       setTimeout(loadAssetTypes, 3000);
-    } catch (err) { setResult({ success: false, error: err.message }); }
-    finally { setSubmitting(false); }
+    } catch (err) {
+      setResult({ success: false, error: err.message });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleToggle = async (assetTypeId, currentlyActive) => {
-    try { await api("asset-types", { method: "PATCH", body: JSON.stringify({ assetTypeId, action: currentlyActive ? "deactivate" : "reactivate" }) }); setTimeout(loadAssetTypes, 2000); }
-    catch (err) { alert("Failed: " + err.message); }
+    try {
+      await api("asset-types", {
+        method: "PATCH",
+        body: JSON.stringify({
+          assetTypeId,
+          action: currentlyActive ? "deactivate" : "reactivate",
+        }),
+      });
+      setTimeout(loadAssetTypes, 2000);
+    } catch (err) {
+      alert("Failed: " + err.message);
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h2 className="font-semibold text-lg">Asset Types</h2><p className="text-sm text-anansi-muted">Register and manage tokenizable Caribbean assets.</p></div>
-        <button onClick={() => setShowForm(!showForm)} className="btn-primary">{showForm ? "Cancel" : "+ New Asset Type"}</button>
+        <div>
+          <h2 className="font-semibold text-lg">Asset Types</h2>
+          <p className="text-sm text-anansi-muted">
+            Register and manage tokenizable Caribbean assets.
+          </p>
+        </div>
+        <button onClick={() => setShowForm(!showForm)} className="btn-primary">
+          {showForm ? "Cancel" : "+ New Asset Type"}
+        </button>
       </div>
 
       {showForm && (
         <div className="card p-6 border-anansi-red/20 animate-scale-in">
           <h3 className="font-semibold mb-1">Register New Asset Type</h3>
-          <p className="text-sm text-anansi-muted mb-5">Creates an on-chain asset type and issues a CustodianCap to the specified address.</p>
+          <p className="text-sm text-anansi-muted mb-5">
+            Creates an on-chain asset type and issues a CustodianCap to the specified address.
+          </p>
           <form onSubmit={handleCreate} className="grid md:grid-cols-2 gap-4">
-            <Field label="Symbol" value={form.symbol} onChange={(v) => setForm((p) => ({ ...p, symbol: v }))} placeholder="NUTMG" help="Short ticker" />
-            <Field label="Full Name" value={form.name} onChange={(v) => setForm((p) => ({ ...p, name: v }))} placeholder="Grenada Nutmeg" />
-            <Field label="Unit" value={form.unit} onChange={(v) => setForm((p) => ({ ...p, unit: v }))} placeholder="kg" help="kg, sqft, barrel" />
-            <Field label="Region" value={form.region} onChange={(v) => setForm((p) => ({ ...p, region: v }))} placeholder="Grenada" />
-            <Field label="Custodian Name" value={form.custodianName} onChange={(v) => setForm((p) => ({ ...p, custodianName: v }))} placeholder="GCNA" help="Organization with physical custody" />
-            <Field label="Custodian Address" value={form.custodianAddress} onChange={(v) => setForm((p) => ({ ...p, custodianAddress: v }))} placeholder="0x..." help="Sui address (zkLogin)" mono />
+            <Field
+              label="Symbol"
+              value={form.symbol}
+              onChange={(v) => setForm((p) => ({ ...p, symbol: v }))}
+              placeholder="NUTMG"
+              help="Short ticker"
+            />
+            <Field
+              label="Full Name"
+              value={form.name}
+              onChange={(v) => setForm((p) => ({ ...p, name: v }))}
+              placeholder="Grenada Nutmeg"
+            />
+            <Field
+              label="Unit"
+              value={form.unit}
+              onChange={(v) => setForm((p) => ({ ...p, unit: v }))}
+              placeholder="kg"
+              help="kg, sqft, barrel"
+            />
+            <Field
+              label="Region"
+              value={form.region}
+              onChange={(v) => setForm((p) => ({ ...p, region: v }))}
+              placeholder="Grenada"
+            />
+            <Field
+              label="Custodian Name"
+              value={form.custodianName}
+              onChange={(v) => setForm((p) => ({ ...p, custodianName: v }))}
+              placeholder="GCNA"
+              help="Organization with physical custody"
+            />
+            <Field
+              label="Custodian Address"
+              value={form.custodianAddress}
+              onChange={(v) => setForm((p) => ({ ...p, custodianAddress: v }))}
+              placeholder="0x..."
+              help="Sui address (zkLogin)"
+              mono
+            />
             <div className="md:col-span-2">
-              <button type="submit" disabled={submitting} className="px-6 py-2.5 bg-anansi-red text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-anansi-red-light transition-colors active:scale-[0.98]">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-6 py-2.5 bg-anansi-red text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-anansi-red-light transition-colors active:scale-[0.98]"
+              >
                 {submitting ? "Creating on-chain..." : "Create Asset Type"}
               </button>
             </div>
           </form>
-          {result && <ResultBanner result={result} successMsg={<><span className="font-medium">Asset type created.</span> <span className="font-mono text-xs">Tx: {result.data?.digest}</span></>} />}
+          {result && (
+            <ResultBanner
+              result={result}
+              successMsg={
+                <>
+                  <span className="font-medium">Asset type created.</span>{" "}
+                  <span className="font-mono text-xs">Tx: {result.data?.digest}</span>
+                </>
+              }
+            />
+          )}
         </div>
       )}
 
-      {loading ? <div className="space-y-3">{[1, 2].map(i => <div key={i} className="card p-5 h-24 animate-pulse" />)}</div>
-        : assetTypes.length === 0 ? <EmptyState icon="package" title="No asset types registered" subtitle={`Click "+ New Asset Type" to register your first Caribbean asset.`} />
-          : (
-            <div className="space-y-3">
-              {assetTypes.map((at) => (
-                <div key={at.id} className="card p-5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg font-bold">{at.symbol}</span>
-                      <span className={`badge ${at.active ? "badge-open" : "bg-red-50 text-red-700 ring-1 ring-red-600/10"}`}>{at.active ? "Active" : "Inactive"}</span>
-                    </div>
-                    <button onClick={() => handleToggle(at.id, at.active)} className={`text-xs px-3 py-1 rounded-lg border transition-colors ${at.active ? "border-red-200 text-red-600 hover:bg-red-50" : "border-emerald-200 text-emerald-600 hover:bg-emerald-50"}`}>
-                      {at.active ? "Deactivate" : "Reactivate"}
-                    </button>
-                  </div>
-                  <p className="text-sm text-anansi-gray mt-2">{at.name}</p>
-                  <div className="flex gap-6 mt-3 text-xs text-anansi-muted">
-                    <span>Region: <strong className="text-anansi-black">{at.region}</strong></span>
-                    <span>Unit: <strong className="text-anansi-black">{at.unit}</strong></span>
-                    <span>Custodian: <strong className="text-anansi-black">{at.custodian}</strong></span>
-                  </div>
-                  <p className="text-[10px] font-mono text-anansi-muted mt-2">{at.id}</p>
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2].map((i) => (
+            <div key={i} className="card p-5 h-24 animate-pulse" />
+          ))}
+        </div>
+      ) : assetTypes.length === 0 ? (
+        <EmptyState
+          icon="package"
+          title="No asset types registered"
+          subtitle={`Click "+ New Asset Type" to register your first Caribbean asset.`}
+        />
+      ) : (
+        <div className="space-y-3">
+          {assetTypes.map((at) => (
+            <div key={at.id} className="card p-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg font-bold">{at.symbol}</span>
+                  <span
+                    className={`badge ${at.active ? "badge-open" : "bg-red-50 text-red-700 ring-1 ring-red-600/10"}`}
+                  >
+                    {at.active ? "Active" : "Inactive"}
+                  </span>
                 </div>
-              ))}
+                <button
+                  onClick={() => handleToggle(at.id, at.active)}
+                  className={`text-xs px-3 py-1 rounded-lg border transition-colors ${at.active ? "border-red-200 text-red-600 hover:bg-red-50" : "border-emerald-200 text-emerald-600 hover:bg-emerald-50"}`}
+                >
+                  {at.active ? "Deactivate" : "Reactivate"}
+                </button>
+              </div>
+              <p className="text-sm text-anansi-gray mt-2">{at.name}</p>
+              <div className="flex gap-6 mt-3 text-xs text-anansi-muted">
+                <span>
+                  Region: <strong className="text-anansi-black">{at.region}</strong>
+                </span>
+                <span>
+                  Unit: <strong className="text-anansi-black">{at.unit}</strong>
+                </span>
+                <span>
+                  Custodian: <strong className="text-anansi-black">{at.custodian}</strong>
+                </span>
+              </div>
+              <p className="text-[10px] font-mono text-anansi-muted mt-2">{at.id}</p>
             </div>
-          )}
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function CustodiansPanel({ api }) {
-  const [custodians, setCustodians] = useState([]); const [assetTypes, setAssetTypes] = useState([]); const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false); const [form, setForm] = useState({ assetTypeId: "", custodianAddress: "" });
-  const [submitting, setSubmitting] = useState(false); const [result, setResult] = useState(null);
+  const [custodians, setCustodians] = useState([]);
+  const [assetTypes, setAssetTypes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ assetTypeId: "", custodianAddress: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState(null);
 
   useEffect(() => {
-    Promise.all([api("custodians"), api("asset-types")]).then(([c, a]) => { setCustodians(Array.isArray(c) ? c : []); setAssetTypes(Array.isArray(a) ? a : []); })
-      .catch(console.error).finally(() => setLoading(false));
+    Promise.all([api("custodians"), api("asset-types")])
+      .then(([c, a]) => {
+        setCustodians(Array.isArray(c) ? c : []);
+        setAssetTypes(Array.isArray(a) ? a : []);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, [api]);
 
   const handleIssue = async (e) => {
-    e.preventDefault(); setSubmitting(true); setResult(null);
+    e.preventDefault();
+    setSubmitting(true);
+    setResult(null);
     try {
       const data = await api("custodians", { method: "POST", body: JSON.stringify(form) });
       if (data.error) throw new Error(data.error);
-      setResult({ success: true, digest: data.digest }); setForm({ assetTypeId: "", custodianAddress: "" }); setShowForm(false);
+      setResult({ success: true, digest: data.digest });
+      setForm({ assetTypeId: "", custodianAddress: "" });
+      setShowForm(false);
       setCustodians(Array.isArray(await api("custodians")) ? await api("custodians") : []);
-    } catch (err) { setResult({ success: false, error: err.message }); }
-    finally { setSubmitting(false); }
+    } catch (err) {
+      setResult({ success: false, error: err.message });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h2 className="font-semibold text-lg">Custodians</h2><p className="text-sm text-anansi-muted">Manage who can create lots and record deliveries.</p></div>
-        <button onClick={() => setShowForm(!showForm)} className="btn-primary">{showForm ? "Cancel" : "+ Issue Cap"}</button>
+        <div>
+          <h2 className="font-semibold text-lg">Custodians</h2>
+          <p className="text-sm text-anansi-muted">
+            Manage who can create lots and record deliveries.
+          </p>
+        </div>
+        <button onClick={() => setShowForm(!showForm)} className="btn-primary">
+          {showForm ? "Cancel" : "+ Issue Cap"}
+        </button>
       </div>
 
       {showForm && (
@@ -216,43 +422,83 @@ function CustodiansPanel({ api }) {
           <h3 className="font-semibold mb-4">Issue New Custodian Capability</h3>
           <form onSubmit={handleIssue} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">Asset Type</label>
-              <select value={form.assetTypeId} onChange={(e) => setForm((p) => ({ ...p, assetTypeId: e.target.value }))} className="input-field" required>
+              <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">
+                Asset Type
+              </label>
+              <select
+                value={form.assetTypeId}
+                onChange={(e) => setForm((p) => ({ ...p, assetTypeId: e.target.value }))}
+                className="input-field"
+                required
+              >
                 <option value="">Select asset type...</option>
-                {assetTypes.map((at) => <option key={at.id} value={at.id}>{at.symbol} — {at.name}</option>)}
+                {assetTypes.map((at) => (
+                  <option key={at.id} value={at.id}>
+                    {at.symbol} — {at.name}
+                  </option>
+                ))}
               </select>
             </div>
-            <Field label="Custodian Address" value={form.custodianAddress} onChange={(v) => setForm((p) => ({ ...p, custodianAddress: v }))} placeholder="0x..." help="Sui address of the new custodian" mono />
-            <button type="submit" disabled={submitting || !form.assetTypeId || !form.custodianAddress} className="px-6 py-2.5 bg-anansi-red text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-anansi-red-light transition-colors active:scale-[0.98]">
+            <Field
+              label="Custodian Address"
+              value={form.custodianAddress}
+              onChange={(v) => setForm((p) => ({ ...p, custodianAddress: v }))}
+              placeholder="0x..."
+              help="Sui address of the new custodian"
+              mono
+            />
+            <button
+              type="submit"
+              disabled={submitting || !form.assetTypeId || !form.custodianAddress}
+              className="px-6 py-2.5 bg-anansi-red text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-anansi-red-light transition-colors active:scale-[0.98]"
+            >
               {submitting ? "Issuing on-chain..." : "Issue Custodian Cap"}
             </button>
           </form>
-          {result && <ResultBanner result={result} successMsg={`Custodian cap issued. Tx: ${result.digest}`} />}
+          {result && (
+            <ResultBanner
+              result={result}
+              successMsg={`Custodian cap issued. Tx: ${result.digest}`}
+            />
+          )}
         </div>
       )}
 
-      {loading ? <div className="card p-5 h-24 animate-pulse" />
-        : custodians.length === 0 ? <EmptyState icon="user" title="No custodians assigned" subtitle="Custodians are created automatically with asset types, or issue additional caps above." />
-          : (
-            <div className="card overflow-hidden">
-              <table className="w-full text-sm">
-                <thead><tr className="border-b border-anansi-border bg-anansi-light/50">
-                  <th className="text-left px-5 py-3 stat-label font-medium">Asset Type</th>
-                  <th className="text-left px-5 py-3 stat-label font-medium">Custodian Address</th>
-                  <th className="text-left px-5 py-3 stat-label font-medium">Issued</th>
-                </tr></thead>
-                <tbody>
-                  {custodians.map((c, i) => (
-                    <tr key={i} className="border-b border-anansi-border last:border-0 hover:bg-anansi-light/30 transition-colors">
-                      <td className="px-5 py-3 font-semibold">{c.assetTypeSymbol}</td>
-                      <td className="px-5 py-3 font-mono text-xs">{c.custodianAddress}</td>
-                      <td className="px-5 py-3 text-xs text-anansi-muted">{c.timestamp ? new Date(c.timestamp).toLocaleDateString() : "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+      {loading ? (
+        <div className="card p-5 h-24 animate-pulse" />
+      ) : custodians.length === 0 ? (
+        <EmptyState
+          icon="user"
+          title="No custodians assigned"
+          subtitle="Custodians are created automatically with asset types, or issue additional caps above."
+        />
+      ) : (
+        <div className="card overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-anansi-border bg-anansi-light/50">
+                <th className="text-left px-5 py-3 stat-label font-medium">Asset Type</th>
+                <th className="text-left px-5 py-3 stat-label font-medium">Custodian Address</th>
+                <th className="text-left px-5 py-3 stat-label font-medium">Issued</th>
+              </tr>
+            </thead>
+            <tbody>
+              {custodians.map((c, i) => (
+                <tr
+                  key={i}
+                  className="border-b border-anansi-border last:border-0 hover:bg-anansi-light/30 transition-colors"
+                >
+                  <td className="px-5 py-3 font-semibold">{c.assetTypeSymbol}</td>
+                  <td className="px-5 py-3 font-mono text-xs">{c.custodianAddress}</td>
+                  <td className="px-5 py-3 text-xs text-anansi-muted">
+                    {c.timestamp ? new Date(c.timestamp).toLocaleDateString() : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -265,89 +511,113 @@ function CompliancePanel({ api }) {
   // Verify form
   const [showVerify, setShowVerify] = useState(false);
   const [verifyForm, setVerifyForm] = useState({
-    userAddress: '', jurisdiction: 'GD', providerRef: '', role: 0,
+    userAddress: "",
+    jurisdiction: "GD",
+    providerRef: "",
+    role: 0,
   });
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
 
   // Freeze form
-  const [freezeAddress, setFreezeAddress] = useState('');
-  const [freezeReason, setFreezeReason] = useState('');
+  const [freezeAddress, setFreezeAddress] = useState("");
+  const [freezeReason, setFreezeReason] = useState("");
   const [freezing, setFreezing] = useState(null);
 
   const loadCompliance = useCallback(async () => {
     try {
-      const data = await api('compliance');
-      setState({ userCount: data.userCount || 0, enforcementEnabled: data.enforcementEnabled || false });
+      const data = await api("compliance");
+      setState({
+        userCount: data.userCount || 0,
+        enforcementEnabled: data.enforcementEnabled || false,
+      });
       setUsers(Array.isArray(data.users) ? data.users : []);
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }, [api]);
 
-  useEffect(() => { loadCompliance(); }, [loadCompliance]);
+  useEffect(() => {
+    loadCompliance();
+  }, [loadCompliance]);
 
   const handleVerify = async (e) => {
-    e.preventDefault(); setSubmitting(true); setResult(null);
+    e.preventDefault();
+    setSubmitting(true);
+    setResult(null);
     try {
-      const data = await api('compliance', {
-        method: 'POST',
-        body: JSON.stringify({ action: 'verify', ...verifyForm }),
+      const data = await api("compliance", {
+        method: "POST",
+        body: JSON.stringify({ action: "verify", ...verifyForm }),
       });
       if (data.error) throw new Error(data.error);
       setResult({ success: true, digest: data.digest });
-      setVerifyForm({ userAddress: '', jurisdiction: 'GD', providerRef: '', role: 0 });
+      setVerifyForm({ userAddress: "", jurisdiction: "GD", providerRef: "", role: 0 });
       setShowVerify(false);
       setTimeout(loadCompliance, 3000);
-    } catch (err) { setResult({ success: false, error: err.message }); }
-    finally { setSubmitting(false); }
+    } catch (err) {
+      setResult({ success: false, error: err.message });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleFreeze = async (address) => {
-    const reason = prompt('Reason for freeze (regulatory hold, suspicious activity, etc.):');
+    const reason = prompt("Reason for freeze (regulatory hold, suspicious activity, etc.):");
     if (!reason) return;
     setFreezing(address);
     try {
-      await api('compliance', {
-        method: 'POST',
-        body: JSON.stringify({ action: 'freeze', userAddress: address, reason }),
+      await api("compliance", {
+        method: "POST",
+        body: JSON.stringify({ action: "freeze", userAddress: address, reason }),
       });
       setTimeout(loadCompliance, 2000);
-    } catch (err) { alert('Freeze failed: ' + err.message); }
-    finally { setFreezing(null); }
+    } catch (err) {
+      alert("Freeze failed: " + err.message);
+    } finally {
+      setFreezing(null);
+    }
   };
 
   const handleUnfreeze = async (address) => {
     setFreezing(address);
     try {
-      await api('compliance', {
-        method: 'POST',
-        body: JSON.stringify({ action: 'unfreeze', userAddress: address }),
+      await api("compliance", {
+        method: "POST",
+        body: JSON.stringify({ action: "unfreeze", userAddress: address }),
       });
       setTimeout(loadCompliance, 2000);
-    } catch (err) { alert('Unfreeze failed: ' + err.message); }
-    finally { setFreezing(null); }
+    } catch (err) {
+      alert("Unfreeze failed: " + err.message);
+    } finally {
+      setFreezing(null);
+    }
   };
 
   const handleToggleEnforcement = async () => {
     try {
-      await api('compliance', {
-        method: 'POST',
-        body: JSON.stringify({ action: 'set_enforcement', enabled: !state.enforcementEnabled }),
+      await api("compliance", {
+        method: "POST",
+        body: JSON.stringify({ action: "set_enforcement", enabled: !state.enforcementEnabled }),
       });
       setTimeout(loadCompliance, 2000);
-    } catch (err) { alert('Toggle failed: ' + err.message); }
+    } catch (err) {
+      alert("Toggle failed: " + err.message);
+    }
   };
 
-  const roleLabels = { 0: 'Buyer', 1: 'Farmer', 2: 'Custodian', 3: 'Admin' };
+  const roleLabels = { 0: "Buyer", 1: "Farmer", 2: "Custodian", 3: "Admin" };
   const jurisdictions = [
-    { code: 'GD', name: 'Grenada' },
-    { code: 'TT', name: 'Trinidad & Tobago' },
-    { code: 'BB', name: 'Barbados' },
-    { code: 'JM', name: 'Jamaica' },
-    { code: 'US', name: 'United States' },
-    { code: 'GB', name: 'United Kingdom' },
-    { code: 'EU', name: 'European Union' },
-    { code: 'OTHER', name: 'Other' },
+    { code: "GD", name: "Grenada" },
+    { code: "TT", name: "Trinidad & Tobago" },
+    { code: "BB", name: "Barbados" },
+    { code: "JM", name: "Jamaica" },
+    { code: "US", name: "United States" },
+    { code: "GB", name: "United Kingdom" },
+    { code: "EU", name: "European Union" },
+    { code: "OTHER", name: "Other" },
   ];
 
   return (
@@ -356,10 +626,12 @@ function CompliancePanel({ api }) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-semibold text-lg">Compliance</h2>
-          <p className="text-sm text-anansi-muted">KYC verification, freeze controls, and enforcement settings.</p>
+          <p className="text-sm text-anansi-muted">
+            KYC verification, freeze controls, and enforcement settings.
+          </p>
         </div>
         <button onClick={() => setShowVerify(!showVerify)} className="btn-primary">
-          {showVerify ? 'Cancel' : '+ Verify User'}
+          {showVerify ? "Cancel" : "+ Verify User"}
         </button>
       </div>
 
@@ -372,20 +644,23 @@ function CompliancePanel({ api }) {
         <div className="card p-4">
           <p className="stat-label">Enforcement</p>
           <div className="flex items-center gap-2 mt-1">
-            <span className={`badge ${state.enforcementEnabled ? 'badge-open' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/10'}`}>
-              {state.enforcementEnabled ? 'Active' : 'Disabled'}
+            <span
+              className={`badge ${state.enforcementEnabled ? "badge-open" : "bg-amber-50 text-amber-700 ring-1 ring-amber-600/10"}`}
+            >
+              {state.enforcementEnabled ? "Active" : "Disabled"}
             </span>
           </div>
         </div>
         <div className="card p-4 flex items-center justify-center">
           <button
             onClick={handleToggleEnforcement}
-            className={`text-sm font-medium px-4 py-2 rounded-lg border transition-colors ${state.enforcementEnabled
-                ? 'border-amber-200 text-amber-700 hover:bg-amber-50'
-                : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
-              }`}
+            className={`text-sm font-medium px-4 py-2 rounded-lg border transition-colors ${
+              state.enforcementEnabled
+                ? "border-amber-200 text-amber-700 hover:bg-amber-50"
+                : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+            }`}
           >
-            {state.enforcementEnabled ? 'Disable Enforcement' : 'Enable Enforcement'}
+            {state.enforcementEnabled ? "Disable Enforcement" : "Enable Enforcement"}
           </button>
         </div>
       </div>
@@ -401,28 +676,34 @@ function CompliancePanel({ api }) {
             <Field
               label="User Address"
               value={verifyForm.userAddress}
-              onChange={(v) => setVerifyForm(p => ({ ...p, userAddress: v }))}
+              onChange={(v) => setVerifyForm((p) => ({ ...p, userAddress: v }))}
               placeholder="0x..."
               help="The user's Sui / zkLogin address"
               mono
             />
             <div>
-              <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">Jurisdiction</label>
+              <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">
+                Jurisdiction
+              </label>
               <select
                 value={verifyForm.jurisdiction}
-                onChange={(e) => setVerifyForm(p => ({ ...p, jurisdiction: e.target.value }))}
+                onChange={(e) => setVerifyForm((p) => ({ ...p, jurisdiction: e.target.value }))}
                 className="input-field"
               >
-                {jurisdictions.map(j => (
-                  <option key={j.code} value={j.code}>{j.code} — {j.name}</option>
+                {jurisdictions.map((j) => (
+                  <option key={j.code} value={j.code}>
+                    {j.code} — {j.name}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">Role</label>
+              <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">
+                Role
+              </label>
               <select
                 value={verifyForm.role}
-                onChange={(e) => setVerifyForm(p => ({ ...p, role: parseInt(e.target.value) }))}
+                onChange={(e) => setVerifyForm((p) => ({ ...p, role: parseInt(e.target.value) }))}
                 className="input-field"
               >
                 <option value={0}>Buyer</option>
@@ -434,7 +715,7 @@ function CompliancePanel({ api }) {
             <Field
               label="KYC Provider Ref"
               value={verifyForm.providerRef}
-              onChange={(v) => setVerifyForm(p => ({ ...p, providerRef: v }))}
+              onChange={(v) => setVerifyForm((p) => ({ ...p, providerRef: v }))}
               placeholder="KYC-12345"
               help="External reference from KYC provider (optional)"
             />
@@ -444,13 +725,17 @@ function CompliancePanel({ api }) {
                 disabled={submitting || !verifyForm.userAddress}
                 className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-emerald-700 transition-colors active:scale-[0.98]"
               >
-                {submitting ? 'Verifying on-chain...' : 'Verify User'}
+                {submitting ? "Verifying on-chain..." : "Verify User"}
               </button>
             </div>
           </form>
           {result && (
-            <div className={`mt-4 p-4 rounded-lg text-sm ${result.success ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
-              {result.success ? `User verified on-chain. Tx: ${result.digest?.slice(0, 24)}…` : `Error: ${result.error}`}
+            <div
+              className={`mt-4 p-4 rounded-lg text-sm ${result.success ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-800 border border-red-200"}`}
+            >
+              {result.success
+                ? `User verified on-chain. Tx: ${result.digest?.slice(0, 24)}…`
+                : `Error: ${result.error}`}
             </div>
           )}
         </div>
@@ -462,12 +747,24 @@ function CompliancePanel({ api }) {
       ) : users.length === 0 ? (
         <div className="card text-center py-16">
           <div className="w-12 h-12 rounded-full bg-anansi-light flex items-center justify-center mx-auto">
-            <svg className="w-6 h-6 text-anansi-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            <svg
+              className="w-6 h-6 text-anansi-muted"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+              />
             </svg>
           </div>
           <p className="text-sm font-medium mt-3">No verified users</p>
-          <p className="text-xs text-anansi-muted mt-1">Click "+ Verify User" to register the first KYC-verified user.</p>
+          <p className="text-xs text-anansi-muted mt-1">
+            Click "+ Verify User" to register the first KYC-verified user.
+          </p>
         </div>
       ) : (
         <div className="card overflow-hidden">
@@ -484,20 +781,30 @@ function CompliancePanel({ api }) {
             </thead>
             <tbody>
               {users.map((u, i) => (
-                <tr key={i} className="border-b border-anansi-border last:border-0 hover:bg-anansi-light/30 transition-colors">
-                  <td className="px-5 py-3 font-mono text-xs">{u.address?.slice(0, 8)}···{u.address?.slice(-6)}</td>
+                <tr
+                  key={i}
+                  className="border-b border-anansi-border last:border-0 hover:bg-anansi-light/30 transition-colors"
+                >
+                  <td className="px-5 py-3 font-mono text-xs">
+                    {u.address?.slice(0, 8)}···{u.address?.slice(-6)}
+                  </td>
                   <td className="px-5 py-3">
-                    <span className="badge bg-blue-50 text-blue-700 ring-1 ring-blue-600/10">{u.jurisdiction}</span>
+                    <span className="badge bg-blue-50 text-blue-700 ring-1 ring-blue-600/10">
+                      {u.jurisdiction}
+                    </span>
                   </td>
                   <td className="px-5 py-3">{u.roleLabel}</td>
                   <td className="px-5 py-3">
-                    {u.frozen
-                      ? <span className="badge bg-red-50 text-red-700 ring-1 ring-red-600/10">Frozen</span>
-                      : <span className="badge badge-open">Active</span>
-                    }
+                    {u.frozen ? (
+                      <span className="badge bg-red-50 text-red-700 ring-1 ring-red-600/10">
+                        Frozen
+                      </span>
+                    ) : (
+                      <span className="badge badge-open">Active</span>
+                    )}
                   </td>
                   <td className="px-5 py-3 text-xs text-anansi-muted">
-                    {u.verifiedAt ? new Date(u.verifiedAt).toLocaleDateString() : '—'}
+                    {u.verifiedAt ? new Date(u.verifiedAt).toLocaleDateString() : "—"}
                   </td>
                   <td className="px-5 py-3 text-right">
                     {u.frozen ? (
@@ -506,7 +813,7 @@ function CompliancePanel({ api }) {
                         disabled={freezing === u.address}
                         className="text-xs px-3 py-1 rounded-lg border border-emerald-200 text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-50"
                       >
-                        {freezing === u.address ? '...' : 'Unfreeze'}
+                        {freezing === u.address ? "..." : "Unfreeze"}
                       </button>
                     ) : (
                       <button
@@ -514,7 +821,7 @@ function CompliancePanel({ api }) {
                         disabled={freezing === u.address}
                         className="text-xs px-3 py-1 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
                       >
-                        {freezing === u.address ? '...' : 'Freeze'}
+                        {freezing === u.address ? "..." : "Freeze"}
                       </button>
                     )}
                   </td>
@@ -530,14 +837,16 @@ function CompliancePanel({ api }) {
         <h3 className="font-semibold text-sm mb-3">How compliance works</h3>
         <div className="space-y-3">
           {[
-            'Users complete KYC through an external provider (Sumsub, Onfido, etc.).',
-            'After verification, the platform admin registers them on-chain here.',
-            'When enforcement is enabled, only verified + non-frozen addresses can transact.',
-            'Frozen addresses cannot claim surplus, sell tokens, or make purchases.',
-            'Enforcement can be disabled for testnet or early-stage development.',
+            "Users complete KYC through an external provider (Sumsub, Onfido, etc.).",
+            "After verification, the platform admin registers them on-chain here.",
+            "When enforcement is enabled, only verified + non-frozen addresses can transact.",
+            "Frozen addresses cannot claim surplus, sell tokens, or make purchases.",
+            "Enforcement can be disabled for testnet or early-stage development.",
           ].map((text, i) => (
             <div key={i} className="flex gap-3 items-start">
-              <span className="text-xs font-mono text-anansi-muted font-medium mt-0.5">0{i + 1}</span>
+              <span className="text-xs font-mono text-anansi-muted font-medium mt-0.5">
+                0{i + 1}
+              </span>
               <p className="text-sm text-anansi-gray leading-relaxed">{text}</p>
             </div>
           ))}
@@ -548,46 +857,131 @@ function CompliancePanel({ api }) {
 }
 
 function DepositsPanel({ api }) {
-  const [lotId, setLotId] = useState(""); const [amount, setAmount] = useState("");
-  const [submitting, setSubmitting] = useState(false); const [result, setResult] = useState(null);
+  const [lotId, setLotId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [tokenSymbol, setTokenSymbol] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState(null);
+
+  // Read registered tokens from env (works server-rendered)
+  const registeredTokens = (process.env.NEXT_PUBLIC_REGISTERED_TOKENS || "NUTMEG")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  // Default to first token
+  useEffect(() => {
+    if (!tokenSymbol && registeredTokens.length > 0) {
+      setTokenSymbol(registeredTokens[0]);
+    }
+  }, []);
+
   const handleDeposit = async (e) => {
-    e.preventDefault(); setSubmitting(true); setResult(null);
+    e.preventDefault();
+    setSubmitting(true);
+    setResult(null);
     try {
-      const data = await api("deposit", { method: "POST", body: JSON.stringify({ lotId, amount: parseFloat(amount) }) });
+      const data = await api("deposit", {
+        method: "POST",
+        body: JSON.stringify({ lotId, amount: parseFloat(amount), tokenSymbol }),
+      });
       if (data.error) throw new Error(data.error);
-      setResult({ success: true, digest: data.digest }); setAmount("");
-    } catch (err) { setResult({ success: false, error: err.message }); }
-    finally { setSubmitting(false); }
+      setResult({ success: true, digest: data.digest });
+      setAmount("");
+    } catch (err) {
+      setResult({ success: false, error: err.message });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-6">
-      <div><h2 className="font-semibold text-lg">Surplus Deposits</h2><p className="text-sm text-anansi-muted">Deposit USDC surplus for a lot after commodity sale. 1% fee, remainder claimable by all NUTMEG holders pro-rata.</p></div>
+      <div>
+        <h2 className="font-semibold text-lg">Surplus Deposits</h2>
+        <p className="text-sm text-anansi-muted">
+          Deposit USDC surplus for a lot after commodity sale. 1% fee, remainder claimable by all
+          token holders pro-rata.
+        </p>
+      </div>
 
       <div className="card p-6 border-emerald-200">
         <h3 className="font-semibold mb-4">Deposit USDC Surplus</h3>
         <form onSubmit={handleDeposit} className="space-y-4">
-          <Field label="Lot ID" value={lotId} onChange={setLotId} placeholder="0x..." help="The lot that was sold. Find in GCNA admin → Manage Lots." mono />
-          <Field label="USDC Amount" value={amount} onChange={setAmount} placeholder="50.00" type="number" help="Total surplus. 1% fee deducted. Remainder distributed to all NUTMEG holders based on balance at time of claim." />
-          <button type="submit" disabled={submitting || !lotId || !amount} className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-emerald-700 transition-colors active:scale-[0.98]">
-            {submitting ? <span className="flex items-center gap-2"><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />Depositing...</span> : "Deposit Surplus"}
+          <div>
+            <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">
+              Token
+            </label>
+            <select
+              value={tokenSymbol}
+              onChange={(e) => setTokenSymbol(e.target.value)}
+              className="input-field"
+              required
+            >
+              {registeredTokens.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-anansi-muted mt-1">
+              Which commodity token this surplus is for. The total supply of this token is used for
+              the pro-rata snapshot.
+            </p>
+          </div>
+          <Field
+            label="Lot ID"
+            value={lotId}
+            onChange={setLotId}
+            placeholder="0x..."
+            help="The lot that was sold. Find in GCNA admin → Manage Lots."
+            mono
+          />
+          <Field
+            label="USDC Amount"
+            value={amount}
+            onChange={setAmount}
+            placeholder="50.00"
+            type="number"
+            help="Total surplus in USDC. 1% fee deducted. Remainder distributed to all token holders."
+          />
+          <button
+            type="submit"
+            disabled={submitting || !lotId || !amount || !tokenSymbol}
+            className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-emerald-700 transition-colors active:scale-[0.98]"
+          >
+            {submitting ? (
+              <span className="flex items-center gap-2">
+                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Depositing...
+              </span>
+            ) : (
+              `Deposit Surplus for ${tokenSymbol || "..."}`
+            )}
           </button>
         </form>
-        {result && <ResultBanner result={result} successMsg={`Surplus deposited. Farmers can now claim. Tx: ${result.digest?.slice(0, 24)}…`} />}
+        {result && (
+          <ResultBanner
+            result={result}
+            successMsg={`Surplus deposited for ${tokenSymbol}. Farmers can now claim. Tx: ${result.digest?.slice(0, 24)}…`}
+          />
+        )}
       </div>
 
       <div className="card p-5">
         <h3 className="font-semibold text-sm mb-3">How surplus distribution works</h3>
         <div className="space-y-3">
           {[
-            "GCNA sells the nutmeg lot and receives payment.",
+            "Custodian sells the commodity lot and receives payment.",
             "Surplus USDC is transferred to the platform admin wallet.",
-            "You deposit it here — 1% fee collected, rest held for claims.",
-            "Any NUTMEG holder can claim their pro-rata share.",
-            "Share = (holder balance / total NUTMEG supply) × surplus pool.",
+            "You deposit it here — select the correct token, 1% fee collected, rest held for claims.",
+            `Any ${tokenSymbol || "token"} holder can claim their pro-rata share.`,
+            `Share = (holder balance / total ${tokenSymbol || "token"} supply) × surplus pool.`,
           ].map((text, i) => (
             <div key={i} className="flex gap-3 items-start">
-              <span className="text-xs font-mono text-anansi-muted font-medium mt-0.5">0{i + 1}</span>
+              <span className="text-xs font-mono text-anansi-muted font-medium mt-0.5">
+                0{i + 1}
+              </span>
               <p className="text-sm text-anansi-gray leading-relaxed">{text}</p>
             </div>
           ))}
@@ -605,15 +999,37 @@ function OverviewPanel({ stats }) {
         <h3 className="font-semibold mb-5">Role architecture</h3>
         <div className="space-y-4">
           {[
-            { role: "Platform Admin (You)", path: "/platform", desc: "Create asset types, assign custodians, deposit surplus. Server-side CLI keypair.", color: "bg-anansi-red" },
-            { role: "Custodian (GCNA Staff)", path: "/admin", desc: "Create lots, record deliveries, manage lot lifecycle. zkLogin (Google).", color: "bg-anansi-black" },
-            { role: "Farmer", path: "/farmer", desc: "View balances, sell early on DEX, claim surplus. zkLogin (Google).", color: "bg-emerald-600" },
-            { role: "Buyer", path: "/buyer", desc: "Buy NUTMEG tokens, track portfolio. zkLogin (Google).", color: "bg-blue-600" },
+            {
+              role: "Platform Admin (You)",
+              path: "/platform",
+              desc: "Create asset types, assign custodians, deposit surplus. Server-side CLI keypair.",
+              color: "bg-anansi-red",
+            },
+            {
+              role: "Custodian (GCNA Staff)",
+              path: "/admin",
+              desc: "Create lots, record deliveries, manage lot lifecycle. zkLogin (Google).",
+              color: "bg-anansi-black",
+            },
+            {
+              role: "Farmer",
+              path: "/farmer",
+              desc: "View balances, sell early on DEX, claim surplus. zkLogin (Google).",
+              color: "bg-emerald-600",
+            },
+            {
+              role: "Buyer",
+              path: "/buyer",
+              desc: "Buy NUTMEG tokens, track portfolio. zkLogin (Google).",
+              color: "bg-blue-600",
+            },
           ].map((r, i) => (
             <div key={i} className="flex gap-3">
               <div className={`w-1.5 rounded-full ${r.color} shrink-0`} />
               <div>
-                <p className="text-sm font-semibold">{r.role} <span className="font-mono text-xs text-anansi-muted">{r.path}</span></p>
+                <p className="text-sm font-semibold">
+                  {r.role} <span className="font-mono text-xs text-anansi-muted">{r.path}</span>
+                </p>
                 <p className="text-sm text-anansi-gray">{r.desc}</p>
               </div>
             </div>
@@ -630,7 +1046,10 @@ function OverviewPanel({ stats }) {
             ["Package", (process.env.NEXT_PUBLIC_PACKAGE_ID || "").slice(0, 20) + "…"],
             ["Network", process.env.NEXT_PUBLIC_SUI_NETWORK || "testnet"],
           ].map(([label, value], i) => (
-            <div key={i} className="flex justify-between py-1.5 border-b border-anansi-border last:border-0">
+            <div
+              key={i}
+              className="flex justify-between py-1.5 border-b border-anansi-border last:border-0"
+            >
               <span className="text-anansi-muted">{label}</span>
               <span className="font-mono text-xs">{value ?? "—"}</span>
             </div>
@@ -648,8 +1067,16 @@ function OverviewPanel({ stats }) {
 function Field({ label, value, onChange, placeholder, type = "text", mono, help }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">{label}</label>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={`input-field ${mono ? "font-mono text-xs" : ""}`} />
+      <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">
+        {label}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={`input-field ${mono ? "font-mono text-xs" : ""}`}
+      />
       {help && <p className="text-xs text-anansi-muted mt-1">{help}</p>}
     </div>
   );
@@ -657,21 +1084,48 @@ function Field({ label, value, onChange, placeholder, type = "text", mono, help 
 
 function ResultBanner({ result, successMsg }) {
   return (
-    <div className={`mt-4 p-4 rounded-lg text-sm ${result.success ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-800 border border-red-200"}`}>
-      {result.success ? (typeof successMsg === 'string' ? successMsg : successMsg) : `Error: ${result.error}`}
+    <div
+      className={`mt-4 p-4 rounded-lg text-sm ${result.success ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-800 border border-red-200"}`}
+    >
+      {result.success
+        ? typeof successMsg === "string"
+          ? successMsg
+          : successMsg
+        : `Error: ${result.error}`}
     </div>
   );
 }
 
 function EmptyState({ icon, title, subtitle }) {
   const icons = {
-    package: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />,
-    user: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
+    package: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+      />
+    ),
+    user: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+      />
+    ),
   };
   return (
     <div className="card text-center py-16">
       <div className="w-12 h-12 rounded-full bg-anansi-light flex items-center justify-center mx-auto">
-        <svg className="w-6 h-6 text-anansi-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">{icons[icon]}</svg>
+        <svg
+          className="w-6 h-6 text-anansi-muted"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          {icons[icon]}
+        </svg>
       </div>
       <p className="text-sm font-medium mt-3">{title}</p>
       <p className="text-xs text-anansi-muted mt-1">{subtitle}</p>
