@@ -17,7 +17,8 @@ set -e
 SYMBOL="$1"
 NAME="$2"
 DESCRIPTION="${3:-Tokenized ${NAME} on the Spice platform.}"
-ICON="${4:-${SYMBOL,,}.png}"
+MODULE_NAME="$(printf '%s' "$SYMBOL" | tr '[:upper:]' '[:lower:]')"
+ICON="${4:-${MODULE_NAME}.png}"
 
 if [ -z "$SYMBOL" ] || [ -z "$NAME" ]; then
   echo ""
@@ -36,7 +37,6 @@ if [ -z "$SYMBOL" ] || [ -z "$NAME" ]; then
   exit 1
 fi
 
-MODULE_NAME="${SYMBOL,,}"  # lowercase
 OUTPUT_FILE="${MODULE_NAME}.move"
 
 cat > "$OUTPUT_FILE" << MOVEEOF
@@ -132,7 +132,7 @@ echo "     cp ${OUTPUT_FILE} ../contracts/sources/"
 echo ""
 echo "  2. Build and upgrade (NOT publish):"
 echo "     cd ../contracts"
-echo "     rm move.lock"
+echo "     rm Move.lock"
 echo "     sui move build"
 echo "     sui client upgrade --upgrade-capability 0xYOUR_UPGRADE_CAP --gas-budget 100000000"
 echo ""
