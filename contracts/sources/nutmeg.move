@@ -11,6 +11,7 @@ module anansi::nutmeg {
     use sui::clock::Clock;
     use std::string::String;
     use anansi::asset_pool::{Self, CustodianCap, Lot};
+    use anansi::compliance::{Self, ComplianceRegistry};
 
     // ============ One-Time Witness ============
 
@@ -54,12 +55,12 @@ module anansi::nutmeg {
 
     /// Record a delivery and mint NUTMEG to the farmer.
     /// This is the ONLY way to create new NUTMEG tokens.
-    /// Calls asset_pool::record_delivery (package-internal) for lot tracking,
-    /// then mints the corresponding Coin<NUTMEG>.
+    /// Checks compliance: farmer must be verified and not frozen.
     public fun record_delivery(
         vault: &mut MintVault,
         cap: &CustodianCap,
         lot: &mut Lot,
+        registry: &ComplianceRegistry,
         farmer: address,
         units: u64,
         grade: vector<u8>,
@@ -67,6 +68,9 @@ module anansi::nutmeg {
         clock: &Clock,
         ctx: &mut TxContext,
     ) {
+        // Compliance check — farmer must be verified and not frozen
+        compliance::assert_can_participate(registry, farmer);
+
         // 1 unit = 1_000_000 smallest coin units (6 decimals, like USDC)
         let coin_amount = units * 1_000_000;
 

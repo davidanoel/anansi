@@ -1,7 +1,7 @@
 import { CetusClmmSDK } from "@cetusprotocol/sui-clmm-sdk";
 import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
 import Decimal from "decimal.js";
-import { SUI_NETWORK } from "../../../../lib/constants";
+import { SUI_NETWORK, COMPLIANCE_ID } from "../../../../lib/constants";
 
 const POOL_ID = process.env.NEXT_PUBLIC_CETUS_NUTMEG_POOL_ID;
 const DECIMALS = 6;
@@ -36,6 +36,56 @@ export async function POST(req) {
     const pool = await sdk.Pool.getPool(POOL_ID);
     if (!pool) {
       return Response.json({ error: "Pool not found" }, { status: 404 });
+    }
+
+    // Compliance check — query registry directly
+    try {
+      const regObj = await suiClient.getObject({
+        id: COMPLIANCE_ID,
+        options: { showContent: true },
+      });
+      const fields = regObj.data?.content?.fields || {};
+      if (fields.enforcement_enabled === true) {
+        // Check if user is in the verified_users table
+        // We query UserVerified events for this address
+        const events = await suiClient.queryEvents({
+          query: {
+            MoveEventType: `${process.env.NEXT_PUBLIC_PACKAGE_ID}::compliance::UserVerified`,
+          },
+          limit: 100,
+          order: "descending",
+        });
+        const verified = events.data.some((e) => e.parsedJson?.user === senderAddress);
+        if (!verified) {
+          return Response.json(
+            { error: "KYC verification required before trading." },
+            { status: 403 },
+          );
+        }
+
+        // Check frozen
+        const frozenEvents = await suiClient.queryEvents({
+          query: { MoveEventType: `${process.env.NEXT_PUBLIC_PACKAGE_ID}::compliance::UserFrozen` },
+          limit: 100,
+        });
+        const unfrozenEvents = await suiClient.queryEvents({
+          query: {
+            MoveEventType: `${process.env.NEXT_PUBLIC_PACKAGE_ID}::compliance::UserUnfrozen`,
+          },
+          limit: 100,
+        });
+        const frozenSet = new Set();
+        for (const e of frozenEvents.data) frozenSet.add(e.parsedJson?.user);
+        for (const e of unfrozenEvents.data) frozenSet.delete(e.parsedJson?.user);
+        if (frozenSet.has(senderAddress)) {
+          return Response.json(
+            { error: "Your account is frozen. Contact the platform admin." },
+            { status: 403 },
+          );
+        }
+      }
+    } catch (err) {
+      console.warn("Compliance check skipped:", err.message);
     }
 
     // coin_type_a = NUTMEG, coin_type_b = USDC

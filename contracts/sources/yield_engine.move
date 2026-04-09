@@ -13,6 +13,7 @@ module anansi::yield_engine {
     use sui::table::{Self, Table};
     use anansi::asset_pool::{Self, Lot};
     use anansi::carib_coin::{Self, CARIB_COIN, Treasury};
+    use anansi::compliance::{Self, ComplianceRegistry};
 
     // ============ Objects ============
 
@@ -160,9 +161,13 @@ module anansi::yield_engine {
     public fun claim_surplus<PaymentT, CommodityT>(
         deposit: &mut SurplusDeposit<PaymentT>,
         holder_coin: &Coin<CommodityT>,
+        registry: &ComplianceRegistry,
         ctx: &mut TxContext,
     ) {
         let claimant = ctx.sender();
+
+        // Compliance check — claimant must be verified and not frozen
+        compliance::assert_can_participate(registry, claimant);
 
         // Check not already claimed
         assert!(!table::contains(&deposit.claims, claimant), EAlreadyClaimed);

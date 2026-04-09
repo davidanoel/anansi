@@ -1,3 +1,16 @@
+SUI TESTNET — DEPLOYMENT 2 (2026-04-08)
+PACKAGE_ID=0x41028a00d69343ecb93a4ae3b0e7ff01de625be267533696bad00a7194a5c1e8
+REGISTRY_ID=0xb3bf7a04b9c45b950875da4cb414870aef23372062e838c0c6e66bc8cb5deadb
+YIELD_ENGINE_ID=0x1c50b92cf7dd8f2b2acb7034d164ebc44643da584b42fc9bac54b16f32f15ef6
+COMPLIANCE_ID=0x6b74ae783fc4625ebde72e1323c0dc859d394ced17e80047bc432bb16a4d329c
+PLATFORM_ID=0x7ec08d42b1dfa237b26fd733f91ef1bf5b4874e1104765c2b40506c9562ba269
+CARIB_TREASURY_ID=0x8f49d86699c61d3afbc99ca1c58e01d862fb6fa0293b23d24b4e8bbeaf97e5f5
+NUTMEG_MINT_VAULT_ID=0xc37aa8168f326a16f8f00b543c606d80919f1c10cf14e0dfc846132dc1ef1a1d
+UPGRADE_CAP=0xdb7a852b40e4f8c9913769abb5dbdf7aca4e0e5ce0f3f199eec932f78dbcf3a6
+
+----------- NOTE: Cetus pool was for old package. New pool needed for new NUTMEG type -----------
+
+=== DEPLOYMENT 1 (original) ===
 SUI TESTNET
 Set active environment to testnet
 ╭─────────────────────────────────────────────────────────────────────────────────────────────────╮
@@ -37,7 +50,7 @@ custodian (GCNA): 0x7a584a2f129f2823705bde5d4734cff9c09ae3532c521c332beee1d7d088
 farmer: 0x22c814ddf889307d76b5c568c69374aeaa9b8dabee8e4ccc4f6ad46aef5ff887 (tanomoshiko@gmail.com)
 
 ----------- TESTNET POOL CREATED (USDC/NUTMG) ----------
-https://suiscan.xyz/testnet/tx/8hAnds2UYaRwgULmufKziuEc4UXFibq4WW453knjJbx9
+https://testnet.suivision.xyz/txblock/3BQn3oL14jBMzNMJL33Hw8nisjZ1FVJdWvVVEd8VtrHc
 # Cetus V2 Pool ID
-POOL_ID=0x0966038be54c0971880ac85f7536636a461725726c1b4cf270295b9188ba8d5e
+POOL_ID=0xf05bdf4c05430f6f02fec956379992467ef7709b50d2c585468f1a478d68a56d
 

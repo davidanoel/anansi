@@ -159,3 +159,17 @@ After deploying Coin<NUTMEG>:
 3. Install Cetus SDK: `npm install @cetus-clmm/sui-clmm-sdk`
 4. Wire sellNutmeg() and buyNutmeg() in transactions.js to Cetus router
 5. "Sell Early" and "Buy" buttons work via DEX swap
+
+## COMPLIANCE ENFORCEMENT
+
+1. Deploy contracts, update env vars
+2. Platform admin: Create NUTMEG asset type, assign custodian
+3. Platform admin: Compliance tab → Verify the farmer address (jurisdiction: GD, role: Farmer)
+4. Platform admin: Compliance tab → Enable Enforcement
+5. Custodian: Create lot, record delivery to the verified farmer → should SUCCEED
+6. Try recording delivery to an UNVERIFIED address → should FAIL with compliance error
+7. Platform admin: Freeze the farmer
+8. Farmer: Try "Sell Early" → should FAIL (swap route rejects)
+9. Farmer: Try "Claim Surplus" → should FAIL (on-chain compliance check)
+10. Platform admin: Unfreeze the farmer
+11. Farmer: Try again → should SUCCEED

@@ -13,6 +13,7 @@ import {
   USDC_DECIMALS,
   NUTMEG_TYPE,
   NUTMEG_DECIMALS,
+  COMPLIANCE_ID,
 } from "./constants";
 
 // ============================================================
@@ -139,6 +140,7 @@ export async function recordDelivery(
       tx.object(NUTMEG_MINT_VAULT_ID),
       tx.object(custodianCapId),
       tx.object(lotId),
+      tx.object(COMPLIANCE_ID),
       tx.pure.address(farmerAddress),
       tx.pure.u64(units),
       tx.pure.vector("u8", Array.from(new TextEncoder().encode(grade))),
@@ -216,7 +218,11 @@ export async function claimSurplus(depositId) {
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.YIELD_ENGINE}::claim_surplus`,
     typeArguments: [USDC_TYPE, NUTMEG_TYPE],
-    arguments: [tx.object(depositId), tx.object(nutmegCoins[0].coinObjectId)],
+    arguments: [
+      tx.object(depositId),
+      tx.object(nutmegCoins[0].coinObjectId),
+      tx.object(COMPLIANCE_ID),
+    ],
   });
 
   // Use sponsored execution — no user coins are spent (just referenced)
