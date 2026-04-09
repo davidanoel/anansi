@@ -14,9 +14,23 @@ export default function FarmerPage() {
   const [deliveries, setDeliveries] = useState([])
   const [deposits, setDeposits] = useState([])
   const [claimedLotIds, setClaimedLotIds] = useState(new Set())
+  const [prices, setPrices] = useState({}) // { NUTMEG: { priceUsdc: 0.91, ... } }
   const [loading, setLoading] = useState(true)
   const [claiming, setClaiming] = useState(null)
   const [sellState, setSellState] = useState({ symbol: null, amount: '', selling: false })
+
+  // Fetch live prices from Cetus pools
+  async function loadPrices() {
+    try {
+      const res = await fetch('/api/cetus/price')
+      if (res.ok) {
+        const data = await res.json()
+        setPrices(data.prices || {})
+      }
+    } catch (err) {
+      console.warn('Price fetch failed:', err.message)
+    }
+  }
 
   async function loadData() {
     if (!user?.address) return
@@ -40,7 +54,23 @@ export default function FarmerPage() {
     }
   }
 
-  useEffect(() => { loadData() }, [user])
+  useEffect(() => {
+    loadData()
+    loadPrices()
+    // Refresh prices every 30 seconds
+    const interval = setInterval(loadPrices, 30_000)
+    return () => clearInterval(interval)
+  }, [user])
+
+  // Helper: get price for a token
+  const getPrice = (symbol) => prices[symbol]?.priceUsdc || null
+
+  // Helper: format USD value (returns "—" if no price)
+  const formatValue = (balance, symbol) => {
+    const price = getPrice(symbol)
+    if (price === null) return '—'
+    return `$${(balance * price).toFixed(2)}`
+  }
 
   const handleClaim = async (depositId, tokenSymbol) => {
     setClaiming(depositId)
@@ -64,6 +94,7 @@ export default function FarmerPage() {
       alert(`${symbol} sold for USDC!`)
       setSellState({ symbol: null, amount: '', selling: false })
       await loadData()
+      loadPrices()
     } catch (err) {
       alert(err.message)
       setSellState(s => ({ ...s, selling: false }))
@@ -74,8 +105,12 @@ export default function FarmerPage() {
     return <><AppNav /><div className="max-w-lg mx-auto px-6 py-20 text-center"><p className="text-anansi-gray">Please sign in to view your farmer dashboard.</p></div></>
   }
 
-  const totalValue = portfolio.reduce((sum, t) => sum + t.displayBalance * 0.55, 0)
+  const totalValue = portfolio.reduce((sum, t) => {
+    const price = getPrice(t.symbol)
+    return sum + (price ? t.displayBalance * price : 0)
+  }, 0)
   const totalTokens = portfolio.reduce((sum, t) => sum + t.displayBalance, 0)
+  const hasPrices = Object.keys(prices).length > 0
 
   // Filter claimable deposits
   const totalBalance = portfolio.reduce((sum, t) => sum + t.totalBalance, 0)
@@ -107,7 +142,9 @@ export default function FarmerPage() {
               )}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              {portfolio.length > 0 ? `${portfolio.length} token${portfolio.length > 1 ? 's' : ''} · ≈ $${totalValue.toFixed(2)} USD` : 'No tokens yet'}
+              {portfolio.length > 0
+                ? `${portfolio.length} token${portfolio.length > 1 ? 's' : ''}${hasPrices ? ` · ≈ $${totalValue.toFixed(2)} USD` : ''}`
+                : 'No tokens yet'}
             </p>
             {usdc.displayBalance > 0 && (
               <p className="text-xs text-emerald-400 mt-1">${usdc.displayBalance.toFixed(2)} USDC</p>
@@ -120,75 +157,87 @@ export default function FarmerPage() {
           <div className="mt-6">
             <p className="section-title">Your tokens</p>
             <div className="space-y-3">
-              {portfolio.map(token => (
-                <div key={token.symbol} className="card p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-lg">{token.displayBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
-                        <span className="text-sm text-anansi-muted">{token.symbol}</span>
-                      </div>
-                      <p className="text-xs text-anansi-muted mt-0.5">≈ ${(token.displayBalance * 0.55).toFixed(2)} USD</p>
-                    </div>
-                    {token.hasPool && (
-                      <button
-                        onClick={() => setSellState(s => s.symbol === token.symbol ? { symbol: null, amount: '', selling: false } : { symbol: token.symbol, amount: '', selling: false })}
-                        className={`text-xs px-4 py-2 rounded-lg font-medium transition-all ${
-                          sellState.symbol === token.symbol
-                            ? 'bg-anansi-light text-anansi-gray'
-                            : 'bg-anansi-red text-white hover:bg-anansi-red-light'
-                        }`}
-                      >
-                        {sellState.symbol === token.symbol ? 'Cancel' : 'Sell Early'}
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Sell panel */}
-                  {sellState.symbol === token.symbol && (
-                    <div className="mt-4 pt-4 border-t border-anansi-border animate-scale-in">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-medium">Sell {token.symbol} for USDC</p>
-                        <span className="badge badge-open">Via Cetus DEX</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <div className="flex-1 relative">
-                          <input
-                            type="number"
-                            step="1"
-                            max={token.displayBalance}
-                            value={sellState.amount}
-                            onChange={e => setSellState(s => ({ ...s, amount: e.target.value }))}
-                            placeholder="0"
-                            className="input-field pr-16 text-lg font-semibold"
-                          />
-                          <button
-                            onClick={() => setSellState(s => ({ ...s, amount: String(Math.floor(token.displayBalance)) }))}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-wider text-anansi-red px-2 py-1"
-                          >
-                            Max
-                          </button>
+              {portfolio.map(token => {
+                const price = getPrice(token.symbol)
+                return (
+                  <div key={token.symbol} className="card p-5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-lg">{token.displayBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+                          <span className="text-sm text-anansi-muted">{token.symbol}</span>
                         </div>
-                        <button
-                          onClick={() => handleSell(token.symbol)}
-                          disabled={sellState.selling || !sellState.amount || parseFloat(sellState.amount) <= 0}
-                          className="btn-primary px-6"
-                        >
-                          {sellState.selling ? (
-                            <span className="flex items-center gap-2">
-                              <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                              Selling
-                            </span>
-                          ) : 'Sell'}
-                        </button>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {price !== null ? (
+                            <>
+                              <p className="text-xs text-anansi-muted">≈ ${(token.displayBalance * price).toFixed(2)} USD</p>
+                              <span className="text-[10px] text-anansi-muted">· ${price.toFixed(4)}/token</span>
+                            </>
+                          ) : (
+                            <p className="text-xs text-anansi-muted">Price loading…</p>
+                          )}
+                        </div>
                       </div>
-                      {sellState.amount && parseFloat(sellState.amount) > 0 && (
-                        <p className="text-xs text-anansi-muted mt-2">≈ ${(parseFloat(sellState.amount) * 0.55).toFixed(2)} USDC at current pool price</p>
+                      {token.hasPool && (
+                        <button
+                          onClick={() => setSellState(s => s.symbol === token.symbol ? { symbol: null, amount: '', selling: false } : { symbol: token.symbol, amount: '', selling: false })}
+                          className={`text-xs px-4 py-2 rounded-lg font-medium transition-all ${
+                            sellState.symbol === token.symbol
+                              ? 'bg-anansi-light text-anansi-gray'
+                              : 'bg-anansi-red text-white hover:bg-anansi-red-light'
+                          }`}
+                        >
+                          {sellState.symbol === token.symbol ? 'Cancel' : 'Sell Early'}
+                        </button>
                       )}
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {/* Sell panel */}
+                    {sellState.symbol === token.symbol && (
+                      <div className="mt-4 pt-4 border-t border-anansi-border animate-scale-in">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm font-medium">Sell {token.symbol} for USDC</p>
+                          <span className="badge badge-open">Via Cetus DEX</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <div className="flex-1 relative">
+                            <input
+                              type="number"
+                              step="1"
+                              max={token.displayBalance}
+                              value={sellState.amount}
+                              onChange={e => setSellState(s => ({ ...s, amount: e.target.value }))}
+                              placeholder="0"
+                              className="input-field pr-16 text-lg font-semibold"
+                            />
+                            <button
+                              onClick={() => setSellState(s => ({ ...s, amount: String(Math.floor(token.displayBalance)) }))}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-wider text-anansi-red px-2 py-1"
+                            >
+                              Max
+                            </button>
+                          </div>
+                          <button
+                            onClick={() => handleSell(token.symbol)}
+                            disabled={sellState.selling || !sellState.amount || parseFloat(sellState.amount) <= 0}
+                            className="btn-primary px-6"
+                          >
+                            {sellState.selling ? (
+                              <span className="flex items-center gap-2">
+                                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                Selling
+                              </span>
+                            ) : 'Sell'}
+                          </button>
+                        </div>
+                        {sellState.amount && parseFloat(sellState.amount) > 0 && price !== null && (
+                          <p className="text-xs text-anansi-muted mt-2">≈ ${(parseFloat(sellState.amount) * price).toFixed(2)} USDC at current pool price</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}
@@ -201,7 +250,6 @@ export default function FarmerPage() {
               {claimableDeposits.map(deposit => {
                 const myShare = (deposit.netAmount * totalBalance) / deposit.tokensSnapshot
                 const shareUsdc = myShare / (10 ** USDC_DECIMALS)
-                // Find which token to use for claiming (use first held token)
                 const claimToken = portfolio.find(t => t.totalBalance > 0)
 
                 return (

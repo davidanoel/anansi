@@ -12,10 +12,23 @@ export default function BuyerPage() {
   const [portfolio, setPortfolio] = useState([])
   const [usdc, setUsdc] = useState({ displayBalance: 0 })
   const [lots, setLots] = useState([])
+  const [prices, setPrices] = useState({})
   const [loading, setLoading] = useState(true)
   const [buyState, setBuyState] = useState({ token: null, amount: '', buying: false })
 
   const tradableTokens = getTradableTokens()
+
+  async function loadPrices() {
+    try {
+      const res = await fetch('/api/cetus/price')
+      if (res.ok) {
+        const data = await res.json()
+        setPrices(data.prices || {})
+      }
+    } catch (err) {
+      console.warn('Price fetch failed:', err.message)
+    }
+  }
 
   async function loadData() {
     if (!user?.address) { setLoading(false); return }
@@ -33,7 +46,14 @@ export default function BuyerPage() {
     } finally { setLoading(false) }
   }
 
-  useEffect(() => { loadData() }, [user])
+  useEffect(() => {
+    loadData()
+    loadPrices()
+    const interval = setInterval(loadPrices, 30_000)
+    return () => clearInterval(interval)
+  }, [user])
+
+  const getPrice = (symbol) => prices[symbol]?.priceUsdc || null
 
   const handleBuy = async (symbol) => {
     if (!buyState.amount) return
@@ -43,6 +63,7 @@ export default function BuyerPage() {
       alert(`${symbol} purchased!`)
       setBuyState({ token: null, amount: '', buying: false })
       await loadData()
+      loadPrices()
     } catch (err) {
       alert(err.message)
       setBuyState(s => ({ ...s, buying: false }))
@@ -53,7 +74,11 @@ export default function BuyerPage() {
     return <><AppNav /><div className="max-w-lg mx-auto px-6 py-20 text-center"><p className="text-anansi-gray">Please sign in to access the marketplace.</p></div></>
   }
 
-  const totalHoldingsValue = portfolio.reduce((sum, t) => sum + t.displayBalance * 0.55, 0)
+  const hasPrices = Object.keys(prices).length > 0
+  const totalHoldingsValue = portfolio.reduce((sum, t) => {
+    const price = getPrice(t.symbol)
+    return sum + (price ? t.displayBalance * price : 0)
+  }, 0)
 
   return (
     <>
@@ -73,10 +98,14 @@ export default function BuyerPage() {
         <div className="grid sm:grid-cols-2 gap-4 mb-8">
           <div className="card p-5 bg-gradient-to-br from-anansi-black to-anansi-black/95 text-white">
             <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Your holdings</p>
-            <p className="text-3xl font-bold mt-2 tabular-nums">${totalHoldingsValue.toFixed(2)}</p>
+            <p className="text-3xl font-bold mt-2 tabular-nums">
+              {hasPrices ? `$${totalHoldingsValue.toFixed(2)}` : '—'}
+            </p>
             <p className="text-xs text-gray-500 mt-1">
-              {portfolio.filter(t => t.totalBalance > 0).length} token{portfolio.filter(t => t.totalBalance > 0).length !== 1 ? 's' : ''}
-              {portfolio.filter(t => t.totalBalance > 0).map(t => ` · ${t.displayBalance.toLocaleString(undefined, {maximumFractionDigits: 0})} ${t.symbol}`).join('')}
+              {portfolio.filter(t => t.totalBalance > 0).map(t => {
+                const price = getPrice(t.symbol)
+                return `${t.displayBalance.toLocaleString(undefined, {maximumFractionDigits: 0})} ${t.symbol}${price ? ` · $${price.toFixed(4)}` : ''}`
+              }).join(' · ') || 'No tokens held'}
             </p>
           </div>
           <div className="card p-5">
@@ -92,6 +121,7 @@ export default function BuyerPage() {
           {tradableTokens.map(token => {
             const held = portfolio.find(p => p.symbol === token.symbol)
             const isExpanded = buyState.token === token.symbol
+            const price = getPrice(token.symbol)
 
             return (
               <div key={token.symbol} className="card p-6">
@@ -100,9 +130,13 @@ export default function BuyerPage() {
                     <div className="flex items-center gap-3">
                       <h3 className="font-semibold text-lg">{token.symbol}</h3>
                       <span className="badge badge-open">Live on DEX</span>
+                      {price !== null && (
+                        <span className="text-sm font-semibold text-anansi-black">${price.toFixed(4)}</span>
+                      )}
                     </div>
                     <p className="text-sm text-anansi-muted mt-1">
-                      {token.moduleName.charAt(0).toUpperCase() + token.moduleName.slice(1)} · 6 decimals · Coin&lt;{token.symbol}&gt;
+                      {token.moduleName.charAt(0).toUpperCase() + token.moduleName.slice(1)} · Coin&lt;{token.symbol}&gt;
+                      {price === null && ' · Price loading…'}
                     </p>
                   </div>
                   <div className="text-right">
@@ -151,11 +185,14 @@ export default function BuyerPage() {
                         ) : 'Buy'}
                       </button>
                     </div>
-                    {buyState.amount && parseFloat(buyState.amount) > 0 && (
+                    {buyState.amount && parseFloat(buyState.amount) > 0 && price !== null && (
                       <div className="mt-3 p-3 bg-anansi-light rounded-lg flex items-center justify-between">
                         <span className="text-xs text-anansi-muted">Estimated output</span>
-                        <span className="text-sm font-semibold">≈ {(parseFloat(buyState.amount) / 0.55).toFixed(2)} {token.symbol}</span>
+                        <span className="text-sm font-semibold">≈ {(parseFloat(buyState.amount) / price).toFixed(2)} {token.symbol}</span>
                       </div>
+                    )}
+                    {buyState.amount && parseFloat(buyState.amount) > 0 && price === null && (
+                      <p className="text-xs text-anansi-muted mt-2">Fetching live price…</p>
                     )}
                   </div>
                 )}
@@ -189,6 +226,7 @@ export default function BuyerPage() {
           <div className="space-y-4">
             {lots.map((lot, i) => {
               const sBadge = lot.status === 0 ? 'badge-open' : lot.status === 1 ? 'badge-selling' : lot.status === 2 ? 'badge-distributing' : 'badge-closed'
+              const lotPrice = getPrice(lot.assetTypeSymbol)
               return (
                 <div key={lot.id} className="card p-6 animate-slide-up" style={{ animationDelay: `${i * 0.05}s` }}>
                   <div className="flex items-center justify-between">
@@ -196,6 +234,12 @@ export default function BuyerPage() {
                       <h3 className="font-semibold">{lot.assetTypeSymbol} — Lot #{lot.lotNumber}</h3>
                       <span className={`badge ${sBadge}`}>{lot.statusLabel}</span>
                     </div>
+                    {lotPrice !== null && (
+                      <div className="text-right">
+                        <p className="font-bold">${lotPrice.toFixed(4)}</p>
+                        <p className="text-[10px] text-anansi-muted">per token (live)</p>
+                      </div>
+                    )}
                   </div>
                   <div className="grid grid-cols-4 gap-4 mt-5 pt-4 border-t border-anansi-border">
                     <div><p className="stat-label">Supply</p><p className="stat-value">{lot.totalUnits.toLocaleString()} kg</p></div>
