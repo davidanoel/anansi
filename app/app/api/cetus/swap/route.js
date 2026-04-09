@@ -1,9 +1,8 @@
 import { CetusClmmSDK } from "@cetusprotocol/sui-clmm-sdk";
 import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
 import Decimal from "decimal.js";
-import { SUI_NETWORK, COMPLIANCE_ID } from "../../../../lib/constants";
+import { SUI_NETWORK, TOKEN_REGISTRY, USDC_TYPE } from "../../../../lib/constants";
 
-const POOL_ID = process.env.NEXT_PUBLIC_CETUS_NUTMEG_POOL_ID;
 const DECIMALS = 6;
 
 function getCetusSDK(senderAddress) {
@@ -24,77 +23,71 @@ function getSuiClient() {
 
 export async function POST(req) {
   try {
-    const { direction, amount, senderAddress } = await req.json();
+    const { direction, amount, senderAddress, token } = await req.json();
 
     if (!direction || !amount || !senderAddress) {
-      return Response.json({ error: "Missing params" }, { status: 400 });
+      return Response.json({ error: "Missing direction, amount, or senderAddress" }, { status: 400 });
+    }
+
+    // Look up token from registry (default to NUTMEG for backward compatibility)
+    const tokenSymbol = token || "NUTMEG";
+    const tokenConfig = TOKEN_REGISTRY[tokenSymbol];
+
+    if (!tokenConfig) {
+      return Response.json({ error: `Unknown token: ${tokenSymbol}` }, { status: 400 });
+    }
+
+    if (!tokenConfig.poolId) {
+      return Response.json({ error: `No DEX pool configured for ${tokenSymbol}. Set NEXT_PUBLIC_TOKEN_${tokenSymbol}_POOL.` }, { status: 400 });
     }
 
     const sdk = getCetusSDK(senderAddress);
     const suiClient = getSuiClient();
 
-    const pool = await sdk.Pool.getPool(POOL_ID);
-    if (!pool) {
-      return Response.json({ error: "Pool not found" }, { status: 404 });
-    }
-
-    // Compliance check — query registry directly
+    // Compliance check (when enforcement is enabled)
     try {
-      const regObj = await suiClient.getObject({
-        id: COMPLIANCE_ID,
-        options: { showContent: true },
-      });
-      const fields = regObj.data?.content?.fields || {};
-      if (fields.enforcement_enabled === true) {
-        // Check if user is in the verified_users table
-        // We query UserVerified events for this address
-        const events = await suiClient.queryEvents({
-          query: {
-            MoveEventType: `${process.env.NEXT_PUBLIC_PACKAGE_ID}::compliance::UserVerified`,
-          },
-          limit: 100,
-          order: "descending",
-        });
-        const verified = events.data.some((e) => e.parsedJson?.user === senderAddress);
-        if (!verified) {
-          return Response.json(
-            { error: "KYC verification required before trading." },
-            { status: 403 },
-          );
-        }
-
-        // Check frozen
-        const frozenEvents = await suiClient.queryEvents({
-          query: { MoveEventType: `${process.env.NEXT_PUBLIC_PACKAGE_ID}::compliance::UserFrozen` },
-          limit: 100,
-        });
-        const unfrozenEvents = await suiClient.queryEvents({
-          query: {
-            MoveEventType: `${process.env.NEXT_PUBLIC_PACKAGE_ID}::compliance::UserUnfrozen`,
-          },
-          limit: 100,
-        });
-        const frozenSet = new Set();
-        for (const e of frozenEvents.data) frozenSet.add(e.parsedJson?.user);
-        for (const e of unfrozenEvents.data) frozenSet.delete(e.parsedJson?.user);
-        if (frozenSet.has(senderAddress)) {
-          return Response.json(
-            { error: "Your account is frozen. Contact the platform admin." },
-            { status: 403 },
-          );
+      const complianceId = process.env.NEXT_PUBLIC_COMPLIANCE_ID;
+      if (complianceId && complianceId !== '0x0') {
+        const regObj = await suiClient.getObject({ id: complianceId, options: { showContent: true } });
+        const fields = regObj.data?.content?.fields || {};
+        if (fields.enforcement_enabled === true) {
+          const pkgId = process.env.NEXT_PUBLIC_PACKAGE_ID;
+          const events = await suiClient.queryEvents({
+            query: { MoveEventType: `${pkgId}::compliance::UserVerified` }, limit: 100, order: 'descending',
+          });
+          const verified = events.data.some(e => e.parsedJson?.user === senderAddress);
+          if (!verified) {
+            return Response.json({ error: "KYC verification required before trading." }, { status: 403 });
+          }
+          const frozenEvents = await suiClient.queryEvents({ query: { MoveEventType: `${pkgId}::compliance::UserFrozen` }, limit: 100 });
+          const unfrozenEvents = await suiClient.queryEvents({ query: { MoveEventType: `${pkgId}::compliance::UserUnfrozen` }, limit: 100 });
+          const frozenSet = new Set();
+          for (const e of frozenEvents.data) frozenSet.add(e.parsedJson?.user);
+          for (const e of unfrozenEvents.data) frozenSet.delete(e.parsedJson?.user);
+          if (frozenSet.has(senderAddress)) {
+            return Response.json({ error: "Your account is frozen. Contact the platform admin." }, { status: 403 });
+          }
         }
       }
     } catch (err) {
       console.warn("Compliance check skipped:", err.message);
     }
 
-    // coin_type_a = NUTMEG, coin_type_b = USDC
-    // sell NUTMEG = a2b = true (price goes DOWN → use MIN limit)
-    // buy NUTMEG  = a2b = false (price goes UP → use MAX limit)
-    const a2b = direction === "sell";
+    const pool = await sdk.Pool.getPool(tokenConfig.poolId);
+    if (!pool) {
+      return Response.json({ error: `Pool not found for ${tokenSymbol}` }, { status: 404 });
+    }
+
+    // Determine swap direction based on pool coin ordering
+    // Pool coin_type_a and coin_type_b are set at pool creation
+    // "sell" = swap token → USDC, "buy" = swap USDC → token
+    const tokenIsA = pool.coin_type_a === tokenConfig.type;
+    const a2b = direction === "sell" ? tokenIsA : !tokenIsA;
+
     const amountRaw = new Decimal(amount).mul(10 ** DECIMALS).toFixed(0);
 
-    // Get quote from SDK (this works reliably)
+    console.log("Swap:", { token: tokenSymbol, direction, a2b, amount: amountRaw, pool: tokenConfig.poolId.slice(0, 12) });
+
     const res = await sdk.Swap.preSwap({
       pool: pool,
       current_sqrt_price: pool.current_sqrt_price,
@@ -108,15 +101,14 @@ export async function POST(req) {
     });
 
     const estimatedOut = res.estimated_amount_out?.toString() || "0";
-    console.log("Pre-swap:", { direction, amountIn: amountRaw, amountOut: estimatedOut });
+    console.log("Quote:", { amountIn: amountRaw, amountOut: estimatedOut });
 
     if (estimatedOut === "0") {
-      return Response.json({ error: "Insufficient liquidity" }, { status: 400 });
+      return Response.json({ error: "Insufficient liquidity in pool" }, { status: 400 });
     }
 
     const amountLimit = new Decimal(estimatedOut).mul(0.99).toFixed(0);
 
-    // Build swap payload using Cetus SDK (now uses same @mysten/sui version)
     const swapPayload = await sdk.Swap.createSwapPayload({
       pool_id: pool.id,
       coin_type_a: pool.coin_type_a,
@@ -127,7 +119,6 @@ export async function POST(req) {
       amount_limit: amountLimit,
     });
 
-    // Build transaction bytes — SDK and our code now share the same Transaction class
     swapPayload.setSender(senderAddress);
     const txBytes = await swapPayload.build({ client: suiClient });
     const txBase64 = Buffer.from(txBytes).toString("base64");
@@ -135,6 +126,7 @@ export async function POST(req) {
     return Response.json({
       txBytes: txBase64,
       quote: {
+        token: tokenSymbol,
         amountIn: new Decimal(amountRaw).div(10 ** DECIMALS).toFixed(DECIMALS),
         estimatedOut: new Decimal(estimatedOut).div(10 ** DECIMALS).toFixed(DECIMALS),
         direction,

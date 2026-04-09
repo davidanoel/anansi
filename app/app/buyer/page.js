@@ -3,28 +3,29 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../components/AuthProvider'
 import AppNav from '../../components/AppNav'
-import { getNutmegBalance, getUsdcBalance, getActiveLots } from '../../lib/data'
-import { buyNutmeg } from '../../lib/transactions'
-import { USDC_DECIMALS, NUTMEG_DECIMALS } from '../../lib/constants'
+import { getMultiTokenPortfolio, getUsdcBalance, getActiveLots } from '../../lib/data'
+import { buyToken } from '../../lib/transactions'
+import { getTradableTokens, USDC_DECIMALS } from '../../lib/constants'
 
 export default function BuyerPage() {
   const { user } = useAuth()
-  const [nutmeg, setNutmeg] = useState({ displayBalance: 0 })
+  const [portfolio, setPortfolio] = useState([])
   const [usdc, setUsdc] = useState({ displayBalance: 0 })
   const [lots, setLots] = useState([])
   const [loading, setLoading] = useState(true)
-  const [buyAmount, setBuyAmount] = useState('')
-  const [buying, setBuying] = useState(false)
+  const [buyState, setBuyState] = useState({ token: null, amount: '', buying: false })
+
+  const tradableTokens = getTradableTokens()
 
   async function loadData() {
     if (!user?.address) { setLoading(false); return }
     try {
-      const [n, u, l] = await Promise.all([
-        getNutmegBalance(user.address),
+      const [p, u, l] = await Promise.all([
+        getMultiTokenPortfolio(user.address),
         getUsdcBalance(user.address),
         getActiveLots(),
       ])
-      setNutmeg(n)
+      setPortfolio(p)
       setUsdc(u)
       setLots(l)
     } catch (err) {
@@ -34,55 +35,49 @@ export default function BuyerPage() {
 
   useEffect(() => { loadData() }, [user])
 
-  const handleBuy = async () => {
-    if (!buyAmount) return
-    setBuying(true)
+  const handleBuy = async (symbol) => {
+    if (!buyState.amount) return
+    setBuyState(s => ({ ...s, buying: true }))
     try {
-      await buyNutmeg(parseFloat(buyAmount))
-      alert('NUTMEG purchased!')
-      setBuyAmount('')
+      await buyToken(parseFloat(buyState.amount), symbol)
+      alert(`${symbol} purchased!`)
+      setBuyState({ token: null, amount: '', buying: false })
       await loadData()
     } catch (err) {
       alert(err.message)
-    } finally { setBuying(false) }
+      setBuyState(s => ({ ...s, buying: false }))
+    }
   }
 
   if (!user) {
-    return (
-      <>
-        <AppNav />
-        <div className="max-w-lg mx-auto px-6 py-20 text-center">
-          <p className="text-anansi-gray">Please sign in to access the marketplace.</p>
-        </div>
-      </>
-    )
+    return <><AppNav /><div className="max-w-lg mx-auto px-6 py-20 text-center"><p className="text-anansi-gray">Please sign in to access the marketplace.</p></div></>
   }
 
-  const unitPrice = 0.55
+  const totalHoldingsValue = portfolio.reduce((sum, t) => sum + t.displayBalance * 0.55, 0)
 
   return (
     <>
       <AppNav />
       <div className="max-w-5xl mx-auto px-6 py-8 animate-fade-in">
 
-        {/* Header */}
         <div className="mb-8">
           <p className="section-title">Marketplace</p>
-          <h1 className="text-display-sm font-display">
-            Buy NUTMEG
-          </h1>
+          <h1 className="text-display-sm font-display">Buy Tokens</h1>
           <p className="text-anansi-gray mt-2 max-w-xl">
-            Purchase tokenized Grenada nutmeg backed by physical warehouse receipts.
-            Earn surplus when the commodity sells.
+            Purchase tokenized real-world assets backed by physical commodities and property.
+            Earn surplus when assets are sold.
           </p>
         </div>
 
-        {/* Wallet Cards */}
+        {/* Wallet Summary */}
         <div className="grid sm:grid-cols-2 gap-4 mb-8">
           <div className="card p-5 bg-gradient-to-br from-anansi-black to-anansi-black/95 text-white">
-            <p className="text-xs font-medium uppercase tracking-wider text-gray-400">NUTMEG holdings</p>
-            <p className="text-3xl font-bold mt-2 tabular-nums">{nutmeg.displayBalance.toLocaleString()}</p>
-            <p className="text-xs text-gray-500 mt-1">≈ ${(nutmeg.displayBalance * unitPrice).toFixed(2)} USD</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Your holdings</p>
+            <p className="text-3xl font-bold mt-2 tabular-nums">${totalHoldingsValue.toFixed(2)}</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {portfolio.filter(t => t.totalBalance > 0).length} token{portfolio.filter(t => t.totalBalance > 0).length !== 1 ? 's' : ''}
+              {portfolio.filter(t => t.totalBalance > 0).map(t => ` · ${t.displayBalance.toLocaleString(undefined, {maximumFractionDigits: 0})} ${t.symbol}`).join('')}
+            </p>
           </div>
           <div className="card p-5">
             <p className="stat-label">USDC available</p>
@@ -91,126 +86,135 @@ export default function BuyerPage() {
           </div>
         </div>
 
-        {/* Buy Card */}
-        <div className="card p-6 border-anansi-red/20 mb-10">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="font-semibold text-lg">Swap USDC → NUTMEG</h2>
-              <p className="text-xs text-anansi-muted mt-0.5">Via Cetus DEX · 1% max slippage</p>
-            </div>
-            <span className="badge badge-open">Live</span>
-          </div>
+        {/* Available Tokens */}
+        <p className="section-title">Available tokens</p>
+        <div className="space-y-4 mb-10">
+          {tradableTokens.map(token => {
+            const held = portfolio.find(p => p.symbol === token.symbol)
+            const isExpanded = buyState.token === token.symbol
 
-          <div className="flex gap-3">
-            <div className="flex-1 relative">
-              <input
-                type="number"
-                step="1"
-                value={buyAmount}
-                onChange={e => setBuyAmount(e.target.value)}
-                placeholder="Enter USDC amount"
-                className="input-field text-lg font-semibold pr-16"
-              />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-anansi-muted">USDC</span>
-            </div>
-            <button
-              onClick={handleBuy}
-              disabled={buying || !buyAmount || parseFloat(buyAmount) <= 0}
-              className="btn-primary px-8"
-            >
-              {buying ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Swapping
-                </span>
-              ) : 'Buy'}
-            </button>
-          </div>
+            return (
+              <div key={token.symbol} className="card p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-semibold text-lg">{token.symbol}</h3>
+                      <span className="badge badge-open">Live on DEX</span>
+                    </div>
+                    <p className="text-sm text-anansi-muted mt-1">
+                      {token.moduleName.charAt(0).toUpperCase() + token.moduleName.slice(1)} · 6 decimals · Coin&lt;{token.symbol}&gt;
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    {held && held.totalBalance > 0 && (
+                      <p className="text-sm font-semibold">{held.displayBalance.toLocaleString(undefined, {maximumFractionDigits: 2})} held</p>
+                    )}
+                    <button
+                      onClick={() => setBuyState(s => s.token === token.symbol ? { token: null, amount: '', buying: false } : { token: token.symbol, amount: '', buying: false })}
+                      className={`mt-1 text-xs px-4 py-2 rounded-lg font-medium transition-all ${
+                        isExpanded ? 'bg-anansi-light text-anansi-gray' : 'btn-primary'
+                      }`}
+                    >
+                      {isExpanded ? 'Cancel' : `Buy ${token.symbol}`}
+                    </button>
+                  </div>
+                </div>
 
-          {buyAmount && parseFloat(buyAmount) > 0 && (
-            <div className="mt-3 p-3 bg-anansi-light rounded-lg flex items-center justify-between">
-              <span className="text-xs text-anansi-muted">Estimated output</span>
-              <span className="text-sm font-semibold">≈ {(parseFloat(buyAmount) / unitPrice).toFixed(2)} NUTMEG</span>
-            </div>
-          )}
+                {isExpanded && (
+                  <div className="mt-5 pt-4 border-t border-anansi-border animate-scale-in">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm font-medium">Swap USDC → {token.symbol}</p>
+                      <span className="text-xs text-anansi-muted">Via Cetus DEX · 1% max slippage</span>
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="flex-1 relative">
+                        <input
+                          type="number"
+                          step="1"
+                          value={buyState.amount}
+                          onChange={e => setBuyState(s => ({ ...s, amount: e.target.value }))}
+                          placeholder="USDC amount"
+                          className="input-field text-lg font-semibold pr-16"
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-anansi-muted">USDC</span>
+                      </div>
+                      <button
+                        onClick={() => handleBuy(token.symbol)}
+                        disabled={buyState.buying || !buyState.amount || parseFloat(buyState.amount) <= 0}
+                        className="btn-primary px-8"
+                      >
+                        {buyState.buying ? (
+                          <span className="flex items-center gap-2">
+                            <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Swapping
+                          </span>
+                        ) : 'Buy'}
+                      </button>
+                    </div>
+                    {buyState.amount && parseFloat(buyState.amount) > 0 && (
+                      <div className="mt-3 p-3 bg-anansi-light rounded-lg flex items-center justify-between">
+                        <span className="text-xs text-anansi-muted">Estimated output</span>
+                        <span className="text-sm font-semibold">≈ {(parseFloat(buyState.amount) / 0.55).toFixed(2)} {token.symbol}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
 
-          {usdc.displayBalance > 0 && !buyAmount && (
-            <p className="text-xs text-anansi-muted mt-3">
-              Max buy: ~{Math.floor(usdc.displayBalance / unitPrice).toLocaleString()} NUTMEG at current pool price
-            </p>
+          {tradableTokens.length === 0 && (
+            <div className="card text-center py-16">
+              <div className="w-12 h-12 rounded-full bg-anansi-light flex items-center justify-center mx-auto">
+                <svg className="w-6 h-6 text-anansi-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <p className="text-sm font-medium mt-3">No tokens available for trading</p>
+              <p className="text-xs text-anansi-muted mt-1">Tokens will appear here once DEX pools are created.</p>
+            </div>
           )}
         </div>
 
         {/* Active Lots */}
-        <div>
-          <p className="section-title">Active lots</p>
-          {loading ? (
-            <div className="space-y-4">
-              {[1,2].map(i => (
-                <div key={i} className="card p-6">
+        <p className="section-title">Active lots</p>
+        {loading ? (
+          <div className="space-y-4">{[1,2].map(i => <div key={i} className="card p-6 h-32 animate-pulse" />)}</div>
+        ) : lots.length === 0 ? (
+          <div className="card text-center py-16">
+            <p className="text-sm font-medium">No active lots</p>
+            <p className="text-xs text-anansi-muted mt-1">Check back soon.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {lots.map((lot, i) => {
+              const sBadge = lot.status === 0 ? 'badge-open' : lot.status === 1 ? 'badge-selling' : lot.status === 2 ? 'badge-distributing' : 'badge-closed'
+              return (
+                <div key={lot.id} className="card p-6 animate-slide-up" style={{ animationDelay: `${i * 0.05}s` }}>
                   <div className="flex items-center justify-between">
-                    <div className="w-32 h-5 bg-anansi-light rounded animate-pulse" />
-                    <div className="w-16 h-5 bg-anansi-light rounded animate-pulse" />
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-semibold">{lot.assetTypeSymbol} — Lot #{lot.lotNumber}</h3>
+                      <span className={`badge ${sBadge}`}>{lot.statusLabel}</span>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-4 gap-4 mt-5">
-                    {[1,2,3,4].map(j => (
-                      <div key={j} className="space-y-1">
-                        <div className="w-12 h-3 bg-anansi-light rounded animate-pulse" />
-                        <div className="w-16 h-4 bg-anansi-light rounded animate-pulse" />
-                      </div>
-                    ))}
+                  <div className="grid grid-cols-4 gap-4 mt-5 pt-4 border-t border-anansi-border">
+                    <div><p className="stat-label">Supply</p><p className="stat-value">{lot.totalUnits.toLocaleString()} kg</p></div>
+                    <div><p className="stat-label">Tokens</p><p className="stat-value">{lot.totalTokensMinted.toLocaleString()}</p></div>
+                    <div><p className="stat-label">Deliveries</p><p className="stat-value">{lot.deliveryCount}</p></div>
+                    <div><p className="stat-label">Surplus</p><p className="stat-value">{lot.totalSurplusDeposited > 0 ? `$${(lot.totalSurplusDeposited / 1e6).toFixed(2)}` : '—'}</p></div>
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : lots.length === 0 ? (
-            <div className="card text-center py-16">
-              <div className="w-12 h-12 rounded-full bg-anansi-light flex items-center justify-center mx-auto">
-                <svg className="w-6 h-6 text-anansi-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-              </div>
-              <p className="text-sm font-medium mt-3">No active lots</p>
-              <p className="text-xs text-anansi-muted mt-1">Check back soon.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {lots.map((lot, i) => {
-                const statusBadge = lot.status === 0 ? 'badge-open' :
-                  lot.status === 1 ? 'badge-selling' :
-                  lot.status === 2 ? 'badge-distributing' : 'badge-closed'
-
-                return (
-                  <div key={lot.id} className="card p-6 animate-slide-up" style={{ animationDelay: `${i * 0.05}s` }}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-semibold">{lot.assetTypeSymbol} — Lot #{lot.lotNumber}</h3>
-                        <span className={`badge ${statusBadge}`}>{lot.statusLabel}</span>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">${unitPrice.toFixed(2)}</p>
-                        <p className="text-[10px] text-anansi-muted">per unit</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-4 gap-4 mt-5 pt-4 border-t border-anansi-border">
-                      <div><p className="stat-label">Supply</p><p className="stat-value">{lot.totalUnits.toLocaleString()} kg</p></div>
-                      <div><p className="stat-label">Tokens minted</p><p className="stat-value">{lot.totalTokensMinted.toLocaleString()}</p></div>
-                      <div><p className="stat-label">Deliveries</p><p className="stat-value">{lot.deliveryCount}</p></div>
-                      <div><p className="stat-label">Surplus</p><p className="stat-value">{lot.totalSurplusDeposited > 0 ? `$${(lot.totalSurplusDeposited / 1e6).toFixed(2)}` : '—'}</p></div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
+              )
+            })}
+          </div>
+        )}
 
         {/* How it Works */}
         <div className="mt-12 grid sm:grid-cols-3 gap-5">
           {[
-            { step: '01', title: 'Buy tokens', desc: 'Purchase NUTMEG with USDC. Each token is backed by physical nutmeg in GCNA warehouses.' },
-            { step: '02', title: 'Hold or trade', desc: 'Hold tokens to earn surplus when the lot sells. Or trade on the DEX anytime.' },
-            { step: '03', title: 'Earn surplus', desc: 'When GCNA sells the nutmeg, surplus USDC is distributed to all token holders.' },
+            { step: '01', title: 'Buy tokens', desc: 'Purchase tokens with USDC. Each is backed by physical assets held by a local custodian.' },
+            { step: '02', title: 'Hold or trade', desc: 'Hold tokens to earn surplus when assets are sold. Or trade on the DEX anytime.' },
+            { step: '03', title: 'Earn surplus', desc: 'When the custodian sells the commodity, surplus USDC is distributed to all holders.' },
           ].map((item, i) => (
             <div key={i} className="card p-5">
               <span className="text-2xl font-display italic text-anansi-border">{item.step}</span>
@@ -222,10 +226,7 @@ export default function BuyerPage() {
 
         <div className="mt-8 card p-5 text-xs text-anansi-muted">
           <p className="font-medium text-anansi-black mb-1">Risk disclosure</p>
-          <p className="leading-relaxed">
-            NUTMEG tokens represent claims on surplus from real-world commodity sales.
-            Returns depend on market prices and are not guaranteed. Do your own research.
-          </p>
+          <p>Tokens represent claims on surplus from real-world asset sales. Returns depend on market prices and are not guaranteed.</p>
         </div>
       </div>
     </>
