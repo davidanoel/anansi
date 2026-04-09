@@ -7,13 +7,14 @@ import {
   REGISTRY_ID,
   YIELD_ENGINE_ID,
   CARIB_TREASURY_ID,
-  NUTMEG_MINT_VAULT_ID,
+  COMPLIANCE_ID,
   MODULES,
   USDC_TYPE,
   USDC_DECIMALS,
   NUTMEG_TYPE,
   NUTMEG_DECIMALS,
-  COMPLIANCE_ID,
+  TOKEN_REGISTRY,
+  getToken,
 } from "./constants";
 
 // ============================================================
@@ -43,7 +44,6 @@ function buildZkLoginParams() {
 // Transaction Execution
 // ============================================================
 
-// Execute WITH Shinami gas sponsorship (default for all user actions)
 async function executeTransaction(tx) {
   const client = getSuiClient();
   const { session, ephemeralKey, zkProof, maxEpoch, addressSeed } = buildZkLoginParams();
@@ -80,7 +80,6 @@ async function executeTransaction(tx) {
   });
 }
 
-// Execute WITHOUT sponsorship — for transactions involving user-owned coins
 async function executeTransactionDirect(tx) {
   const client = getSuiClient();
   const { session, ephemeralKey, zkProof, maxEpoch, addressSeed } = buildZkLoginParams();
@@ -123,8 +122,8 @@ export async function createLot(custodianCapId, assetTypeId, receiptHash) {
   return executeTransaction(tx);
 }
 
-// Record delivery and mint Coin<NUTMEG> to farmer
-// Calls nutmeg::record_delivery which internally calls asset_pool::record_delivery
+// Record delivery and mint tokens to farmer.
+// tokenSymbol determines which commodity module to call (nutmeg, cocoa, etc.)
 export async function recordDelivery(
   custodianCapId,
   lotId,
@@ -132,12 +131,16 @@ export async function recordDelivery(
   units,
   grade,
   receiptHash,
+  tokenSymbol = "NUTMEG",
 ) {
+  const token = getToken(tokenSymbol);
+  if (!token) throw new Error(`Unknown token: ${tokenSymbol}`);
+
   const tx = new Transaction();
   tx.moveCall({
-    target: `${PACKAGE_ID}::nutmeg::record_delivery`,
+    target: `${PACKAGE_ID}::${token.moduleName}::record_delivery`,
     arguments: [
-      tx.object(NUTMEG_MINT_VAULT_ID),
+      tx.object(token.mintVaultId),
       tx.object(custodianCapId),
       tx.object(lotId),
       tx.object(COMPLIANCE_ID),
@@ -188,54 +191,47 @@ export async function closeLot(custodianCapId, lotId) {
 }
 
 // ============================================================
-// Surplus Claims (Farmer action)
+// Surplus Claims (generic — works with any commodity token)
 // ============================================================
 
-// Claim surplus USDC from a SurplusDeposit.
-// Farmer presents their Coin<NUTMEG> as proof of holdings.
-// Two type params: PaymentT (USDC), CommodityT (NUTMEG)
-export async function claimSurplus(depositId) {
+export async function claimSurplus(depositId, tokenSymbol = "NUTMEG") {
   const client = getSuiClient();
   const session = getSession();
+  const token = getToken(tokenSymbol);
+  if (!token) throw new Error(`Unknown token: ${tokenSymbol}`);
+
   const tx = new Transaction();
 
-  // Get farmer's NUTMEG coins and merge into one
-  const { data: nutmegCoins } = await client.getCoins({
+  const { data: coins } = await client.getCoins({
     owner: session.address,
-    coinType: NUTMEG_TYPE,
+    coinType: token.type,
   });
 
-  if (nutmegCoins.length === 0) {
-    throw new Error("No NUTMEG tokens found in your wallet");
+  if (coins.length === 0) {
+    throw new Error(`No ${tokenSymbol} tokens found in your wallet`);
   }
 
-  // Merge if multiple coin objects
-  if (nutmegCoins.length > 1) {
-    const otherCoins = nutmegCoins.slice(1).map((c) => tx.object(c.coinObjectId));
-    tx.mergeCoins(tx.object(nutmegCoins[0].coinObjectId), otherCoins);
+  if (coins.length > 1) {
+    const otherCoins = coins.slice(1).map((c) => tx.object(c.coinObjectId));
+    tx.mergeCoins(tx.object(coins[0].coinObjectId), otherCoins);
   }
 
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULES.YIELD_ENGINE}::claim_surplus`,
-    typeArguments: [USDC_TYPE, NUTMEG_TYPE],
-    arguments: [
-      tx.object(depositId),
-      tx.object(nutmegCoins[0].coinObjectId),
-      tx.object(COMPLIANCE_ID),
-    ],
+    typeArguments: [USDC_TYPE, token.type],
+    arguments: [tx.object(depositId), tx.object(coins[0].coinObjectId), tx.object(COMPLIANCE_ID)],
   });
 
-  // Use sponsored execution — no user coins are spent (just referenced)
   return executeTransaction(tx);
 }
 
 // ============================================================
-// DEX Swap — Sell Early / Buy NUTMEG
-// Routes through Cetus Protocol on Sui
+// DEX Swap — Generic multi-token support
+// Server builds tx via Cetus SDK, client signs with zkLogin
 // ============================================================
 
-// Sell NUTMEG for USDC (farmer "Sell Early")
-export async function sellNutmeg(nutmegAmount) {
+// Sell any token for USDC
+export async function sellToken(amount, tokenSymbol = "NUTMEG") {
   const session = getSession();
   if (!session) throw new Error("Not authenticated. Please sign in.");
 
@@ -244,32 +240,39 @@ export async function sellNutmeg(nutmegAmount) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       direction: "sell",
-      amount: nutmegAmount,
+      amount,
       senderAddress: session.address,
+      token: tokenSymbol,
     }),
   });
+
   const data = await res.json();
   if (data.error) throw new Error(data.error);
 
   console.log("Swap quote:", data.quote);
 
-  // Deserialize the pre-built transaction
   const txBytes = Uint8Array.from(atob(data.txBytes), (c) => c.charCodeAt(0));
   const tx = Transaction.from(txBytes);
 
   return executeTransactionDirect(tx);
 }
 
-// Buy NUTMEG with USDC (investor action)
-export async function buyNutmeg(usdcAmount) {
+// Buy any token with USDC
+export async function buyToken(usdcAmount, tokenSymbol = "NUTMEG") {
   const session = getSession();
   if (!session) throw new Error("Not authenticated. Please sign in.");
 
   const res = await fetch("/api/cetus/swap", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ direction: "buy", amount: usdcAmount, senderAddress: session.address }),
+    body: JSON.stringify({
+      direction: "buy",
+      amount: usdcAmount,
+      senderAddress: session.address,
+      token: tokenSymbol,
+    }),
   });
+
   const data = await res.json();
   if (data.error) throw new Error(data.error);
 
