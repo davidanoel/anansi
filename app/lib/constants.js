@@ -53,18 +53,27 @@ function buildTokenRegistry() {
     .map((s) => s.trim())
     .filter(Boolean);
 
+  // Parse token config from single JSON env var (Next.js inlines this correctly)
+  let tokenConfig = {};
+  try {
+    tokenConfig = JSON.parse(process.env.NEXT_PUBLIC_TOKEN_CONFIG || "{}");
+  } catch (e) {
+    console.warn("Failed to parse NEXT_PUBLIC_TOKEN_CONFIG:", e);
+  }
+
   const registry = {};
 
   for (const symbol of registered) {
     const moduleName = symbol.toLowerCase();
+    const config = tokenConfig[symbol] || {};
     registry[symbol] = {
       symbol,
       moduleName,
       type: `${ORIGINAL_PACKAGE_ID}::${moduleName}::${symbol}`,
       decimals: 6,
-      mintVaultId: process.env[`NEXT_PUBLIC_TOKEN_${symbol}_MINT_VAULT`] || "0x0",
-      poolId: process.env[`NEXT_PUBLIC_TOKEN_${symbol}_POOL`] || "",
-      hasPool: !!process.env[`NEXT_PUBLIC_TOKEN_${symbol}_POOL`],
+      mintVaultId: config.mintVault || "0x0",
+      poolId: config.pool || "",
+      hasPool: !!config.pool,
     };
   }
 

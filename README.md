@@ -1,54 +1,237 @@
-# Anansi Final Architecture Update
+# Anansi — Spice Platform
 
-## Architecture: Standard Coin<NUTMEG> + DEX Integration
+**Real-world asset tokenization for the Caribbean and beyond.**
 
-This update converts SpiceToken (custom object) to Coin<NUTMEG> (standard Sui coin).
-NUTMEG trades on any DEX natively. Adding new commodities = copy one 20-line template file.
+Spice turns physical commodities, property, and revenue streams into tradeable digital tokens on the Sui blockchain. A farmer in Grenada delivers nutmeg, receives tokens, and can sell them for USDC — all through a Google sign-in, no wallet needed.
 
-## WHAT CHANGED
+**Live:** [anansi-navy.vercel.app](https://anansi-navy.vercel.app)
+**By:** Anansi Technology Corporation · Miami, FL
 
-### Contracts (FULL REDEPLOY REQUIRED)
+---
 
-1. `asset_pool.move` — record_delivery now takes coin_amount parameter for decimal tracking.
-   No longer creates SpiceToken. Commodity modules handle minting.
+## Architecture
 
-2. `nutmeg.move` — NEW. Template coin module. Creates Coin<NUTMEG> with 6 decimals.
-   MintVault (shared) holds TreasuryCap. record_delivery mints coins to farmer.
+```
+contracts/sources/          ← Sui Move smart contracts
+  ├── asset_pool.move       ← Lots, deliveries, custodians (generic, any asset)
+  ├── yield_engine.move     ← Surplus distribution (generic, any Coin<T>)
+  ├── compliance.move       ← KYC registry, freeze, enforcement
+  ├── platform.move         ← Emergency controls
+  ├── carib_coin.move       ← Protocol token (10B fixed supply)
+  └── nutmeg.move           ← Coin<NUTMEG> template (copy for new commodities)
 
-3. `yield_engine.move` — deposit_surplus now takes total_commodity_supply parameter.
-   Correct pro-rata math with fungible coins across multiple lots.
+app/                        ← Next.js application
+  ├── app/page.js           ← Landing + role selection
+  ├── app/farmer/page.js    ← Farmer dashboard (multi-token portfolio)
+  ├── app/buyer/page.js     ← Marketplace (buy any token)
+  ├── app/admin/page.js     ← GCNA custodian dashboard
+  ├── app/admin/cetus/      ← DEX pool creation
+  ├── app/platform/page.js  ← Platform admin (asset types, compliance, surplus)
+  ├── app/api/cetus/swap/   ← DEX swap via Cetus SDK
+  ├── app/api/platform/     ← Admin API routes
+  ├── lib/constants.js      ← Token registry (dynamic from env vars)
+  ├── lib/transactions.js   ← All blockchain transactions
+  ├── lib/data.js           ← RPC queries
+  ├── lib/auth.js           ← zkLogin (Google → Sui address)
+  └── lib/admin-signer.js   ← Server-side admin transactions
+```
 
-4. `marketplace.move` — DELETED. Using DEX (Cetus) instead.
+---
 
-5. `compliance.move`, `platform.move`, `carib_coin.move` — UNCHANGED (keep your existing files)
+## How It Works
 
-### JS Files
+1. **Farmer delivers nutmeg** to GCNA receiving station → gets EC$ advance (unchanged)
+2. **GCNA records delivery** in Spice → farmer receives `Coin<NUTMEG>` tokens automatically
+3. **Farmer holds tokens** until lot sells → claims surplus USDC pro-rata
+4. **Or sells early** on the DEX → swaps NUTMEG for USDC instantly
+5. **Investors buy tokens** on the marketplace → get exposure to Caribbean commodities
+6. **When GCNA sells the lot** → surplus USDC deposited → all holders claim their share
 
-- `lib/constants.js` — Added NUTMEG_TYPE, NUTMEG_DECIMALS, NUTMEG_MINT_VAULT_ID
-- `lib/transactions.js` — Calls nutmeg::record_delivery, two-type-arg claim_surplus, DEX swap stubs
-- `lib/data.js` — getNutmegBalance() replaces getTokenPortfolio(), getAllSurplusDeposits()
-- `lib/admin-signer.js` — Reads MintVault total supply before surplus deposit
-- `pages/farmer/page.js` — Coin balance display, Sell Early UI, surplus claims
-- `pages/buyer/page.js` — Buy NUTMEG with USDC UI
+Zero wallet, zero gas fees (Shinami sponsorship), zero crypto knowledge required.
 
-## DEPLOYMENT STEPS
+---
 
-### Step 1: Update Contract Sources
+## Tech Stack
 
-Copy these files to your `contracts/sources/` directory:
+| Layer | Technology |
+|-------|-----------|
+| Blockchain | Sui (Move) |
+| Auth | zkLogin (Google OAuth → Sui address) |
+| Gas | Shinami Gas Station (sponsored transactions) |
+| DEX | Cetus Protocol CLMM |
+| Frontend | Next.js 14 + Tailwind |
+| Hosting | Vercel |
+| IPFS | Pinata (warehouse receipts) |
 
-- `contracts/sources/asset_pool.move` → REPLACE existing
-- `contracts/sources/nutmeg.move` → NEW FILE
-- `contracts/sources/yield_engine.move` → REPLACE existing
-- DELETE `contracts/sources/marketplace.move` if it exists
+---
 
-Keep these UNCHANGED:
+## Token Configuration
 
-- `contracts/sources/compliance.move`
-- `contracts/sources/platform.move`
-- `contracts/sources/carib_coin.move`
+Tokens are configured via two environment variables:
 
-### Step 2: Build and Deploy
+```env
+NEXT_PUBLIC_REGISTERED_TOKENS=NUTMEG
+NEXT_PUBLIC_TOKEN_CONFIG={"NUTMEG":{"mintVault":"0x...","pool":"0x..."}}
+```
+
+**⚠️ Important:** Token config MUST be a single JSON env var. Next.js does not support dynamic `process.env` access on the client side — expressions like `` process.env[`NEXT_PUBLIC_TOKEN_${symbol}_POOL`] `` get stripped at build time. The single JSON string is inlined correctly.
+
+### Token config format
+
+```json
+{
+  "SYMBOL": {
+    "mintVault": "0x...",
+    "pool": "0x..."
+  }
+}
+```
+
+- `mintVault` — MintVault shared object ID (from contract deploy, required)
+- `pool` — Cetus DEX pool ID (from pool creation, optional — omit until pool exists)
+
+If `pool` is empty or omitted, the token won't appear in the marketplace but can still be minted via deliveries and held by farmers.
+
+### Example: multiple tokens
+
+```env
+NEXT_PUBLIC_REGISTERED_TOKENS=NUTMEG,COCOA,COFFEE
+NEXT_PUBLIC_TOKEN_CONFIG={"NUTMEG":{"mintVault":"0xabc...","pool":"0xdef..."},"COCOA":{"mintVault":"0x123...","pool":"0x456..."},"COFFEE":{"mintVault":"0x789...","pool":""}}
+```
+
+---
+
+## Adding a New Commodity
+
+Adding a new real-world asset requires **zero code changes** to the app. The only code involved is a ~20-line Move module generated by a script.
+
+### Step 1: Generate the Move module
+
+```bash
+cd scripts
+chmod +x generate-commodity.sh
+./generate-commodity.sh COCOA "Grenada Cocoa"
+```
+
+This generates `cocoa.move` — a complete Sui coin module.
+
+### Step 2: Deploy via package upgrade
+
+```bash
+cp cocoa.move ../contracts/sources/
+cd ../contracts
+rm move.lock
+sui move build
+sui client upgrade --upgrade-capability 0xYOUR_UPGRADE_CAP --gas-budget 100000000
+```
+
+**Important:** Use `upgrade`, not `publish`. Publishing creates a new package and invalidates all existing tokens. Upgrading adds the new module alongside existing ones. Save your `UpgradeCap` object ID from the original deploy.
+
+### Step 3: Update env vars
+
+Add the new token to `NEXT_PUBLIC_TOKEN_CONFIG`:
+
+```env
+NEXT_PUBLIC_REGISTERED_TOKENS=NUTMEG,COCOA
+NEXT_PUBLIC_TOKEN_CONFIG={"NUTMEG":{"mintVault":"0x...","pool":"0x..."},"COCOA":{"mintVault":"0xNEW_VAULT_ID","pool":""}}
+```
+
+Get the MintVault ID from the upgrade output (look for `cocoa::MintVault` in the created objects).
+
+### Step 4: Create asset type
+
+From `/platform` dashboard:
+- Symbol: `COCOA`
+- Name: `Grenada Cocoa`
+- Unit: `kg`
+- Region: `Grenada`
+- Custodian: `GCA`
+- Custodian Address: `0x...` (their zkLogin address)
+
+### Step 5: Create Cetus pool (optional — enables DEX trading)
+
+1. Record a test delivery to get some COCOA tokens
+2. Go to `/admin/cetus`
+3. Create and seed COCOA/USDC pool
+4. Update env var with the pool ID:
+
+```env
+NEXT_PUBLIC_TOKEN_CONFIG={"NUTMEG":{"mintVault":"0x...","pool":"0x..."},"COCOA":{"mintVault":"0x...","pool":"0xNEW_POOL_ID"}}
+```
+
+### Step 6: Done
+
+- Farmers see COCOA tokens in their portfolio
+- Buyers can buy COCOA on the marketplace
+- Sellers can sell COCOA for USDC
+- Surplus claims work automatically
+
+**Total time:** ~30 minutes per commodity.
+
+### Example commodities
+
+```bash
+# Agriculture
+./generate-commodity.sh NUTMEG "Grenada Nutmeg"
+./generate-commodity.sh COCOA "Grenada Cocoa"
+./generate-commodity.sh MACE "Grenada Mace"
+./generate-commodity.sh COFFEE "Jamaica Blue Mountain Coffee"
+./generate-commodity.sh IDNUT "Indonesian Nutmeg"
+
+# Real Estate
+./generate-commodity.sh VILLA "Antigua Villa Share" "Fractional ownership of Antiguan luxury villas."
+
+# Revenue Streams
+./generate-commodity.sh RUM "Barbados Rum Revenue" "Tokenized revenue from Barbados rum distillery."
+```
+
+---
+
+## Environment Variables
+
+### .env.local (full reference)
+
+```env
+# Sui Network
+NEXT_PUBLIC_SUI_NETWORK=testnet
+NEXT_PUBLIC_SUI_RPC_URL=/api/sui-rpc
+SUI_RPC_URL=https://fullnode.testnet.sui.io/
+
+# Contract IDs (from initial publish)
+NEXT_PUBLIC_PACKAGE_ID=0x...
+NEXT_PUBLIC_ORIGINAL_PACKAGE_ID=0x...
+NEXT_PUBLIC_REGISTRY_ID=0x...
+NEXT_PUBLIC_YIELD_ENGINE_ID=0x...
+NEXT_PUBLIC_COMPLIANCE_ID=0x...
+NEXT_PUBLIC_PLATFORM_ID=0x...
+NEXT_PUBLIC_CARIB_TREASURY_ID=0x...
+
+# Token Registry (multi-asset)
+NEXT_PUBLIC_REGISTERED_TOKENS=NUTMEG
+NEXT_PUBLIC_TOKEN_CONFIG={"NUTMEG":{"mintVault":"0x...","pool":"0x..."}}
+
+# Google OAuth (zkLogin)
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_id.apps.googleusercontent.com
+NEXT_PUBLIC_REDIRECT_URL=http://localhost:3001/auth/callback
+
+# Shinami (server-side only)
+SHINAMI_GAS_STATION_KEY=your_key
+SHINAMI_ZKLOGIN_KEY=your_key
+
+# Platform Admin (server-side only)
+ADMIN_PRIVATE_KEY=base64_private_key
+PLATFORM_ADMIN_KEY=your_admin_password
+
+# IPFS / Pinata (optional)
+PINATA_JWT=your_jwt
+NEXT_PUBLIC_IPFS_GATEWAY=https://gateway.pinata.cloud/ipfs
+```
+
+---
+
+## Initial Deployment
+
+### 1. Deploy contracts
 
 ```bash
 cd contracts
@@ -57,223 +240,108 @@ sui move build
 sui client publish --gas-budget 100000000
 ```
 
-### Step 3: Extract Object IDs from Deploy Output
+Save all object IDs from the output:
+- `PackageID` → `NEXT_PUBLIC_PACKAGE_ID` and `NEXT_PUBLIC_ORIGINAL_PACKAGE_ID`
+- `asset_pool::Registry` (Shared) → `NEXT_PUBLIC_REGISTRY_ID`
+- `yield_engine::YieldEngine` (Shared) → `NEXT_PUBLIC_YIELD_ENGINE_ID`
+- `compliance::ComplianceRegistry` (Shared) → `NEXT_PUBLIC_COMPLIANCE_ID`
+- `platform::Platform` (Shared) → `NEXT_PUBLIC_PLATFORM_ID`
+- `carib_coin::Treasury` (Owned) → `NEXT_PUBLIC_CARIB_TREASURY_ID`
+- `nutmeg::MintVault` (Shared) → use in `NEXT_PUBLIC_TOKEN_CONFIG`
+- `package::UpgradeCap` (Owned) → **save this for future upgrades**
 
-From the publish output, find these objects:
-
-```
-PACKAGE_ID           = PackageID from "Published Objects"
-REGISTRY_ID          = asset_pool::Registry (Shared)
-YIELD_ENGINE_ID      = yield_engine::YieldEngine (Shared)
-COMPLIANCE_ID        = compliance::ComplianceRegistry (Shared)
-PLATFORM_ID          = platform::Platform (Shared)
-CARIB_TREASURY_ID    = carib_coin::Treasury (Account-owned)
-NUTMEG_MINT_VAULT_ID = nutmeg::MintVault (Shared)  ← NEW
-UPGRADE_CAP          = package::UpgradeCap (Account-owned)
-```
-
-### Step 4: Update .env.local
-
-```
-NEXT_PUBLIC_SUI_NETWORK=testnet
-NEXT_PUBLIC_SUI_RPC_URL=/api/sui-rpc
-SUI_RPC_URL=https://fullnode.testnet.sui.io/
-
-NEXT_PUBLIC_PACKAGE_ID=<new package id>
-NEXT_PUBLIC_ORIGINAL_PACKAGE_ID=<same as PACKAGE_ID after fresh deploy>
-NEXT_PUBLIC_REGISTRY_ID=<from deploy>
-NEXT_PUBLIC_YIELD_ENGINE_ID=<from deploy>
-NEXT_PUBLIC_COMPLIANCE_ID=<from deploy>
-NEXT_PUBLIC_PLATFORM_ID=<from deploy>
-NEXT_PUBLIC_CARIB_TREASURY_ID=<from deploy>
-NEXT_PUBLIC_NUTMEG_MINT_VAULT_ID=<from deploy - NEW>
-
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=<your google client id>
-NEXT_PUBLIC_REDIRECT_URL=http://localhost:3001/auth/callback
-
-SHINAMI_GAS_STATION_KEY=<your key>
-SHINAMI_ZKLOGIN_KEY=<your key>
-
-ADMIN_PRIVATE_KEY=<base64 from sui keytool export>
-PLATFORM_ADMIN_KEY=<any password>
-```
-
-### Step 5: Update JS Files
-
-Copy from this package to your app/ directory:
-
-| Package path                  | Copy to                                |
-| ----------------------------- | -------------------------------------- |
-| lib/constants.js              | app/lib/constants.js (REPLACE)         |
-| lib/transactions.js           | app/lib/transactions.js (REPLACE)      |
-| lib/data.js                   | app/lib/data.js (REPLACE)              |
-| lib/admin-signer.js           | app/lib/admin-signer.js (REPLACE)      |
-| api/sui-rpc/route.js          | app/app/api/sui-rpc/route.js (REPLACE) |
-| api/platform/deposit/route.js | app/app/api/platform/deposit/route.js  |
-| pages/farmer/page.js          | app/app/farmer/page.js (REPLACE)       |
-| pages/buyer/page.js           | app/app/buyer/page.js (REPLACE)        |
-
-DO NOT OVERWRITE:
-
-- app/lib/auth.js
-- app/app/auth/callback/page.js
-- app/app/api/salt/route.js
-- app/app/api/zkproof/route.js
-- app/app/api/sponsor/route.js
-- app/app/platform/page.js (add Deposits tab manually)
-
-### Step 6: Restart and Test
+### 2. Install and run the app
 
 ```bash
 cd app
-rm -rf .next
+npm install
+cp .env.example .env.local  # Fill in all values
 npm run dev
 ```
 
-## E2E TEST SEQUENCE
+### 3. Initial setup (from the running app)
 
-1. Platform admin: /platform → Create NUTMEG → assign custodian
-2. Custodian: Create lot → Record delivery (100kg to farmer)
-3. Farmer: Sign in → see NUTMEG balance (100.000000 NUTMEG)
-4. Custodian: Mark lot as Selling → Start Distribution
-5. Platform admin: /platform → Surplus Deposits → deposit 10 USDC for lot
-6. Farmer: See "Available Surplus" → click Claim → receive USDC
-7. Farmer: "Sell Early" → (will show DEX not configured until Cetus pool created)
+1. Go to `/platform` → sign in with your admin password
+2. Create asset type: NUTMEG, Grenada Nutmeg, kg, Grenada, GCNA
+3. Assign custodian (GCNA staff's zkLogin address)
+4. Sign in as custodian → `/admin` → Create lot → Record delivery
+5. Create Cetus pool from `/admin/cetus`
+6. Update `NEXT_PUBLIC_TOKEN_CONFIG` with pool ID
 
-## ADDING NEW COMMODITIES
-
-To add cocoa:
-
-1. Copy `nutmeg.move` → `cocoa.move`
-2. Find-replace: NUTMEG → COCOA, "Grenada Nutmeg" → "Grenada Cocoa", etc.
-3. `sui client upgrade --upgrade-capability UPGRADE_CAP --gas-budget 100000000`
-4. Add NEXT_PUBLIC_COCOA_MINT_VAULT_ID to .env.local
-5. Create COCOA asset type from /platform
-6. Create Cetus COCOA/USDC pool
-
-Total time: ~30 minutes.
-
-## DEX INTEGRATION (NEXT STEP)
-
-After deploying Coin<NUTMEG>:
-
-1. Create NUTMEG/USDC pool on Cetus testnet
-2. Seed initial liquidity (admin sends NUTMEG + USDC to pool)
-3. Install Cetus SDK: `npm install @cetus-clmm/sui-clmm-sdk`
-4. Wire sellNutmeg() and buyNutmeg() in transactions.js to Cetus router
-5. "Sell Early" and "Buy" buttons work via DEX swap
-
-## COMPLIANCE ENFORCEMENT
-
-1. Deploy contracts, update env vars
-2. Platform admin: Create NUTMEG asset type, assign custodian
-3. Platform admin: Compliance tab → Verify the farmer address (jurisdiction: GD, role: Farmer)
-4. Platform admin: Compliance tab → Enable Enforcement
-5. Custodian: Create lot, record delivery to the verified farmer → should SUCCEED
-6. Try recording delivery to an UNVERIFIED address → should FAIL with compliance error
-7. Platform admin: Freeze the farmer
-8. Farmer: Try "Sell Early" → should FAIL (swap route rejects)
-9. Farmer: Try "Claim Surplus" → should FAIL (on-chain compliance check)
-10. Platform admin: Unfreeze the farmer
-11. Farmer: Try again → should SUCCEED
-
-# Multi-Asset Update
-
-Makes the Spice platform fully multi-asset. Adding a new commodity (cocoa,
-coffee, villas, rum, etc.) requires zero code changes to the app.
-
-## How it works
-
-The app discovers tokens from environment variables:
-
-```env
-NEXT_PUBLIC_REGISTERED_TOKENS=NUTMEG,COCOA,COFFEE
-NEXT_PUBLIC_TOKEN_NUTMEG_MINT_VAULT=0x...
-NEXT_PUBLIC_TOKEN_NUTMEG_POOL=0x...
-NEXT_PUBLIC_TOKEN_COCOA_MINT_VAULT=0x...
-NEXT_PUBLIC_TOKEN_COCOA_POOL=0x...
-NEXT_PUBLIC_TOKEN_COFFEE_MINT_VAULT=0x...
-NEXT_PUBLIC_TOKEN_COFFEE_POOL=0x...
-```
-
-Convention: Symbol `COCOA` → Move module `cocoa` → coin type `PACKAGE::cocoa::COCOA`
-
-## Adding a new commodity (end-to-end)
-
-### Step 1: Generate the Move module
+### 4. Deploy to Vercel
 
 ```bash
-chmod +x scripts/generate-commodity.sh
-./scripts/generate-commodity.sh COCOA "Grenada Cocoa"
-cp cocoa.move contracts/sources/
+vercel --prod
 ```
 
-### Step 2: Deploy
+Set all env vars in Vercel dashboard → Settings → Environment Variables.
 
-```bash
-cd contracts && rm Move.lock && sui move build
-sui client upgrade --upgrade-capability 0xYOUR_UPGRADE_CAP --gas-budget 100000000
-```
+---
 
-### Step 3: Add env vars
+## Compliance
 
-```env
-NEXT_PUBLIC_REGISTERED_TOKENS=NUTMEG,COCOA    # Add to list
-NEXT_PUBLIC_TOKEN_COCOA_MINT_VAULT=0x...      # MintVault from deploy
-NEXT_PUBLIC_TOKEN_COCOA_POOL=                  # Empty until pool created
-```
+The compliance module provides on-chain KYC enforcement:
 
-### Step 4: Create asset type (from /platform dashboard)
+- **Verify users** — register addresses as KYC-verified with jurisdiction and role
+- **Freeze accounts** — block frozen addresses from minting, claiming, and trading
+- **Toggle enforcement** — disabled for testnet, enable for mainnet
 
-- Symbol: COCOA
-- Name: Grenada Cocoa
-- Unit: kg
-- Region: Grenada
-- Custodian: GCA
-- Custodian Address: 0x... (their zkLogin address)
+### On-chain enforcement (Approach A)
 
-### Step 5: Create Cetus pool (from /admin/cetus)
+`record_delivery` and `claim_surplus` both require `&ComplianceRegistry` and call `assert_can_participate`. When enforcement is enabled, only verified non-frozen addresses can receive tokens or claim surplus.
 
-After recording a delivery (to get some COCOA tokens), create and seed
-the COCOA/USDC pool. Update the env var:
+### Server-side enforcement (Approach B)
 
-```env
-NEXT_PUBLIC_TOKEN_COCOA_POOL=0x...
-```
+The `/api/cetus/swap` route queries the compliance registry and rejects frozen/unverified users. This covers DEX swaps which go through Cetus contracts (not ours).
 
-### Step 6: Done
+### Testing compliance
 
-- Farmers see COCOA tokens in their portfolio
-- Buyers can buy COCOA on the marketplace
-- Sellers can sell COCOA for USDC
-- All surplus claims work automatically
+1. `/platform` → Compliance → Verify a farmer address
+2. Compliance → Enable Enforcement
+3. Record delivery to verified farmer → succeeds
+4. Record delivery to unverified address → fails
+5. Freeze the farmer → farmer can't sell or claim
+6. Unfreeze → farmer can transact again
 
-## Env var migration
+---
 
-Your existing NUTMEG env vars still work. Just add:
+## Surplus Distribution
 
-```env
-NEXT_PUBLIC_REGISTERED_TOKENS=NUTMEG
-NEXT_PUBLIC_TOKEN_NUTMEG_MINT_VAULT=<your existing NUTMEG_MINT_VAULT_ID>
-NEXT_PUBLIC_TOKEN_NUTMEG_POOL=<your existing CETUS_NUTMEG_POOL_ID>
-```
+Surplus uses a **snapshot-based pro-rata** model:
 
-The old `NEXT_PUBLIC_NUTMEG_MINT_VAULT_ID` and `NEXT_PUBLIC_CETUS_NUTMEG_POOL_ID`
-are still read as fallbacks for backward compatibility.
+1. Admin deposits USDC surplus for a lot
+2. Contract records total `Coin<NUTMEG>` supply at that moment
+3. Any NUTMEG holder can claim: `(my_balance / total_supply) × surplus_pool`
+4. Claim is recorded on-chain — each address claims once per deposit
+5. If you sold tokens before surplus, the buyer gets your share (correct behavior)
 
-## Example commodities
+This works with fungible coins across multiple lots. All NUTMEG is equivalent regardless of which lot it originated from.
 
-```bash
-# Agriculture
-./scripts/generate-commodity.sh NUTMEG "Grenada Nutmeg"
-./scripts/generate-commodity.sh COCOA "Grenada Cocoa"
-./scripts/generate-commodity.sh MACE "Grenada Mace"
-./scripts/generate-commodity.sh COFFEE "Jamaica Blue Mountain Coffee"
-./scripts/generate-commodity.sh IDNUT "Indonesian Nutmeg"
+---
 
-# Real Estate
-./scripts/generate-commodity.sh VILLA "Antigua Villa Share" "Fractional ownership of Antiguan luxury villas."
+## Roles
 
-# Revenue Streams
-./scripts/generate-commodity.sh RUM "Barbados Rum Revenue" "Tokenized revenue from Barbados rum distillery."
-```
+| Role | Access | Auth | Path |
+|------|--------|------|------|
+| Platform Admin | Create assets, manage compliance, deposit surplus | Password | `/platform` |
+| Custodian (GCNA) | Create lots, record deliveries, manage lifecycle | zkLogin (Google) | `/admin` |
+| Farmer | View tokens, sell early, claim surplus | zkLogin (Google) | `/farmer` |
+| Buyer / Investor | Buy tokens, view portfolio | zkLogin (Google) | `/buyer` |
+
+---
+
+## Key Decisions
+
+- **Standard `Coin<T>`** not custom objects — trades on any Sui DEX natively
+- **One module per commodity** — Sui requires it for `Coin<T>`, 20 lines each
+- **Package upgrades** to add commodities — existing tokens/lots unaffected
+- **Cetus CLMM** for DEX — SDK for quotes, `createSwapPayload` for transactions
+- **npm overrides** `{"@mysten/sui": "2.15.0"}` — forces single version, prevents SDK conflicts
+- **zkLogin + Shinami** — zero-wallet, zero-gas UX for all users
+- **JSON env var for tokens** — Next.js strips dynamic `process.env` access client-side
+
+---
+
+## License
+
+Proprietary — Anansi Technology Corporation
