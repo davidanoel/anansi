@@ -91,7 +91,7 @@ function RecordDeliveryForm({ custodianCaps }) {
   return (
     <div className="card p-6">
       <h2 className="font-semibold text-lg mb-1">Record Delivery</h2>
-      <p className="text-sm text-anansi-muted mb-5">Record a physical delivery and mint NUTMEG tokens to the farmer.</p>
+      <p className="text-sm text-anansi-muted mb-5">Record a physical delivery and mint tokens to the farmer.</p>
       {custodianCaps.length > 1 && (
         <div className="mb-4">
           <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">Asset Type</label>
@@ -123,7 +123,7 @@ function RecordDeliveryForm({ custodianCaps }) {
       </form>
       {result && (
         <div className={`mt-4 p-4 rounded-lg text-sm ${result.success ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-red-50 text-red-800 border border-red-200"}`}>
-          {result.success ? <><span className="font-medium">Recorded.</span> {result.tokens} NUTMEG minted. <span className="font-mono text-xs">Tx: {result.digest?.slice(0, 20)}…</span></> : `Error: ${result.error}`}
+          {result.success ? <><span className="font-medium">Recorded.</span> {result.tokens} tokens minted. <span className="font-mono text-xs">Tx: {result.digest?.slice(0, 20)}…</span></> : `Error: ${result.error}`}
         </div>
       )}
     </div>

@@ -1,0 +1,10 @@
+[package]
+name = "anansi_coffee"
+edition = "2024.beta"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
+anansi = { local = "../../core" }
+
+[addresses]
+anansi_coffee = "0x0"
