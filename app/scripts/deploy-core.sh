@@ -1,6 +1,12 @@
 #!/bin/bash
 # ============================================================
 # deploy-core.sh — Publish the core Anansi platform package
+#
+# Run this ONCE. All commodity packages depend on core.
+# Env vars will be automatically extracted and saved to .env.local.
+# Deployments are logged to a timestamped JSON file in the deployments/ folder.
+#
+# Usage: ./deploy-core.sh
 # ============================================================
 
 set -e
@@ -9,6 +15,14 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 CORE_DIR="$SCRIPT_DIR/../../contracts/core"
 ENV_FILE="$SCRIPT_DIR/../.env.local"
+
+# Create a permanent deployments folder at the root of the project
+DEPLOY_DIR="$SCRIPT_DIR/../../deployments"
+mkdir -p "$DEPLOY_DIR"
+
+# Generate a timestamp (e.g., 20260410_162230)
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+OUTPUT_JSON="$DEPLOY_DIR/core-deploy-${TIMESTAMP}.json"
 
 echo "============================================================"
 echo "  Deploying Anansi Core Platform"
@@ -35,7 +49,6 @@ sui move build 2>&1 | tail -3
 
 echo ""
 echo "👉 Publishing to testnet (this may take a few seconds)..."
-OUTPUT_JSON="/tmp/core-deploy.json"
 sui client publish --gas-budget 200000000 --json > "$OUTPUT_JSON"
 
 if [ ! -s "$OUTPUT_JSON" ]; then

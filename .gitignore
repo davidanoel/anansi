@@ -9,6 +9,7 @@ node_modules/
 build/
 dist/
 .DS_Store
+/deployments/
 
 # Sui Move build artifacts
 contracts/build/

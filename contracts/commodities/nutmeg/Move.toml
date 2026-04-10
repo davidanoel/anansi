@@ -3,7 +3,7 @@ name = "anansi_nutmeg"
 edition = "2024.beta"
 
 [dependencies]
-AnansiCore = { local = "../../core" }
+anansi = { local = "../../core" }
 
 [addresses]
 anansi_nutmeg = "0x0"
