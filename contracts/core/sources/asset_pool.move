@@ -215,9 +215,9 @@ module anansi::asset_pool {
     }
 
     /// Record a delivery and update lot state.
-    /// Returns raw units. The commodity module mints coins and reports back the coin_amount.
-    /// Package-internal — only callable by modules in this package (nutmeg, cocoa, etc.)
-    public(package) fun record_delivery(
+    /// Called by commodity modules (nutmeg, cocoa, coffee — may be in separate packages).
+    /// Safe as `public` because CustodianCap already authorizes the caller.
+    public fun record_delivery(
         cap: &CustodianCap, lot: &mut Lot,
         farmer: address, units: u64, coin_amount: u64, grade: vector<u8>,
         receipt_hash: vector<u8>, clock: &Clock, ctx: &mut TxContext,

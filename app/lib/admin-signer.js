@@ -269,8 +269,7 @@ export async function issueCustodianCap(assetTypeId, newCustodianAddress) {
 
 // ============================================================
 // Deposit USDC surplus for a lot (contract uses &mut Coin + gross_amount)
-// tokenSymbol: which commodity token (NUTMEG, COCOA, etc.) — determines which MintVault to read
-// It accepts tokenSymbol and looks up the correct MintVault from NEXT_PUBLIC_TOKEN_CONFIG.
+// Accepts tokenSymbol, reads mintVault from NEXT_PUBLIC_TOKEN_CONFIG.
 // ============================================================
 
 export async function adminDepositSurplus(lotId, usdcAmount, tokenSymbol) {
@@ -279,10 +278,9 @@ export async function adminDepositSurplus(lotId, usdcAmount, tokenSymbol) {
   const amountUnits = Math.floor(usdcAmount * 10 ** 6);
 
   if (!tokenSymbol) {
-    throw new Error("tokenSymbol is required (e.g., NUTMEG, COCOA)");
+    throw new Error("tokenSymbol is required (e.g., NUTMEG, COFFEE)");
   }
 
-  // Look up MintVault for this token from the JSON config
   const tokenConfig = JSON.parse(process.env.NEXT_PUBLIC_TOKEN_CONFIG || "{}");
   const config = tokenConfig[tokenSymbol];
   if (!config?.mintVault) {

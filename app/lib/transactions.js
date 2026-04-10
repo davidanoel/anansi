@@ -138,7 +138,7 @@ export async function recordDelivery(
 
   const tx = new Transaction();
   tx.moveCall({
-    target: `${PACKAGE_ID}::${token.moduleName}::record_delivery`,
+    target: `${token.packageId}::${token.moduleName}::record_delivery`,
     arguments: [
       tx.object(token.mintVaultId),
       tx.object(custodianCapId),

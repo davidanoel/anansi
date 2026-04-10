@@ -5,24 +5,26 @@
 export const SUI_NETWORK = process.env.NEXT_PUBLIC_SUI_NETWORK || "testnet";
 export const SUI_RPC_URL = process.env.NEXT_PUBLIC_SUI_RPC_URL || "https://fullnode.testnet.sui.io";
 
-// Contract package IDs
+// Core platform package ID (asset_pool, yield_engine, compliance, etc.)
 export const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || "0x0";
 export const ORIGINAL_PACKAGE_ID = process.env.NEXT_PUBLIC_ORIGINAL_PACKAGE_ID || PACKAGE_ID;
 
-// Shared object IDs
+// Shared object IDs (from core package)
 export const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID || "0x0";
 export const YIELD_ENGINE_ID = process.env.NEXT_PUBLIC_YIELD_ENGINE_ID || "0x0";
 export const COMPLIANCE_ID = process.env.NEXT_PUBLIC_COMPLIANCE_ID || "0x0";
 export const PLATFORM_ID = process.env.NEXT_PUBLIC_PLATFORM_ID || "0x0";
 export const CARIB_TREASURY_ID = process.env.NEXT_PUBLIC_CARIB_TREASURY_ID || "0x0";
+export const COMMODITY_REGISTRY_ID = process.env.NEXT_PUBLIC_COMMODITY_REGISTRY_ID || "0x0";
 
-// Module names
+// Module names (core package)
 export const MODULES = {
   CARIB_COIN: "carib_coin",
   ASSET_POOL: "asset_pool",
   YIELD_ENGINE: "yield_engine",
   COMPLIANCE: "compliance",
   PLATFORM: "platform",
+  COMMODITY_REGISTRY: "commodity_registry",
 };
 
 // USDC on Sui
@@ -36,24 +38,35 @@ export const USDC_DECIMALS = 6;
 // ============================================================
 // Token Registry — Dynamic multi-asset discovery
 //
-// Adding a new commodity:
-// 1. Deploy the Move module (e.g., cocoa.move)
-// 2. Add to NEXT_PUBLIC_REGISTERED_TOKENS: "NUTMEG,COCOA"
-// 3. Add env vars:
-//    NEXT_PUBLIC_TOKEN_COCOA_MINT_VAULT=0x...
-//    NEXT_PUBLIC_TOKEN_COCOA_POOL=0x...  (after creating Cetus pool)
-// 4. Create asset type from /platform dashboard
-// 5. Done — app discovers it automatically
+// Each commodity is a SEPARATE Sui package with its own package ID.
+// Token config includes packageId so the app knows where to call
+// record_delivery and what coin type to reference.
+//
+// Env var format:
+//   NEXT_PUBLIC_REGISTERED_TOKENS=NUTMEG,COFFEE
+//   NEXT_PUBLIC_TOKEN_CONFIG={
+//     "NUTMEG": {
+//       "packageId": "0xNUTMEG_PKG_ID",
+//       "mintVault": "0xMINT_VAULT_ID",
+//       "pool": "0xCETUS_POOL_ID"
+//     },
+//     "COFFEE": {
+//       "packageId": "0xCOFFEE_PKG_ID",
+//       "mintVault": "0x...",
+//       "pool": ""
+//     }
+//   }
+//
+// Convention:
+//   Symbol NUTMEG → package "anansi_nutmeg" → module "nutmeg" → type "PKG::nutmeg::NUTMEG"
 // ============================================================
 
-// Convention: symbol NUTMEG → module "nutmeg" → type "PACKAGE::nutmeg::NUTMEG"
 function buildTokenRegistry() {
   const registered = (process.env.NEXT_PUBLIC_REGISTERED_TOKENS || "NUTMEG")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
 
-  // Parse token config from single JSON env var (Next.js inlines this correctly)
   let tokenConfig = {};
   try {
     tokenConfig = JSON.parse(process.env.NEXT_PUBLIC_TOKEN_CONFIG || "{}");
@@ -66,10 +79,14 @@ function buildTokenRegistry() {
   for (const symbol of registered) {
     const moduleName = symbol.toLowerCase();
     const config = tokenConfig[symbol] || {};
+    const packageId = config.packageId || ORIGINAL_PACKAGE_ID;
+
     registry[symbol] = {
       symbol,
       moduleName,
-      type: `${ORIGINAL_PACKAGE_ID}::${moduleName}::${symbol}`,
+      packageId,
+      // Coin type uses the commodity's package ID (not core)
+      type: `${packageId}::${moduleName}::${symbol}`,
       decimals: 6,
       mintVaultId: config.mintVault || "0x0",
       poolId: config.pool || "",
