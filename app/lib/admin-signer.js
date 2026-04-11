@@ -5,7 +5,7 @@
 import { SuiJsonRpcClient, getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
 import { Transaction } from "@mysten/sui/transactions";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
-import { USDC_TYPE } from "./constants";
+import { USDC_TYPE, getToken } from "./constants";
 
 let client = null;
 let keypair = null;
@@ -281,6 +281,12 @@ export async function adminDepositSurplus(lotId, usdcAmount, tokenSymbol) {
     throw new Error("tokenSymbol is required (e.g., NUTMEG, COFFEE)");
   }
 
+  // 1. Look up the fully qualified coin type
+  const token = getToken(tokenSymbol);
+  if (!token || !token.type) {
+    throw new Error(`Could not find coinType for ${tokenSymbol}`);
+  }
+
   const tokenConfig = JSON.parse(process.env.NEXT_PUBLIC_TOKEN_CONFIG || "{}");
   const config = tokenConfig[tokenSymbol];
   if (!config?.mintVault) {
@@ -311,9 +317,10 @@ export async function adminDepositSurplus(lotId, usdcAmount, tokenSymbol) {
     throw new Error(`No ${tokenSymbol} tokens have been minted yet. Record deliveries first.`);
   }
 
+  // 2. Pass BOTH type arguments: USDC_TYPE and the specific Commodity Type
   tx.moveCall({
     target: `${PACKAGE_ID}::yield_engine::deposit_surplus`,
-    typeArguments: [USDC_TYPE],
+    typeArguments: [USDC_TYPE, token.type],
     arguments: [
       tx.object(process.env.NEXT_PUBLIC_YIELD_ENGINE_ID),
       tx.object(lotId),

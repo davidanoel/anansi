@@ -171,6 +171,10 @@ export async function getNutmegCoins(address) {
 export async function getAllSurplusDeposits() {
   const client = getSuiClient();
 
+  // 1. Fetch all lots to build a reference map of lotId -> assetTypeSymbol
+  const allLots = await getAllLots().catch(() => []);
+  const lotMap = new Map(allLots.map((l) => [l.id, l.assetTypeSymbol]));
+
   const events = await queryEvents(`${PACKAGE_ID}::yield_engine::SurplusReceived`, null, 50);
   let allEvents = [...events.data];
   if (ORIGINAL_PACKAGE_ID !== PACKAGE_ID) {
@@ -193,17 +197,19 @@ export async function getAllSurplusDeposits() {
         (c) => c.type === "created" && c.objectType?.includes("::yield_engine::SurplusDeposit"),
       );
       if (created) {
-        // Fetch actual object to check remaining balance
         const depositObj = await client.getObject({
           id: created.objectId,
           options: { showContent: true },
         });
         const fields = depositObj.data?.content?.fields || {};
         const remaining = Number(fields.balance || 0);
+        const lotId = event.parsedJson?.lot_id;
 
         deposits.push({
           id: created.objectId,
-          lotId: event.parsedJson?.lot_id,
+          lotId: lotId,
+          // 2. Safely map the correct symbol to the deposit!
+          assetTypeSymbol: lotMap.get(lotId) || "NUTMEG",
           grossAmount: Number(event.parsedJson?.gross_amount || 0),
           feeAmount: Number(event.parsedJson?.fee_amount || 0),
           netAmount: Number(event.parsedJson?.net_amount || 0),

@@ -1,5 +1,6 @@
 /// Asset Pool — Core lot and delivery management for the Spice platform.
-/// Tracks physical commodity lots and deliveries. Does NOT mint tokens —
+/// Tracks physical commodity lots and deliveries.
+/// Does NOT mint tokens —
 /// each commodity module (nutmeg.move, cocoa.move) handles its own Coin<T> minting.
 module anansi::asset_pool {
     use sui::event;
@@ -10,7 +11,7 @@ module anansi::asset_pool {
 
     public struct Registry has key {
         id: UID,
-        lot_count: u64,
+        lot_count: u64, // Global counter for platform stats
         asset_type_count: u64,
     }
 
@@ -22,6 +23,7 @@ module anansi::asset_pool {
         region: String,
         custodian: String,
         active: bool,
+        lot_count: u64, // Local counter for independent lot numbering
     }
 
     public struct Lot has key, store {
@@ -145,6 +147,7 @@ module anansi::asset_pool {
             region: region_str,
             custodian: custodian_str,
             active: true,
+            lot_count: 0, // Initialize local counter
         });
     }
 
@@ -180,17 +183,19 @@ module anansi::asset_pool {
     // ============ Custodian Functions ============
 
     public fun create_lot(
-        cap: &CustodianCap, registry: &mut Registry, asset_type: &AssetType,
+        cap: &CustodianCap, registry: &mut Registry, asset_type: &mut AssetType,
         receipt_hash: vector<u8>, clock: &Clock, ctx: &mut TxContext,
     ): ID {
         assert!(asset_type.active, EAssetTypeNotActive);
         assert!(cap.asset_type_symbol == asset_type.symbol, ENotCustodian);
 
+        // Increment both counters
         registry.lot_count = registry.lot_count + 1;
+        asset_type.lot_count = asset_type.lot_count + 1;
 
         let lot = Lot {
             id: object::new(ctx),
-            lot_number: registry.lot_count,
+            lot_number: asset_type.lot_count, // Use independent counter
             asset_type_symbol: asset_type.symbol,
             status: STATUS_OPEN,
             total_units: 0,
@@ -207,9 +212,12 @@ module anansi::asset_pool {
 
         let lot_id = object::id(&lot);
         event::emit(LotCreated {
-            lot_id, lot_number: registry.lot_count,
-            asset_type_symbol: asset_type.symbol, custodian: ctx.sender(),
+            lot_id, 
+            lot_number: asset_type.lot_count, // Broadcast independent counter
+            asset_type_symbol: asset_type.symbol, 
+            custodian: ctx.sender(),
         });
+
         transfer::share_object(lot);
         lot_id
     }
@@ -228,7 +236,6 @@ module anansi::asset_pool {
         lot.total_units = lot.total_units + units;
         lot.total_tokens_minted = lot.total_tokens_minted + coin_amount;
         lot.delivery_count = lot.delivery_count + 1;
-
         let grade_str = string::utf8(grade);
 
         transfer::transfer(Delivery {

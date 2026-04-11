@@ -1,39 +1,45 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useAuth } from '../../components/AuthProvider'
-import AppNav from '../../components/AppNav'
-import { getMultiTokenPortfolio, getUsdcBalance, getFarmerDeliveries, getAllSurplusDeposits, getClaimedDepositIds } from '../../lib/data'
-import { claimSurplus, sellToken } from '../../lib/transactions'
-import { USDC_DECIMALS } from '../../lib/constants'
+import { useState, useEffect } from "react";
+import { useAuth } from "../../components/AuthProvider";
+import AppNav from "../../components/AppNav";
+import {
+  getMultiTokenPortfolio,
+  getUsdcBalance,
+  getFarmerDeliveries,
+  getAllSurplusDeposits,
+  getClaimedDepositIds,
+} from "../../lib/data";
+import { claimSurplus, sellToken } from "../../lib/transactions";
+import { USDC_DECIMALS } from "../../lib/constants";
 
 export default function FarmerPage() {
-  const { user } = useAuth()
-  const [portfolio, setPortfolio] = useState([])
-  const [usdc, setUsdc] = useState({ displayBalance: 0 })
-  const [deliveries, setDeliveries] = useState([])
-  const [deposits, setDeposits] = useState([])
-  const [claimedLotIds, setClaimedLotIds] = useState(new Set())
-  const [prices, setPrices] = useState({}) // { NUTMEG: { priceUsdc: 0.91, ... } }
-  const [loading, setLoading] = useState(true)
-  const [claiming, setClaiming] = useState(null)
-  const [sellState, setSellState] = useState({ symbol: null, amount: '', selling: false })
+  const { user } = useAuth();
+  const [portfolio, setPortfolio] = useState([]);
+  const [usdc, setUsdc] = useState({ displayBalance: 0 });
+  const [deliveries, setDeliveries] = useState([]);
+  const [deposits, setDeposits] = useState([]);
+  const [claimedLotIds, setClaimedLotIds] = useState(new Set());
+  const [prices, setPrices] = useState({}); // { NUTMEG: { priceUsdc: 0.91, ... } }
+  const [loading, setLoading] = useState(true);
+  const [claiming, setClaiming] = useState(null);
+  const [sellState, setSellState] = useState({ symbol: null, amount: "", selling: false });
 
   // Fetch live prices from Cetus pools
   async function loadPrices() {
     try {
-      const res = await fetch('/api/cetus/price')
+      const res = await fetch("/api/cetus/price");
       if (res.ok) {
-        const data = await res.json()
-        setPrices(data.prices || {})
+        const data = await res.json();
+        setPrices(data.prices || {});
       }
     } catch (err) {
-      console.warn('Price fetch failed:', err.message)
+      console.warn("Price fetch failed:", err.message);
     }
   }
 
   async function loadData() {
-    if (!user?.address) return
+    if (!user?.address) return;
     try {
       const [p, u, d, s, claimed] = await Promise.all([
         getMultiTokenPortfolio(user.address),
@@ -41,94 +47,101 @@ export default function FarmerPage() {
         getFarmerDeliveries(user.address),
         getAllSurplusDeposits().catch(() => []),
         getClaimedDepositIds(user.address).catch(() => new Set()),
-      ])
-      setPortfolio(p)
-      setUsdc(u)
-      setDeliveries(d)
-      setDeposits(s)
-      setClaimedLotIds(claimed)
+      ]);
+      setPortfolio(p);
+      setUsdc(u);
+      setDeliveries(d);
+      setDeposits(s);
+      setClaimedLotIds(claimed);
     } catch (err) {
-      console.error('Failed to load farmer data:', err)
+      console.error("Failed to load farmer data:", err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    loadData()
-    loadPrices()
+    loadData();
+    loadPrices();
     // Refresh prices every 30 seconds
-    const interval = setInterval(loadPrices, 30_000)
-    return () => clearInterval(interval)
-  }, [user])
+    const interval = setInterval(loadPrices, 30_000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   // Helper: get price for a token
-  const getPrice = (symbol) => prices[symbol]?.priceUsdc || null
-
-  // Helper: format USD value (returns "—" if no price)
-  const formatValue = (balance, symbol) => {
-    const price = getPrice(symbol)
-    if (price === null) return '—'
-    return `$${(balance * price).toFixed(2)}`
-  }
+  const getPrice = (symbol) => prices[symbol]?.priceUsdc || null;
 
   const handleClaim = async (depositId, tokenSymbol) => {
-    setClaiming(depositId)
+    setClaiming(depositId);
     try {
-      await claimSurplus(depositId, tokenSymbol)
-      alert('Surplus claimed! USDC sent to your wallet.')
-      await loadData()
+      await claimSurplus(depositId, tokenSymbol);
+      alert("Surplus claimed! USDC sent to your wallet.");
+      await loadData();
     } catch (err) {
-      if (err.message?.includes('EAlreadyClaimed') || err.message?.includes('204')) {
-        alert('You have already claimed this surplus.')
-        await loadData()
-      } else { alert('Claim failed: ' + err.message) }
-    } finally { setClaiming(null) }
-  }
+      if (err.message?.includes("EAlreadyClaimed") || err.message?.includes("204")) {
+        alert("You have already claimed this surplus.");
+        await loadData();
+      } else {
+        alert("Claim failed: " + err.message);
+      }
+    } finally {
+      setClaiming(null);
+    }
+  };
 
   const handleSell = async (symbol) => {
-    if (!sellState.amount) return
-    setSellState(s => ({ ...s, selling: true }))
+    if (!sellState.amount) return;
+    setSellState((s) => ({ ...s, selling: true }));
     try {
-      await sellToken(parseFloat(sellState.amount), symbol)
-      alert(`${symbol} sold for USDC!`)
-      setSellState({ symbol: null, amount: '', selling: false })
-      await loadData()
-      loadPrices()
+      await sellToken(parseFloat(sellState.amount), symbol);
+      alert(`${symbol} sold for USDC!`);
+      setSellState({ symbol: null, amount: "", selling: false });
+      await loadData();
+      loadPrices();
     } catch (err) {
-      alert(err.message)
-      setSellState(s => ({ ...s, selling: false }))
+      alert(err.message);
+      setSellState((s) => ({ ...s, selling: false }));
     }
-  }
+  };
 
   if (!user) {
-    return <><AppNav /><div className="max-w-lg mx-auto px-6 py-20 text-center"><p className="text-anansi-gray">Please sign in to view your farmer dashboard.</p></div></>
+    return (
+      <>
+        <AppNav />
+        <div className="max-w-lg mx-auto px-6 py-20 text-center">
+          <p className="text-anansi-gray">Please sign in to view your farmer dashboard.</p>
+        </div>
+      </>
+    );
   }
 
   const totalValue = portfolio.reduce((sum, t) => {
-    const price = getPrice(t.symbol)
-    return sum + (price ? t.displayBalance * price : 0)
-  }, 0)
-  const totalTokens = portfolio.reduce((sum, t) => sum + t.displayBalance, 0)
-  const hasPrices = Object.keys(prices).length > 0
+    const price = getPrice(t.symbol);
+    return sum + (price ? t.displayBalance * price : 0);
+  }, 0);
+  const totalTokens = portfolio.reduce((sum, t) => sum + t.displayBalance, 0);
+  const hasPrices = Object.keys(prices).length > 0;
 
-  // Filter claimable deposits
-  const totalBalance = portfolio.reduce((sum, t) => sum + t.totalBalance, 0)
-  const claimableDeposits = deposits.filter(deposit => {
-    if (deposit.remaining === 0) return false
-    if (claimedLotIds.has(deposit.lotId)) return false
-    if (totalBalance <= 0) return false
-    const myShare = deposit.tokensSnapshot > 0
-      ? (deposit.netAmount * totalBalance) / deposit.tokensSnapshot
-      : 0
-    return myShare > 0 && myShare <= deposit.remaining
-  })
+  // Filter claimable deposits based on the SPECIFIC token, not a global sum
+  const claimableDeposits = deposits.filter((deposit) => {
+    if (deposit.remaining === 0) return false;
+    if (claimedLotIds.has(deposit.lotId)) return false;
+
+    // Grab the specific token balance for this deposit's commodity
+    const matchingToken = portfolio.find((t) => t.symbol === deposit.assetTypeSymbol);
+    const tokenBalance = matchingToken ? matchingToken.totalBalance : 0;
+
+    if (tokenBalance <= 0) return false;
+
+    const myShare =
+      deposit.tokensSnapshot > 0 ? (deposit.netAmount * tokenBalance) / deposit.tokensSnapshot : 0;
+    return myShare > 0 && myShare <= deposit.remaining;
+  });
 
   return (
     <>
       <AppNav />
       <div className="max-w-lg mx-auto px-6 py-8 animate-fade-in">
-
         {/* Portfolio Card */}
         <div className="relative overflow-hidden bg-anansi-black text-white rounded-2xl p-6 shadow-elevated">
           <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-anansi-red/20 to-transparent rounded-bl-full" />
@@ -137,17 +150,21 @@ export default function FarmerPage() {
             <p className="text-4xl font-bold mt-2 tabular-nums">
               {loading ? (
                 <span className="inline-block w-32 h-10 bg-white/10 rounded animate-pulse" />
-              ) : portfolio.length === 0 ? '0' : (
+              ) : portfolio.length === 0 ? (
+                "0"
+              ) : (
                 totalTokens.toLocaleString(undefined, { maximumFractionDigits: 2 })
               )}
             </p>
             <p className="text-xs text-gray-500 mt-1">
               {portfolio.length > 0
-                ? `${portfolio.length} token${portfolio.length > 1 ? 's' : ''}${hasPrices ? ` · ≈ $${totalValue.toFixed(2)} USD` : ''}`
-                : 'No tokens yet'}
+                ? `${portfolio.length} token${portfolio.length > 1 ? "s" : ""}${hasPrices ? ` · ≈ $${totalValue.toFixed(2)} USD` : ""}`
+                : "No tokens yet"}
             </p>
             {usdc.displayBalance > 0 && (
-              <p className="text-xs text-emerald-400 mt-1">${usdc.displayBalance.toFixed(2)} USDC</p>
+              <p className="text-xs text-emerald-400 mt-1">
+                ${usdc.displayBalance.toFixed(2)} USDC
+              </p>
             )}
           </div>
         </div>
@@ -157,21 +174,29 @@ export default function FarmerPage() {
           <div className="mt-6">
             <p className="section-title">Your tokens</p>
             <div className="space-y-3">
-              {portfolio.map(token => {
-                const price = getPrice(token.symbol)
+              {portfolio.map((token) => {
+                const price = getPrice(token.symbol);
                 return (
                   <div key={token.symbol} className="card p-5">
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-semibold text-lg">{token.displayBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+                          <p className="font-semibold text-lg">
+                            {token.displayBalance.toLocaleString(undefined, {
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
                           <span className="text-sm text-anansi-muted">{token.symbol}</span>
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           {price !== null ? (
                             <>
-                              <p className="text-xs text-anansi-muted">≈ ${(token.displayBalance * price).toFixed(2)} USD</p>
-                              <span className="text-[10px] text-anansi-muted">· ${price.toFixed(4)}/token</span>
+                              <p className="text-xs text-anansi-muted">
+                                ≈ ${(token.displayBalance * price).toFixed(2)} USD
+                              </p>
+                              <span className="text-[10px] text-anansi-muted">
+                                · ${price.toFixed(4)}/token
+                              </span>
                             </>
                           ) : (
                             <p className="text-xs text-anansi-muted">Price loading…</p>
@@ -180,14 +205,20 @@ export default function FarmerPage() {
                       </div>
                       {token.hasPool && (
                         <button
-                          onClick={() => setSellState(s => s.symbol === token.symbol ? { symbol: null, amount: '', selling: false } : { symbol: token.symbol, amount: '', selling: false })}
+                          onClick={() =>
+                            setSellState((s) =>
+                              s.symbol === token.symbol
+                                ? { symbol: null, amount: "", selling: false }
+                                : { symbol: token.symbol, amount: "", selling: false },
+                            )
+                          }
                           className={`text-xs px-4 py-2 rounded-lg font-medium transition-all ${
                             sellState.symbol === token.symbol
-                              ? 'bg-anansi-light text-anansi-gray'
-                              : 'bg-anansi-red text-white hover:bg-anansi-red-light'
+                              ? "bg-anansi-light text-anansi-gray"
+                              : "bg-anansi-red text-white hover:bg-anansi-red-light"
                           }`}
                         >
-                          {sellState.symbol === token.symbol ? 'Cancel' : 'Sell Early'}
+                          {sellState.symbol === token.symbol ? "Cancel" : "Sell Early"}
                         </button>
                       )}
                     </div>
@@ -206,12 +237,19 @@ export default function FarmerPage() {
                               step="1"
                               max={token.displayBalance}
                               value={sellState.amount}
-                              onChange={e => setSellState(s => ({ ...s, amount: e.target.value }))}
+                              onChange={(e) =>
+                                setSellState((s) => ({ ...s, amount: e.target.value }))
+                              }
                               placeholder="0"
                               className="input-field pr-16 text-lg font-semibold"
                             />
                             <button
-                              onClick={() => setSellState(s => ({ ...s, amount: String(Math.floor(token.displayBalance)) }))}
+                              onClick={() =>
+                                setSellState((s) => ({
+                                  ...s,
+                                  amount: String(Math.floor(token.displayBalance)),
+                                }))
+                              }
                               className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-wider text-anansi-red px-2 py-1"
                             >
                               Max
@@ -219,7 +257,11 @@ export default function FarmerPage() {
                           </div>
                           <button
                             onClick={() => handleSell(token.symbol)}
-                            disabled={sellState.selling || !sellState.amount || parseFloat(sellState.amount) <= 0}
+                            disabled={
+                              sellState.selling ||
+                              !sellState.amount ||
+                              parseFloat(sellState.amount) <= 0
+                            }
                             className="btn-primary px-6"
                           >
                             {sellState.selling ? (
@@ -227,16 +269,21 @@ export default function FarmerPage() {
                                 <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                 Selling
                               </span>
-                            ) : 'Sell'}
+                            ) : (
+                              "Sell"
+                            )}
                           </button>
                         </div>
                         {sellState.amount && parseFloat(sellState.amount) > 0 && price !== null && (
-                          <p className="text-xs text-anansi-muted mt-2">≈ ${(parseFloat(sellState.amount) * price).toFixed(2)} USDC at current pool price</p>
+                          <p className="text-xs text-anansi-muted mt-2">
+                            ≈ ${(parseFloat(sellState.amount) * price).toFixed(2)} USDC at current
+                            pool price
+                          </p>
                         )}
                       </div>
                     )}
                   </div>
-                )
+                );
               })}
             </div>
           </div>
@@ -247,20 +294,30 @@ export default function FarmerPage() {
           <div className="mt-6">
             <p className="section-title">Available surplus</p>
             <div className="space-y-3">
-              {claimableDeposits.map(deposit => {
-                const myShare = (deposit.netAmount * totalBalance) / deposit.tokensSnapshot
-                const shareUsdc = myShare / (10 ** USDC_DECIMALS)
-                const claimToken = portfolio.find(t => t.totalBalance > 0)
+              {claimableDeposits.map((deposit) => {
+                // Grab the specific token balance for this deposit's commodity
+                const matchingToken = portfolio.find((t) => t.symbol === deposit.assetTypeSymbol);
+                const tokenBalance = matchingToken ? matchingToken.totalBalance : 0;
+
+                const myShare = (deposit.netAmount * tokenBalance) / deposit.tokensSnapshot;
+                const shareUsdc = myShare / 10 ** USDC_DECIMALS;
 
                 return (
-                  <div key={deposit.id} className="card p-5 border-emerald-200 bg-gradient-to-r from-emerald-50/50 to-white">
+                  <div
+                    key={deposit.id}
+                    className="card p-5 border-emerald-200 bg-gradient-to-r from-emerald-50/50 to-white"
+                  >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-lg font-bold text-emerald-800">${shareUsdc.toFixed(2)}</p>
-                        <p className="text-xs text-emerald-600 mt-0.5">Your pro-rata share</p>
+                        <p className="text-lg font-bold text-emerald-800">
+                          ${shareUsdc.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-emerald-600 mt-0.5">
+                          Your {deposit.assetTypeSymbol} pro-rata share
+                        </p>
                       </div>
                       <button
-                        onClick={() => handleClaim(deposit.id, claimToken?.symbol || 'NUTMEG')}
+                        onClick={() => handleClaim(deposit.id, deposit.assetTypeSymbol)}
                         disabled={claiming === deposit.id}
                         className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors active:scale-[0.98]"
                       >
@@ -269,11 +326,13 @@ export default function FarmerPage() {
                             <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                             Claiming
                           </span>
-                        ) : 'Claim USDC'}
+                        ) : (
+                          "Claim USDC"
+                        )}
                       </button>
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           </div>
@@ -283,16 +342,32 @@ export default function FarmerPage() {
         <div className="mt-8">
           <p className="section-title">Delivery history</p>
           {loading ? (
-            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="card p-4 h-16 animate-pulse" />)}</div>
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="card p-4 h-16 animate-pulse" />
+              ))}
+            </div>
           ) : deliveries.length === 0 ? (
             <div className="card text-center py-12 px-6">
               <div className="w-12 h-12 rounded-full bg-anansi-light flex items-center justify-center mx-auto">
-                <svg className="w-6 h-6 text-anansi-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                <svg
+                  className="w-6 h-6 text-anansi-muted"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  />
                 </svg>
               </div>
               <p className="text-sm font-medium mt-3">No deliveries yet</p>
-              <p className="text-xs text-anansi-muted mt-1 max-w-xs mx-auto">Tokens appear here after a custodian records your delivery on the Spice platform.</p>
+              <p className="text-xs text-anansi-muted mt-1 max-w-xs mx-auto">
+                Tokens appear here after a custodian records your delivery on the Spice platform.
+              </p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -300,19 +375,45 @@ export default function FarmerPage() {
                 <div key={i} className="card p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      <svg
+                        className="w-4 h-4 text-emerald-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 4v16m8-8H4"
+                        />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-medium">{d.units} kg · Grade {d.grade}</p>
-                      <p className="text-xs text-anansi-muted">{d.timestamp ? new Date(d.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</p>
+                      <p className="text-sm font-medium">
+                        {d.units} kg · Grade {d.grade}
+                      </p>
+                      <p className="text-xs text-anansi-muted">
+                        {d.timestamp
+                          ? new Date(d.timestamp).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })
+                          : "—"}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-emerald-700">+{d.tokensMinted}</p>
-                    <a href={`https://suiscan.xyz/testnet/tx/${d.txDigest}`} target="_blank" rel="noopener noreferrer"
-                      className="text-[10px] text-anansi-muted hover:text-anansi-red font-mono transition-colors">{d.txDigest?.slice(0, 10)}…</a>
+                    <a
+                      href={`https://suiscan.xyz/testnet/tx/${d.txDigest}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-anansi-muted hover:text-anansi-red font-mono transition-colors"
+                    >
+                      {d.txDigest?.slice(0, 10)}…
+                    </a>
                   </div>
                 </div>
               ))}
@@ -325,13 +426,24 @@ export default function FarmerPage() {
           <h3 className="font-display text-lg mb-4">How Spice works</h3>
           <div className="space-y-4">
             {[
-              { step: '01', text: 'Deliver your commodity to the local custodian and receive your advance.' },
-              { step: '02', text: 'The custodian records the delivery — you receive tokens automatically.' },
-              { step: '03', text: 'Hold tokens until the lot sells for your full surplus in USDC.' },
-              { step: '04', text: 'Or sell early on the marketplace for instant USDC.' },
+              {
+                step: "01",
+                text: "Deliver your commodity to the local custodian and receive your advance.",
+              },
+              {
+                step: "02",
+                text: "The custodian records the delivery — you receive tokens automatically.",
+              },
+              {
+                step: "03",
+                text: "Hold tokens until the lot sells for your full surplus in USDC.",
+              },
+              { step: "04", text: "Or sell early on the marketplace for instant USDC." },
             ].map((item, i) => (
               <div key={i} className="flex gap-4 items-start">
-                <span className="text-xs font-mono text-anansi-muted font-medium mt-0.5">{item.step}</span>
+                <span className="text-xs font-mono text-anansi-muted font-medium mt-0.5">
+                  {item.step}
+                </span>
                 <p className="text-sm text-anansi-gray leading-relaxed">{item.text}</p>
               </div>
             ))}
@@ -339,5 +451,5 @@ export default function FarmerPage() {
         </div>
       </div>
     </>
-  )
+  );
 }
