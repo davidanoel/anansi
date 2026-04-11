@@ -1,104 +1,138 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "../../../components/AuthProvider";
+import AppNav from "../../../components/AppNav";
 
-export default function CetusAdminDashboard() {
-  const [loading, setLoading] = useState(false);
-  const [usdcAmount, setUsdcAmount] = useState(10);
-  const [nutmegAmount, setNutmegAmount] = useState(10);
-  const [logs, setLogs] = useState([]);
+export default function CetusPoolAdmin() {
+  const { user } = useAuth();
+  const [tokenSymbol, setTokenSymbol] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [result, setResult] = useState(null);
 
-  const addLog = (msg, type = "info") => {
-    setLogs((prev) => [{ msg, type, time: new Date().toLocaleTimeString() }, ...prev]);
-  };
+  // Dynamically read registered tokens from the environment
+  const registeredTokens = (process.env.NEXT_PUBLIC_REGISTERED_TOKENS || "NUTMEG")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
-  const handleDeployAndFund = async () => {
-    setLoading(true);
-    addLog(`Deploying pool with ${usdcAmount} USDC and ${nutmegAmount} NUTMEG...`);
+  // Default to the first token in the list on load
+  useEffect(() => {
+    if (!tokenSymbol && registeredTokens.length > 0) {
+      setTokenSymbol(registeredTokens[0]);
+    }
+  }, []);
+
+  const handleCreatePool = async (e) => {
+    e.preventDefault();
+    setCreating(true);
+    setResult(null);
+
     try {
       const res = await fetch("/api/cetus/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usdcAmount, nutmegAmount }),
+        body: JSON.stringify({ symbol: tokenSymbol }),
       });
-      const data = await res.json();
 
-      if (data.success) {
-        addLog(`SUCCESS! Digest: ${data.digest}`, "success");
-        addLog("Find the Pool Object ID on Suiscan and add it to your .env file.", "info");
-      } else {
-        addLog(`Error: ${data.error}`, "error");
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create pool");
+
+      setResult({ success: true, poolId: data.poolId });
     } catch (err) {
-      addLog(`Request failed: ${err.message}`, "error");
+      setResult({ success: false, error: err.message });
+    } finally {
+      setCreating(false);
     }
-    setLoading(false);
   };
 
+  // if (!user) {
+  //   return (
+  //     <>
+  //       <AppNav />
+  //       <div className="max-w-lg mx-auto px-6 py-20 text-center">
+  //         <p className="text-anansi-gray">Please sign in to access the DEX admin.</p>
+  //       </div>
+  //     </>
+  //   );
+  // }
+
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8 font-sans">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Cetus DEX Admin</h1>
-        <p className="text-gray-500 mt-2">Deploy your market with custom starting liquidity.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="p-6 bg-white border rounded-xl shadow-sm space-y-4">
-          <h2 className="text-xl font-semibold">Deploy & Seed</h2>
-
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">USDC</label>
-              <input
-                type="number"
-                value={usdcAmount}
-                onChange={(e) => setUsdcAmount(Number(e.target.value))}
-                className="w-full p-2 border rounded-md"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">NUTMEG</label>
-              <input
-                type="number"
-                value={nutmegAmount}
-                onChange={(e) => setNutmegAmount(Number(e.target.value))}
-                className="w-full p-2 border rounded-md"
-              />
-            </div>
-          </div>
-
-          <div className="text-xs text-gray-500 italic bg-gray-50 p-2 rounded">
-            Starting Price: 1 NUTMEG = ${(usdcAmount / nutmegAmount).toFixed(4)} USDC
-          </div>
-
-          <button
-            onClick={handleDeployAndFund}
-            disabled={loading}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 mt-4"
-          >
-            {loading ? "Processing Transaction..." : "Deploy & Fund Pool"}
-          </button>
+    <>
+      <AppNav />
+      <div className="max-w-3xl mx-auto px-6 py-8 animate-fade-in">
+        <div className="mb-8">
+          <p className="section-title">Cetus DEX Admin</p>
+          <h1 className="text-display-sm font-display">Liquidity Pools</h1>
+          <p className="text-anansi-gray mt-1">
+            Initialize new trading pairs on the Cetus Testnet. USDC is always the base token.
+          </p>
         </div>
 
-        <div className="bg-gray-900 rounded-xl p-4 h-64 overflow-y-auto font-mono text-sm shadow-inner">
-          {logs.length === 0 ? (
-            <p className="text-gray-500 italic">Ready.</p>
-          ) : (
-            <div className="space-y-2">
-              {logs.map((log, i) => (
-                <div key={i} className="flex gap-3">
-                  <span className="text-gray-500 shrink-0">[{log.time}]</span>
-                  <span
-                    className={`${log.type === "error" ? "text-red-400" : ""} ${log.type === "success" ? "text-green-400 font-bold" : ""} ${log.type === "info" ? "text-blue-300" : ""}`}
-                  >
-                    {log.msg}
-                  </span>
-                </div>
-              ))}
+        <div className="card p-6 border-anansi-border">
+          <h3 className="font-semibold mb-4">Create New Pool</h3>
+          <form onSubmit={handleCreatePool} className="space-y-5">
+            <div>
+              <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">
+                Commodity Token
+              </label>
+              <select
+                value={tokenSymbol}
+                onChange={(e) => setTokenSymbol(e.target.value)}
+                className="input-field w-full"
+                required
+              >
+                {registeredTokens.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-anansi-muted mt-2">
+                This token will be paired with testnet USDC.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={creating || !tokenSymbol}
+              className="btn-primary w-full py-3"
+            >
+              {creating ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Initializing Pool...
+                </span>
+              ) : (
+                `Initialize ${tokenSymbol} / USDC Pool`
+              )}
+            </button>
+          </form>
+
+          {result && (
+            <div
+              className={`mt-5 p-4 rounded-lg text-sm ${
+                result.success
+                  ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                  : "bg-red-50 text-red-800 border border-red-200"
+              }`}
+            >
+              {result.success ? (
+                <>
+                  <span className="font-medium">Pool Created!</span>
+                  <br />
+                  <span className="font-mono text-xs mt-1 block">Pool ID: {result.poolId}</span>
+                  <p className="text-xs mt-2 font-medium">
+                    Remember to copy this Pool ID into your .env.local file!
+                  </p>
+                </>
+              ) : (
+                `Error: ${result.error}`
+              )}
             </div>
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 }

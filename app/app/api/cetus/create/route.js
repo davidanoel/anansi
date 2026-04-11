@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 import { CetusClmmSDK } from "@cetusprotocol/sui-clmm-sdk";
 import { getJsonRpcFullnodeUrl } from "@mysten/sui/jsonRpc";
 import { getAdminAddress, adminExecute } from "../../../../lib/admin-signer";
-import { NUTMEG_TYPE, SUI_NETWORK, SUI_RPC_URL, USDC_TYPE } from "../../../../lib/constants";
+import { SUI_NETWORK, SUI_RPC_URL, USDC_TYPE, getToken } from "../../../../lib/constants";
 
 const COIN_DECIMALS = 6;
 const FULL_RANGE_PARAMS = { is_full_range: true };
@@ -10,25 +10,39 @@ const FULL_RANGE_PARAMS = { is_full_range: true };
 export async function POST(req) {
   try {
     const body = await req.json().catch(() => ({}));
-    const usdcAmount = Number(body.usdcAmount) || 10;
-    const nutmegAmount = Number(body.nutmegAmount) || 10;
 
-    if (usdcAmount <= 0 || nutmegAmount <= 0) {
-      return Response.json({ error: "Amounts must be greater than zero." }, { status: 400 });
+    // 1. Get the dynamic symbol from the frontend
+    const symbol = body.symbol;
+    if (!symbol) {
+      return Response.json({ error: "No token symbol provided." }, { status: 400 });
     }
+
+    // 2. Look up the token's fully qualified CoinType from constants
+    const token = getToken(symbol);
+    if (!token || !token.type) {
+      return Response.json(
+        { error: `Could not find coinType configuration for ${symbol}` },
+        { status: 400 },
+      );
+    }
+    const COMMODITY_TYPE = token.type;
+
+    // Default to initializing the pool at a 1:1 ratio ($1.00 price)
+    const usdcAmount = 5;
+    const commodityAmount = 5;
 
     const admin = getAdminAddress();
     const network = SUI_NETWORK === "mainnet" ? "mainnet" : "testnet";
 
     // Cetus v2 expects coin A to be the lexicographically larger fully-qualified type.
-    const coin_type_a = USDC_TYPE > NUTMEG_TYPE ? USDC_TYPE : NUTMEG_TYPE;
-    const coin_type_b = coin_type_a === USDC_TYPE ? NUTMEG_TYPE : USDC_TYPE;
+    const coin_type_a = USDC_TYPE > COMMODITY_TYPE ? USDC_TYPE : COMMODITY_TYPE;
+    const coin_type_b = coin_type_a === USDC_TYPE ? COMMODITY_TYPE : USDC_TYPE;
     const fix_amount_a = coin_type_a === USDC_TYPE;
 
     const currentPrice = fix_amount_a
-      ? new Decimal(nutmegAmount).div(usdcAmount)
-      : new Decimal(usdcAmount).div(nutmegAmount);
-    const fixedCoinAmount = fix_amount_a ? usdcAmount : nutmegAmount;
+      ? new Decimal(commodityAmount).div(usdcAmount)
+      : new Decimal(usdcAmount).div(commodityAmount);
+    const fixedCoinAmount = fix_amount_a ? usdcAmount : commodityAmount;
 
     const sdk = CetusClmmSDK.createSDK({
       env: network,
@@ -41,7 +55,7 @@ export async function POST(req) {
       sdk.senderAddress = admin;
     }
 
-    console.log("Using Cetus V2 SDK to deploy AMM...");
+    console.log(`Using Cetus V2 SDK to deploy AMM for ${symbol}...`);
 
     const calculate_result = await sdk.Pool.calculateCreatePoolWithPrice({
       tick_spacing: 60,
@@ -66,12 +80,25 @@ export async function POST(req) {
 
     txb.setGasBudget(100_000_000n);
 
+    // 3. Execute as Admin
     const result = await adminExecute(txb);
+
+    // 4. Extract the newly created Pool ID from the transaction changes
+    let poolId = null;
+    if (result.objectChanges) {
+      const poolChange = result.objectChanges.find(
+        (change) => change.type === "created" && change.objectType?.includes("::pool::Pool"),
+      );
+      if (poolChange) {
+        poolId = poolChange.objectId;
+      }
+    }
 
     return Response.json({
       success: true,
       digest: result.digest,
-      message: "Cetus V2 CLMM pool successfully deployed!",
+      poolId: poolId || "Pool created, but ID not found in response.",
+      message: `Cetus V2 CLMM pool for ${symbol} successfully deployed!`,
     });
   } catch (error) {
     console.error("Cetus V2 Deployment Error:", error);

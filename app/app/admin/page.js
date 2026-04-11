@@ -275,8 +275,16 @@ function LotManager({ custodianCaps }) {
   }, []);
   async function loadLots() {
     try {
-      setLots(await getActiveLots());
-    } catch {
+      const allLots = await getActiveLots();
+      // Extract the symbols this specific custodian is allowed to manage
+      const authorizedSymbols = custodianCaps.map((cap) => cap.assetTypeSymbol);
+
+      // Filter the global lots to only show their own
+      const myLots = allLots.filter((lot) => authorizedSymbols.includes(lot.assetTypeSymbol));
+
+      setLots(myLots);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
