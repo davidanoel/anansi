@@ -27,9 +27,9 @@ export async function POST(req) {
     }
     const COMMODITY_TYPE = token.type;
 
-    // Default to initializing the pool at a 1:1 ratio ($1.00 price)
-    const usdcAmount = 5;
-    const commodityAmount = 5;
+// Accept custom amounts from the frontend, fallback to 10 if missing
+    const usdcAmount = Number(body.usdcAmount) || 10;
+    const commodityAmount = Number(body.commodityAmount) || 10;
 
     const admin = getAdminAddress();
     const network = SUI_NETWORK === "mainnet" ? "mainnet" : "testnet";

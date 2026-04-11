@@ -86,6 +86,7 @@ function PlatformDashboard({ platformKey, onLogout }) {
     { id: "custodians", label: "Custodians" },
     { id: "compliance", label: "Compliance" },
     { id: "deposits", label: "Surplus Deposits" },
+    { id: "dex", label: "DEX Pools" },
     { id: "overview", label: "Overview" },
   ];
 
@@ -154,6 +155,7 @@ function PlatformDashboard({ platformKey, onLogout }) {
         {tab === "custodians" && <CustodiansPanel api={api} />}
         {tab === "compliance" && <CompliancePanel api={api} />}
         {tab === "deposits" && <DepositsPanel api={api} />}
+        {tab === "dex" && <DexPanel api={api} />}
         {tab === "overview" && <OverviewPanel stats={stats} />}
       </div>
     </div>
@@ -1129,6 +1131,231 @@ function EmptyState({ icon, title, subtitle }) {
       </div>
       <p className="text-sm font-medium mt-3">{title}</p>
       <p className="text-xs text-anansi-muted mt-1">{subtitle}</p>
+    </div>
+  );
+}
+
+// ============================================================
+// Cetus Dex Panel
+// ============================================================
+
+function DexPanel({ api }) {
+  const [tokenSymbol, setTokenSymbol] = useState("");
+  const [usdcAmount, setUsdcAmount] = useState("1");
+  const [commodityAmount, setCommodityAmount] = useState("1");
+  const [creating, setCreating] = useState(false);
+  const [removing, setRemoving] = useState(null);
+  const [result, setResult] = useState(null);
+  const [prices, setPrices] = useState({});
+
+  // Read registered tokens from env
+  const registeredTokens = (process.env.NEXT_PUBLIC_REGISTERED_TOKENS || "NUTMEG")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const tokenConfig = JSON.parse(process.env.NEXT_PUBLIC_TOKEN_CONFIG || "{}");
+
+  // EFFECT 1: Set initial token selection (Dependencies: stringified array to prevent loops)
+  useEffect(() => {
+    if (!tokenSymbol && registeredTokens.length > 0) {
+      setTokenSymbol(registeredTokens[0]);
+    }
+  }, [tokenSymbol, registeredTokens.join(",")]);
+
+  // EFFECT 2: Fetch live prices ONLY ONCE when the panel mounts
+  useEffect(() => {
+    fetch("/api/cetus/price")
+      .then((res) => res.json())
+      .then((data) => setPrices(data.prices || {}))
+      .catch(console.error);
+  }, []);
+
+  const handleCreatePool = async (e) => {
+    e.preventDefault();
+    setCreating(true);
+    setResult(null);
+
+    try {
+      const res = await fetch("/api/cetus/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symbol: tokenSymbol,
+          usdcAmount: parseFloat(usdcAmount),
+          commodityAmount: parseFloat(commodityAmount),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create pool");
+
+      setResult({ success: true, poolId: data.poolId, digest: data.digest });
+    } catch (err) {
+      setResult({ success: false, error: err.message });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleRemoveLiquidity = async (symbol) => {
+    if (
+      !confirm(
+        `Are you sure you want to withdraw all liquidity for ${symbol}? This will halt trading for this token on the marketplace.`,
+      )
+    )
+      return;
+
+    setRemoving(symbol);
+    try {
+      const res = await fetch("/api/cetus/remove", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to remove liquidity");
+
+      alert(
+        `Success! Liquidity withdrawn.\n\nTokens returned to admin wallet.\nTx: ${data.digest.slice(0, 15)}...`,
+      );
+
+      setResult(null);
+    } catch (err) {
+      alert("Error withdrawing liquidity: " + err.message);
+    } finally {
+      setRemoving(null);
+    }
+  };
+
+  const initialPrice = parseFloat(usdcAmount) / parseFloat(commodityAmount) || 0;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="font-semibold text-lg">DEX Liquidity Pools</h2>
+        <p className="text-sm text-anansi-muted">
+          Initialize Automated Market Maker (AMM) pools on Cetus to enable early token trading.
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Left Column: Create Pool Form */}
+        <div className="card p-6 border-anansi-red/20">
+          <h3 className="font-semibold mb-4">Initialize New Pool</h3>
+          <form onSubmit={handleCreatePool} className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">
+                Commodity Token
+              </label>
+              <select
+                value={tokenSymbol}
+                onChange={(e) => setTokenSymbol(e.target.value)}
+                className="input-field"
+                required
+              >
+                {registeredTokens.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field
+                label="USDC Deposit"
+                value={usdcAmount}
+                onChange={setUsdcAmount}
+                type="number"
+                placeholder="10"
+              />
+              <Field
+                label={`${tokenSymbol || "Token"} Deposit`}
+                value={commodityAmount}
+                onChange={setCommodityAmount}
+                type="number"
+                placeholder="10"
+              />
+            </div>
+
+            <div className="p-3 bg-anansi-light rounded-lg text-xs flex justify-between items-center">
+              <span className="text-anansi-muted">Initial Price:</span>
+              <span className="font-semibold text-anansi-black">
+                ${initialPrice.toFixed(4)} USDC
+              </span>
+            </div>
+
+            <button
+              type="submit"
+              disabled={creating || !tokenSymbol || !usdcAmount || !commodityAmount}
+              className="w-full px-6 py-2.5 bg-anansi-red text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-anansi-red-light transition-colors active:scale-[0.98]"
+            >
+              {creating ? "Deploying to Cetus..." : "Create Liquidity Pool"}
+            </button>
+          </form>
+
+          {result && (
+            <ResultBanner
+              result={result}
+              successMsg={
+                <>
+                  <span className="font-medium block mb-1">Pool Created Successfully!</span>
+                  <span className="font-mono text-[10px] block truncate">ID: {result.poolId}</span>
+                  <span className="text-xs text-anansi-muted mt-2 block">
+                    Add this ID to NEXT_PUBLIC_TOKEN_CONFIG in .env.local and restart the server.
+                  </span>
+                </>
+              }
+            />
+          )}
+        </div>
+
+        {/* Right Column: Live Pool Stats */}
+        <div className="space-y-3">
+          <h3 className="font-semibold mb-2">Live Pools</h3>
+          {registeredTokens.map((symbol) => {
+            const hasPool = tokenConfig[symbol]?.pool && tokenConfig[symbol].pool.trim() !== "";
+            const livePrice = prices[symbol]?.priceUsdc;
+
+            return (
+              <div key={symbol} className="card p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold">{symbol}</span>
+                    <span
+                      className={`badge ${hasPool ? "badge-open" : "bg-gray-100 text-gray-500"}`}
+                    >
+                      {hasPool ? "Active" : "No Pool"}
+                    </span>
+                  </div>
+                  {hasPool && livePrice && (
+                    <span className="font-semibold text-emerald-700">${livePrice.toFixed(4)}</span>
+                  )}
+                </div>
+
+                {hasPool ? (
+                  <div className="mt-3 pt-3 border-t border-anansi-border flex justify-between items-center">
+                    <p className="text-[10px] font-mono text-anansi-muted truncate mr-4">
+                      {tokenConfig[symbol].pool}
+                    </p>
+                    <button
+                      onClick={() => handleRemoveLiquidity(symbol)}
+                      disabled={removing === symbol}
+                      className="text-[10px] uppercase tracking-wider font-semibold text-red-600 hover:text-red-800 transition-colors shrink-0"
+                    >
+                      {removing === symbol ? "Removing..." : "Withdraw"}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-anansi-muted mt-1">Pending initialization</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
