@@ -420,6 +420,7 @@ export default function FarmerPage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium">
+                        {d.assetTypeSymbol ? `${d.assetTypeSymbol} · ` : ""}
                         {d.units} kg · Grade {d.grade}
                       </p>
                       <p className="text-xs text-anansi-muted">

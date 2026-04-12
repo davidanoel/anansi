@@ -84,22 +84,37 @@ export async function getLot(lotId) {
     createdAt: Number(fields.created_at || 0),
     deliveryCount: Number(fields.delivery_count || 0),
     totalSurplusDeposited: Number(fields.total_surplus_deposited || 0),
+    totalSurplusDistributed: Number(fields.total_surplus_distributed || 0),
   };
 }
 
 // ============ Deliveries ============
 
 export async function getRecentDeliveries(limit = 20) {
-  const events = await queryEvents(`${PACKAGE_ID}::asset_pool::DeliveryRecorded`, null, limit);
-  return events.data.map((event) => ({
-    lotId: event.parsedJson?.lot_id,
-    farmer: event.parsedJson?.farmer,
-    units: Number(event.parsedJson?.units || 0),
-    tokensMinted: Number(event.parsedJson?.tokens_minted || 0),
-    grade: event.parsedJson?.grade || "",
-    txDigest: event.id?.txDigest,
-    timestamp: Number(event.timestampMs || 0),
-  }));
+  const events = await queryEvents(`${PACKAGE_ID}::asset_pool::DeliveryRecorded`, null, 100);
+  let allEvents = [...events.data];
+
+  if (ORIGINAL_PACKAGE_ID !== PACKAGE_ID) {
+    const oldEvents = await queryEvents(
+      `${ORIGINAL_PACKAGE_ID}::asset_pool::DeliveryRecorded`,
+      null,
+      100,
+    );
+    allEvents = [...allEvents, ...oldEvents.data];
+  }
+
+  return allEvents
+    .sort((a, b) => Number(b.timestampMs || 0) - Number(a.timestampMs || 0))
+    .slice(0, limit)
+    .map((event) => ({
+      lotId: event.parsedJson?.lot_id,
+      farmer: event.parsedJson?.farmer,
+      units: Number(event.parsedJson?.units || 0),
+      tokensMinted: Number(event.parsedJson?.tokens_minted || 0),
+      grade: event.parsedJson?.grade || "",
+      txDigest: event.id?.txDigest,
+      timestamp: Number(event.timestampMs || 0),
+    }));
 }
 
 export async function getFarmerDeliveries(farmerAddress) {
@@ -113,16 +128,24 @@ export async function getFarmerDeliveries(farmerAddress) {
     );
     allEvents = [...allEvents, ...oldEvents.data];
   }
+
+  const allLots = await getAllLots().catch(() => []);
+  const lotMap = new Map(allLots.map((l) => [l.id, l.assetTypeSymbol]));
+
   return allEvents
     .filter((e) => e.parsedJson?.farmer === farmerAddress)
-    .map((event) => ({
-      lotId: event.parsedJson?.lot_id,
-      units: Number(event.parsedJson?.units || 0),
-      tokensMinted: Number(event.parsedJson?.tokens_minted || 0),
-      grade: event.parsedJson?.grade || "",
-      txDigest: event.id?.txDigest,
-      timestamp: Number(event.timestampMs || 0),
-    }));
+    .map((event) => {
+      const lotId = event.parsedJson?.lot_id;
+      return {
+        lotId,
+        assetTypeSymbol: lotMap.get(lotId) || "",
+        units: Number(event.parsedJson?.units || 0),
+        tokensMinted: Number(event.parsedJson?.tokens_minted || 0),
+        grade: event.parsedJson?.grade || "",
+        txDigest: event.id?.txDigest,
+        timestamp: Number(event.timestampMs || 0),
+      };
+    });
 }
 
 // ============ Token Balance (Standard Coin<NUTMEG>) ============
@@ -223,7 +246,7 @@ export async function getAllSurplusDeposits() {
     }
   }
 
-  return deposits;
+  return deposits.sort((a, b) => b.timestamp - a.timestamp);
 }
 
 // ============ Asset Types ============
@@ -253,14 +276,58 @@ export async function getAssetTypeBySymbol(symbol) {
 }
 
 export async function getAssetTypes() {
+  const client = getSuiClient();
+
   const events = await queryEvents(`${PACKAGE_ID}::asset_pool::AssetTypeCreated`, null, 50);
-  return events.data.map((event) => ({
-    symbol: event.parsedJson?.symbol,
-    name: event.parsedJson?.name,
-    region: event.parsedJson?.region,
-    custodian: event.parsedJson?.custodian,
-    timestamp: Number(event.timestampMs || 0),
-  }));
+  let allEvents = [...events.data];
+
+  if (ORIGINAL_PACKAGE_ID !== PACKAGE_ID) {
+    const oldEvents = await queryEvents(
+      `${ORIGINAL_PACKAGE_ID}::asset_pool::AssetTypeCreated`,
+      null,
+      50,
+    );
+    allEvents = [...allEvents, ...oldEvents.data];
+  }
+
+  const assetTypes = await Promise.all(
+    allEvents.map(async (event) => {
+      try {
+        const tx = await client.getTransactionBlock({
+          digest: event.id.txDigest,
+          options: { showObjectChanges: true },
+        });
+
+        const created = tx.objectChanges?.find(
+          (c) => c.type === "created" && c.objectType?.includes("::asset_pool::AssetType"),
+        );
+
+        if (!created?.objectId) return null;
+
+        const obj = await client.getObject({
+          id: created.objectId,
+          options: { showContent: true },
+        });
+
+        const fields = obj.data?.content?.fields || {};
+
+        return {
+          id: created.objectId,
+          symbol: fields.symbol || event.parsedJson?.symbol || "",
+          name: fields.name || event.parsedJson?.name || "",
+          unit: fields.unit || "",
+          region: fields.region || event.parsedJson?.region || "",
+          custodian: fields.custodian || event.parsedJson?.custodian || "",
+          active: Boolean(fields.active),
+          timestamp: Number(event.timestampMs || 0),
+        };
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  return assetTypes.filter(Boolean).sort((a, b) => b.timestamp - a.timestamp);
 }
 
 // ============ Admin Objects ============
@@ -307,7 +374,7 @@ export async function getPlatformStats() {
     activeLots: lots.filter((l) => l.status < 3).length,
     totalDeliveries: deliveries.length,
     totalUnitsTokenized: lots.reduce((sum, l) => sum + l.totalUnits, 0),
-    totalSurplusDistributed: lots.reduce((sum, l) => sum + l.totalSurplusDeposited, 0),
+    totalSurplusDistributed: lots.reduce((sum, l) => sum + (l.totalSurplusDistributed || 0), 0),
     totalCaribBurned: burns[0]?.totalBurned || 0,
     uniqueFarmers,
     assetTypes: new Set(lots.map((l) => l.assetTypeSymbol)).size,
