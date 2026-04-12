@@ -115,11 +115,17 @@ export default function FarmerPage() {
     );
   }
 
-  const totalValue = portfolio.reduce((sum, t) => {
-    const price = getPrice(t.symbol);
-    return sum + (price ? t.displayBalance * price : 0);
+  const totalAssetsValue = portfolio.reduce((acc, token) => {
+    const price = getPrice(token.symbol) || 0;
+    return acc + token.displayBalance * price;
   }, 0);
-  const totalTokens = portfolio.reduce((sum, t) => sum + t.displayBalance, 0);
+
+  const totalEquity = totalAssetsValue + (usdc.displayBalance || 0);
+
+  const holdingsSummary = portfolio
+    .filter((t) => t.displayBalance > 0)
+    .map((t) => `${t.displayBalance.toLocaleString()} ${t.symbol}`)
+    .join(" · ");
   const hasPrices = Object.keys(prices).length > 0;
 
   // Filter claimable deposits based on the SPECIFIC token, not a global sum
@@ -143,29 +149,52 @@ export default function FarmerPage() {
       <AppNav />
       <div className="max-w-lg mx-auto px-6 py-8 animate-fade-in">
         {/* Portfolio Card */}
-        <div className="relative overflow-hidden bg-anansi-black text-white rounded-2xl p-6 shadow-elevated">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-anansi-red/20 to-transparent rounded-bl-full" />
+        <div className="relative overflow-hidden bg-anansi-black text-white rounded-2xl p-6 shadow-elevated border border-white/5">
+          {/* Subtle Branding Accent */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-anansi-red/5 to-transparent rounded-bl-full pointer-events-none" />
+
           <div className="relative">
-            <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Portfolio</p>
-            <p className="text-4xl font-bold mt-2 tabular-nums">
-              {loading ? (
-                <span className="inline-block w-32 h-10 bg-white/10 rounded animate-pulse" />
-              ) : portfolio.length === 0 ? (
-                "0"
-              ) : (
-                totalTokens.toLocaleString(undefined, { maximumFractionDigits: 2 })
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
+                  Total Value
+                </p>
+                <p className="text-4xl font-bold mt-1 tabular-nums tracking-tight">
+                  {loading ? (
+                    <span className="inline-block w-32 h-9 bg-white/5 rounded animate-pulse" />
+                  ) : (
+                    `$${totalEquity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                  )}
+                </p>
+              </div>
+
+              {/* Small notification badge for Surplus */}
+              {claimableDeposits.length > 0 && (
+                <div className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                  <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-tighter">
+                    Surplus
+                  </p>
+                </div>
               )}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              {portfolio.length > 0
-                ? `${portfolio.length} token${portfolio.length > 1 ? "s" : ""}${hasPrices ? ` · ≈ $${totalValue.toFixed(2)} USD` : ""}`
-                : "No tokens yet"}
-            </p>
-            {usdc.displayBalance > 0 && (
-              <p className="text-xs text-emerald-400 mt-1">
-                ${usdc.displayBalance.toFixed(2)} USDC
+            </div>
+
+            <div className="mt-5">
+              {/* Itemized Assets line (Nutmeg, Cocoa, etc) */}
+              <p className="text-xs font-medium text-gray-400 truncate">
+                {holdingsSummary || "No active assets"}
               </p>
-            )}
+
+              {/* Explicit Financial Breakdown */}
+              <div className="flex gap-4 mt-1.5 pt-1.5 border-t border-white/[0.03]">
+                <p className="text-[10px] text-gray-600 uppercase tracking-wider">
+                  Assets: <span className="text-gray-400">${totalAssetsValue.toFixed(2)}</span>
+                </p>
+                <p className="text-[10px] text-gray-600 uppercase tracking-wider">
+                  Cash:{" "}
+                  <span className="text-emerald-500/90">${usdc.displayBalance.toFixed(2)}</span>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
