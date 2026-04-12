@@ -13,6 +13,7 @@ import * as db from "./db.js";
 const client = new SuiClient({ url: config.suiRpcUrl });
 const packageIds = getPackageIds();
 const eventTypesByPackage = packageIds.map((pkg) => getEventTypes(pkg));
+const allEventTypes = Object.assign({}, ...eventTypesByPackage);
 
 // ============ Event Processing ============
 
@@ -21,7 +22,7 @@ async function processEvent(event, txDigest, timestamp) {
   const data = event.parsedJson;
 
   try {
-    if (type === eventTypes.LOT_CREATED) {
+    if (type === allEventTypes.LOT_CREATED) {
       await db.upsertLot({
         id: data.lot_id,
         lot_number: Number(data.lot_number),
@@ -30,7 +31,7 @@ async function processEvent(event, txDigest, timestamp) {
         created_at: timestamp,
       });
       console.log(`[LOT] Created: #${data.lot_number} (${data.asset_type_symbol})`);
-    } else if (type === eventTypes.DELIVERY_RECORDED) {
+    } else if (type === allEventTypes.DELIVERY_RECORDED) {
       await db.insertDelivery({
         lot_id: data.lot_id,
         farmer: data.farmer,
@@ -42,13 +43,13 @@ async function processEvent(event, txDigest, timestamp) {
       });
       await db.updateLotDelivery(data.lot_id, Number(data.units), Number(data.tokens_minted));
       console.log(`[DELIVERY] ${data.units} units to ${data.farmer.slice(0, 8)}...`);
-    } else if (type === eventTypes.LOT_STATUS_CHANGED) {
+    } else if (type === allEventTypes.LOT_STATUS_CHANGED) {
       await db.updateLotStatus(data.lot_id, Number(data.new_status));
       console.log(`[LOT STATUS] ${data.lot_id.slice(0, 8)}... → ${data.new_status}`);
-    } else if (type === eventTypes.VALUATION_UPDATED) {
+    } else if (type === allEventTypes.VALUATION_UPDATED) {
       await db.updateLotValuation(data.lot_id, Number(data.new_value));
       console.log(`[VALUATION] ${data.lot_id.slice(0, 8)}... → $${Number(data.new_value) / 1e6}`);
-    } else if (type === eventTypes.SURPLUS_RECEIVED) {
+    } else if (type === allEventTypes.SURPLUS_RECEIVED) {
       await db.insertSurplusDeposit({
         deposit_id: null,
         lot_id: data.lot_id,
@@ -62,7 +63,7 @@ async function processEvent(event, txDigest, timestamp) {
       console.log(
         `[SURPLUS] $${Number(data.net_amount) / 1e6} for lot ${data.lot_id.slice(0, 8)}...`,
       );
-    } else if (type === eventTypes.SURPLUS_CLAIMED) {
+    } else if (type === allEventTypes.SURPLUS_CLAIMED) {
       await db.insertSurplusClaim({
         deposit_id: data.deposit_id,
         lot_id: data.lot_id,
@@ -75,7 +76,7 @@ async function processEvent(event, txDigest, timestamp) {
       console.log(
         `[CLAIM] ${data.claimant.slice(0, 8)}... claimed $${Number(data.amount_received) / 1e6}`,
       );
-    } else if (type === eventTypes.TOKENS_BURNED) {
+    } else if (type === allEventTypes.TOKENS_BURNED) {
       await db.insertBurn({
         amount: Number(data.amount),
         burner: data.burner,
@@ -84,7 +85,7 @@ async function processEvent(event, txDigest, timestamp) {
         timestamp,
       });
       console.log(`[BURN] ${Number(data.amount) / 1e9} CARIB burned`);
-    } else if (type === eventTypes.FEES_COLLECTED) {
+    } else if (type === allEventTypes.FEES_COLLECTED) {
       await db.insertFeeCollection({
         lot_id: data.lot_id,
         total_fee: Number(data.total_fee),
@@ -93,7 +94,7 @@ async function processEvent(event, txDigest, timestamp) {
         tx_digest: txDigest,
         timestamp,
       });
-    } else if (type === eventTypes.ASSET_TYPE_CREATED) {
+    } else if (type === allEventTypes.ASSET_TYPE_CREATED) {
       await db.upsertAssetType({
         symbol: data.symbol,
         name: data.name,
@@ -104,10 +105,10 @@ async function processEvent(event, txDigest, timestamp) {
         created_at: timestamp,
       });
       console.log(`[ASSET TYPE] Registered: ${data.symbol} (${data.region})`);
-    } else if (type === eventTypes.ASSET_TYPE_DEACTIVATED) {
+    } else if (type === allEventTypes.ASSET_TYPE_DEACTIVATED) {
       await db.setAssetTypeActive(data.symbol, false);
       console.log(`[ASSET TYPE] Deactivated: ${data.symbol}`);
-    } else if (type === eventTypes.ASSET_TYPE_REACTIVATED) {
+    } else if (type === allEventTypes.ASSET_TYPE_REACTIVATED) {
       await db.setAssetTypeActive(data.symbol, true);
       console.log(`[ASSET TYPE] Reactivated: ${data.symbol}`);
     }

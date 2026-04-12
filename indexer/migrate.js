@@ -11,14 +11,14 @@ async function migrate() {
         lot_number INTEGER,
         asset_type_symbol TEXT,
         status INTEGER DEFAULT 0,
-        total_units INTEGER DEFAULT 0,
-        total_tokens_minted INTEGER DEFAULT 0,
-        estimated_value_usdc INTEGER DEFAULT 0,
+        total_units BIGINT DEFAULT 0,
+        total_tokens_minted BIGINT DEFAULT 0,
+        estimated_value_usdc BIGINT DEFAULT 0,
         custodian TEXT,
         created_at BIGINT,
         closed_at BIGINT,
-        total_surplus_deposited INTEGER DEFAULT 0,
-        total_surplus_distributed INTEGER DEFAULT 0,
+        total_surplus_deposited BIGINT DEFAULT 0,
+        total_surplus_distributed BIGINT DEFAULT 0,
         delivery_count INTEGER DEFAULT 0,
         updated_at BIGINT DEFAULT (EXTRACT(EPOCH FROM NOW()) * 1000)::BIGINT
       )
@@ -29,8 +29,8 @@ async function migrate() {
         id SERIAL PRIMARY KEY,
         lot_id TEXT,
         farmer TEXT,
-        units INTEGER,
-        tokens_minted INTEGER,
+        units BIGINT,
+        tokens_minted BIGINT,
         grade TEXT,
         tx_digest TEXT,
         timestamp BIGINT,
@@ -43,11 +43,11 @@ async function migrate() {
         id SERIAL PRIMARY KEY,
         deposit_id TEXT UNIQUE,
         lot_id TEXT,
-        gross_amount INTEGER,
-        fee_amount INTEGER,
-        net_amount INTEGER,
-        tokens_snapshot INTEGER,
-        tx_digest TEXT,
+        gross_amount BIGINT,
+        fee_amount BIGINT,
+        net_amount BIGINT,
+        tokens_snapshot BIGINT,
+        tx_digest TEXT UNIQUE,
         timestamp BIGINT,
         FOREIGN KEY (lot_id) REFERENCES lots(id)
       )
@@ -59,8 +59,8 @@ async function migrate() {
         deposit_id TEXT,
         lot_id TEXT,
         claimant TEXT,
-        tokens_held INTEGER,
-        amount_received INTEGER,
+        tokens_held BIGINT,
+        amount_received BIGINT,
         tx_digest TEXT,
         timestamp BIGINT
       )
@@ -69,9 +69,9 @@ async function migrate() {
     await db.query(`
       CREATE TABLE IF NOT EXISTS carib_burns (
         id SERIAL PRIMARY KEY,
-        amount INTEGER,
+        amount BIGINT,
         burner TEXT,
-        total_burned INTEGER,
+        total_burned BIGINT,
         tx_digest TEXT,
         timestamp BIGINT
       )
@@ -81,9 +81,9 @@ async function migrate() {
       CREATE TABLE IF NOT EXISTS fee_collections (
         id SERIAL PRIMARY KEY,
         lot_id TEXT,
-        total_fee INTEGER,
-        burned INTEGER,
-        to_treasury INTEGER,
+        total_fee BIGINT,
+        burned BIGINT,
+        to_treasury BIGINT,
         tx_digest TEXT,
         timestamp BIGINT
       )

@@ -1,11 +1,12 @@
 import pgp from "pg-promise";
 import { config } from "./config.js";
 
+const pgpInstance = pgp();
 let db = null;
 
 export function getDb() {
   if (!db) {
-    db = pgp()(config.dbUrl);
+    db = pgpInstance(config.dbUrl);
   }
   return db;
 }
@@ -169,7 +170,7 @@ export async function insertSurplusDeposit(deposit) {
       deposit_id, lot_id, gross_amount, fee_amount, net_amount, tokens_snapshot, tx_digest, timestamp
     )
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    ON CONFLICT(deposit_id) DO NOTHING
+    ON CONFLICT(tx_digest) DO NOTHING
   `,
     [
       deposit.deposit_id,
