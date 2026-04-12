@@ -197,6 +197,9 @@ fi
 if [ -z "$COMMODITY_REGISTRY_ID" ] && [ -f "$ENV_FILE" ]; then
   COMMODITY_REGISTRY_ID=$(grep "^NEXT_PUBLIC_COMMODITY_REGISTRY_ID=" "$ENV_FILE" | cut -d '=' -f 2 || echo "")
 fi
+if [ -z "$COMMODITY_REGISTRY_ADMIN_ID" ] && [ -f "$ENV_FILE" ]; then
+  COMMODITY_REGISTRY_ADMIN_ID=$(grep "^COMMODITY_REGISTRY_ADMIN_ID=" "$ENV_FILE" | cut -d '=' -f 2 || echo "")
+fi
 
 echo ""
 # Register in commodity registry (if we found all 3 vars)

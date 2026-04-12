@@ -314,10 +314,15 @@ export async function getPlatformStats() {
   };
 }
 
-// Get deposit lot_ids that this address has already claimed
+// Get specific deposit object IDs that this address has already claimed
 export async function getClaimedDepositIds(address) {
+  if (!address) return new Set();
+
+  // 1. Query events from the current package
   const events = await queryEvents(`${PACKAGE_ID}::yield_engine::SurplusClaimed`, null, 100);
   let allEvents = [...events.data];
+
+  // 2. Query events from the original package if we migrated
   if (ORIGINAL_PACKAGE_ID !== PACKAGE_ID) {
     const oldEvents = await queryEvents(
       `${ORIGINAL_PACKAGE_ID}::yield_engine::SurplusClaimed`,
@@ -327,14 +332,26 @@ export async function getClaimedDepositIds(address) {
     allEvents = [...allEvents, ...oldEvents.data];
   }
 
-  // Build a Set of lot_ids this address has claimed
-  const claimedLotIds = new Set();
+  // 3. Build a Set of the unique deposit_ids this address has claimed
+  const claimedDepositIds = new Set();
+
   for (const event of allEvents) {
+    // Only track events where the claimant is the current user
     if (event.parsedJson?.claimant === address) {
-      claimedLotIds.add(event.parsedJson?.lot_id);
+      // We grab the deposit_id (the specific object ID)
+      const depositId = event.parsedJson?.deposit_id;
+
+      if (depositId) {
+        claimedDepositIds.add(depositId);
+      } else {
+        // Fallback for legacy events that didn't have deposit_id yet
+        // This ensures the transition period is smooth
+        claimedDepositIds.add(event.parsedJson?.lot_id);
+      }
     }
   }
-  return claimedLotIds;
+
+  return claimedDepositIds;
 }
 
 // ============================================================

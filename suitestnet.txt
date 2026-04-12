@@ -35,6 +35,7 @@ jwt (secret access token): eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3Jt
 ------------ TESTING ---------------
 Owner (platform admin):0x5e8388bacd2da180d38bbeceee2bdd2ad68958747d92f678af59bae8078a46d8
 custodian (GCNA): 0x7a584a2f129f2823705bde5d4734cff9c09ae3532c521c332beee1d7d088e588 (david.noel.0306@gmail.com)
+custodian (GCA): 0x7a584a2f129f2823705bde5d4734cff9c09ae3532c521c332beee1d7d088e588 (david.noel.0306@gmail.com)
 custodian (CIB): 0x1c15e4d325a056d93d638c88642bf403067068d76cabb884fb2030a3826b6918 (sharit73@gmail.com)
 farmer: 0x22c814ddf889307d76b5c568c69374aeaa9b8dabee8e4ccc4f6ad46aef5ff887 (tanomoshiko@gmail.com)
 

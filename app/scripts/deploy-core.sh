@@ -88,6 +88,8 @@ try:
             elif '::carib_coin::Treasury' in obj_type: objects['NEXT_PUBLIC_CARIB_TREASURY_ID'] = obj_id
             elif '::commodity_registry::CommodityRegistry' in obj_type and 'Admin' not in obj_type: 
                 objects['NEXT_PUBLIC_COMMODITY_REGISTRY_ID'] = obj_id
+            elif '::commodity_registry::CommodityRegistryAdmin' in obj_type: 
+                objects['COMMODITY_REGISTRY_ADMIN_ID'] = obj_id
 
     if not pkg_id:
         print('❌ ERROR: Could not find packageId in the deployment JSON.', file=sys.stderr)

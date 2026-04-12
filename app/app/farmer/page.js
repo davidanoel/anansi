@@ -19,11 +19,11 @@ export default function FarmerPage() {
   const [usdc, setUsdc] = useState({ displayBalance: 0 });
   const [deliveries, setDeliveries] = useState([]);
   const [deposits, setDeposits] = useState([]);
-  const [claimedLotIds, setClaimedLotIds] = useState(new Set());
   const [prices, setPrices] = useState({}); // { NUTMEG: { priceUsdc: 0.91, ... } }
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(null);
   const [sellState, setSellState] = useState({ symbol: null, amount: "", selling: false });
+  const [claimedDepositIds, setClaimedDepositIds] = useState(new Set());
 
   // Fetch live prices from Cetus pools
   async function loadPrices() {
@@ -48,11 +48,11 @@ export default function FarmerPage() {
         getAllSurplusDeposits().catch(() => []),
         getClaimedDepositIds(user.address).catch(() => new Set()),
       ]);
+      setClaimedDepositIds(claimed);
       setPortfolio(p);
       setUsdc(u);
       setDeliveries(d);
       setDeposits(s);
-      setClaimedLotIds(claimed);
     } catch (err) {
       console.error("Failed to load farmer data:", err);
     } finally {
@@ -125,7 +125,7 @@ export default function FarmerPage() {
   // Filter claimable deposits based on the SPECIFIC token, not a global sum
   const claimableDeposits = deposits.filter((deposit) => {
     if (deposit.remaining === 0) return false;
-    if (claimedLotIds.has(deposit.lotId)) return false;
+    if (claimedDepositIds.has(deposit.id)) return false;
 
     // Grab the specific token balance for this deposit's commodity
     const matchingToken = portfolio.find((t) => t.symbol === deposit.assetTypeSymbol);

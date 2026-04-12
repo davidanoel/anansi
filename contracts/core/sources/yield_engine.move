@@ -29,8 +29,7 @@ module anansi::yield_engine {
 
     /// Surplus deposit holding payment coins (USDC) for token holders to claim.
     /// Shared object. Farmers call claim_surplus with their commodity coin as proof.
-    /// BUG FIX: Now strongly typed to the specific CommodityT!
-    public struct SurplusDeposit<phantom PaymentT, phantom CommodityT> has key {
+    public struct SurplusDeposit<phantom PaymentT> has key {
         id: UID,
         lot_id: ID,
         balance: Balance<PaymentT>,
@@ -67,6 +66,7 @@ module anansi::yield_engine {
     }
 
     public struct SurplusClaimed has copy, drop {
+        deposit_id: ID,
         lot_id: ID,
         claimant: address,
         tokens_held: u64,
@@ -102,11 +102,10 @@ module anansi::yield_engine {
 
     // ============ Core Functions ============
 
-    /// Deposit surplus for a lot.
-    /// Takes &mut Coin (the contract splits internally).
+    /// Deposit surplus for a lot. Takes &mut Coin (the contract splits internally).
     /// total_commodity_supply: total Coin<COMMODITY> supply at this moment (read from MintVault).
     /// This is used for pro-rata snapshot so all holders claim fairly with fungible coins.
-    public fun deposit_surplus<PaymentT, CommodityT>(
+    public fun deposit_surplus<PaymentT>(
         engine: &mut YieldEngine,
         lot: &mut Lot,
         payment: &mut Coin<PaymentT>,
@@ -136,8 +135,8 @@ module anansi::yield_engine {
         let tokens_snapshot = total_commodity_supply;
         let lot_id = object::id(lot);
 
-        // Hold net amount in strongly-typed shared deposit
-        transfer::share_object(SurplusDeposit<PaymentT, CommodityT> {
+        // Hold net amount in shared deposit for claims
+        transfer::share_object(SurplusDeposit<PaymentT> {
             id: object::new(ctx),
             lot_id,
             balance: coin::into_balance(deposit_coin),
@@ -156,9 +155,12 @@ module anansi::yield_engine {
     }
 
     /// Claim surplus. Farmer presents their commodity coin as proof of holdings.
-    /// The Move compiler now enforces that the generic types match!
+    /// Pro-rata: (holder_balance / total_tokens_at_snapshot) * total_amount
+    ///
+    /// PaymentT = the payout coin type (USDC)
+    /// CommodityT = the commodity coin type (NUTMEG) — farmer holds this
     public fun claim_surplus<PaymentT, CommodityT>(
-        deposit: &mut SurplusDeposit<PaymentT, CommodityT>,
+        deposit: &mut SurplusDeposit<PaymentT>,
         holder_coin: &Coin<CommodityT>,
         registry: &ComplianceRegistry,
         ctx: &mut TxContext,
@@ -186,6 +188,7 @@ module anansi::yield_engine {
         let payout = coin::from_balance(balance::split(&mut deposit.balance, share), ctx);
 
         event::emit(SurplusClaimed {
+            deposit_id: object::id(deposit),
             lot_id: deposit.lot_id,
             claimant,
             tokens_held: token_balance,
@@ -241,9 +244,9 @@ module anansi::yield_engine {
     public fun fee_rate(engine: &YieldEngine): u64 { engine.fee_rate_bps }
     public fun total_distributed(engine: &YieldEngine): u64 { engine.total_distributed }
     public fun total_fees_burned(engine: &YieldEngine): u64 { engine.total_fees_burned }
-    public fun deposit_remaining<PaymentT, CommodityT>(deposit: &SurplusDeposit<PaymentT, CommodityT>): u64 { balance::value(&deposit.balance) }
-    public fun deposit_total<PaymentT, CommodityT>(deposit: &SurplusDeposit<PaymentT, CommodityT>): u64 { deposit.total_amount }
-    public fun deposit_lot_id<PaymentT, CommodityT>(deposit: &SurplusDeposit<PaymentT, CommodityT>): ID { deposit.lot_id }
+    public fun deposit_remaining<T>(deposit: &SurplusDeposit<T>): u64 { balance::value(&deposit.balance) }
+    public fun deposit_total<T>(deposit: &SurplusDeposit<T>): u64 { deposit.total_amount }
+    public fun deposit_lot_id<T>(deposit: &SurplusDeposit<T>): ID { deposit.lot_id }
 
     #[test_only]
     public fun init_for_testing(ctx: &mut TxContext) { init(ctx); }
