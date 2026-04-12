@@ -1,10 +1,10 @@
-import Database from 'better-sqlite3'
-import { config } from './config.js'
+import Database from "better-sqlite3";
+import { config } from "./config.js";
 
-const db = new Database(config.dbPath)
+const db = new Database(config.dbPath);
 
 // Enable WAL mode for better concurrent read performance
-db.pragma('journal_mode = WAL')
+db.pragma("journal_mode = WAL");
 
 db.exec(`
   -- Lots (asset pool batches)
@@ -50,6 +50,7 @@ db.exec(`
   -- Surplus distributions
   CREATE TABLE IF NOT EXISTS surplus_deposits (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    deposit_id TEXT UNIQUE,
     lot_id TEXT,
     gross_amount INTEGER,
     fee_amount INTEGER,
@@ -63,10 +64,11 @@ db.exec(`
   -- Surplus claims
   CREATE TABLE IF NOT EXISTS surplus_claims (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    deposit_id TEXT,
     lot_id TEXT,
     claimant TEXT,
-    tokens_redeemed INTEGER,
-    usdc_received INTEGER,
+    tokens_held INTEGER,
+    amount_received INTEGER,
     tx_digest TEXT,
     timestamp INTEGER
   );
@@ -101,9 +103,12 @@ db.exec(`
   -- Asset types
   CREATE TABLE IF NOT EXISTS asset_types (
     symbol TEXT PRIMARY KEY,
+    object_id TEXT,
     name TEXT,
+    unit TEXT,
     region TEXT,
     custodian TEXT,
+    active INTEGER DEFAULT 1,
     created_at INTEGER
   );
 
@@ -113,7 +118,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_token_balances_address ON token_balances(address);
   CREATE INDEX IF NOT EXISTS idx_lots_status ON lots(status);
   CREATE INDEX IF NOT EXISTS idx_lots_symbol ON lots(asset_type_symbol);
-`)
+`);
 
-console.log('Database migrated successfully:', config.dbPath)
-db.close()
+console.log("Database migrated successfully:", config.dbPath);
+db.close();
