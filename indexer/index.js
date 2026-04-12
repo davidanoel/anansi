@@ -7,7 +7,7 @@ import * as db from "./db.js";
 // ============================================================
 // Spice Indexer
 // Listens to Sui events from Anansi contracts and stores them
-// in SQLite. Exposes a REST API for the Spice frontend.
+// in PostgreSQL. Exposes a REST API for the Spice frontend.
 // ============================================================
 
 const client = new SuiClient({ url: config.suiRpcUrl });
@@ -16,13 +16,13 @@ const eventTypesByPackage = packageIds.map((pkg) => getEventTypes(pkg));
 
 // ============ Event Processing ============
 
-function processEvent(event, txDigest, timestamp) {
+async function processEvent(event, txDigest, timestamp) {
   const type = event.type;
   const data = event.parsedJson;
 
   try {
     if (type === eventTypes.LOT_CREATED) {
-      db.upsertLot({
+      await db.upsertLot({
         id: data.lot_id,
         lot_number: Number(data.lot_number),
         asset_type_symbol: data.asset_type_symbol,
@@ -31,7 +31,7 @@ function processEvent(event, txDigest, timestamp) {
       });
       console.log(`[LOT] Created: #${data.lot_number} (${data.asset_type_symbol})`);
     } else if (type === eventTypes.DELIVERY_RECORDED) {
-      db.insertDelivery({
+      await db.insertDelivery({
         lot_id: data.lot_id,
         farmer: data.farmer,
         units: Number(data.units),
@@ -40,16 +40,16 @@ function processEvent(event, txDigest, timestamp) {
         tx_digest: txDigest,
         timestamp,
       });
-      db.updateLotDelivery(data.lot_id, Number(data.units), Number(data.tokens_minted));
+      await db.updateLotDelivery(data.lot_id, Number(data.units), Number(data.tokens_minted));
       console.log(`[DELIVERY] ${data.units} units to ${data.farmer.slice(0, 8)}...`);
     } else if (type === eventTypes.LOT_STATUS_CHANGED) {
-      db.updateLotStatus(data.lot_id, Number(data.new_status));
+      await db.updateLotStatus(data.lot_id, Number(data.new_status));
       console.log(`[LOT STATUS] ${data.lot_id.slice(0, 8)}... → ${data.new_status}`);
     } else if (type === eventTypes.VALUATION_UPDATED) {
-      db.updateLotValuation(data.lot_id, Number(data.new_value));
+      await db.updateLotValuation(data.lot_id, Number(data.new_value));
       console.log(`[VALUATION] ${data.lot_id.slice(0, 8)}... → $${Number(data.new_value) / 1e6}`);
     } else if (type === eventTypes.SURPLUS_RECEIVED) {
-      db.insertSurplusDeposit({
+      await db.insertSurplusDeposit({
         deposit_id: null,
         lot_id: data.lot_id,
         gross_amount: Number(data.gross_amount),
@@ -63,7 +63,7 @@ function processEvent(event, txDigest, timestamp) {
         `[SURPLUS] $${Number(data.net_amount) / 1e6} for lot ${data.lot_id.slice(0, 8)}...`,
       );
     } else if (type === eventTypes.SURPLUS_CLAIMED) {
-      db.insertSurplusClaim({
+      await db.insertSurplusClaim({
         deposit_id: data.deposit_id,
         lot_id: data.lot_id,
         claimant: data.claimant,
@@ -76,7 +76,7 @@ function processEvent(event, txDigest, timestamp) {
         `[CLAIM] ${data.claimant.slice(0, 8)}... claimed $${Number(data.amount_received) / 1e6}`,
       );
     } else if (type === eventTypes.TOKENS_BURNED) {
-      db.insertBurn({
+      await db.insertBurn({
         amount: Number(data.amount),
         burner: data.burner,
         total_burned: Number(data.total_burned),
@@ -85,7 +85,7 @@ function processEvent(event, txDigest, timestamp) {
       });
       console.log(`[BURN] ${Number(data.amount) / 1e9} CARIB burned`);
     } else if (type === eventTypes.FEES_COLLECTED) {
-      db.insertFeeCollection({
+      await db.insertFeeCollection({
         lot_id: data.lot_id,
         total_fee: Number(data.total_fee),
         burned: Number(data.burned),
@@ -94,7 +94,7 @@ function processEvent(event, txDigest, timestamp) {
         timestamp,
       });
     } else if (type === eventTypes.ASSET_TYPE_CREATED) {
-      db.upsertAssetType({
+      await db.upsertAssetType({
         symbol: data.symbol,
         name: data.name,
         unit: null,
@@ -105,10 +105,10 @@ function processEvent(event, txDigest, timestamp) {
       });
       console.log(`[ASSET TYPE] Registered: ${data.symbol} (${data.region})`);
     } else if (type === eventTypes.ASSET_TYPE_DEACTIVATED) {
-      db.setAssetTypeActive(data.symbol, false);
+      await db.setAssetTypeActive(data.symbol, false);
       console.log(`[ASSET TYPE] Deactivated: ${data.symbol}`);
     } else if (type === eventTypes.ASSET_TYPE_REACTIVATED) {
-      db.setAssetTypeActive(data.symbol, true);
+      await db.setAssetTypeActive(data.symbol, true);
       console.log(`[ASSET TYPE] Reactivated: ${data.symbol}`);
     }
   } catch (err) {
@@ -123,7 +123,7 @@ async function pollEvents() {
 
   for (const eventType of allTypes) {
     const cursorKey = `cursor:${eventType}`;
-    const savedCursor = db.getCursor(cursorKey);
+    const savedCursor = await db.getCursor(cursorKey);
 
     try {
       const result = await client.queryEvents({
@@ -134,7 +134,7 @@ async function pollEvents() {
       });
 
       for (const event of result.data) {
-        processEvent(
+        await processEvent(
           { type: event.type, parsedJson: event.parsedJson },
           event.id.txDigest,
           Number(event.timestampMs || Date.now()),
@@ -142,7 +142,7 @@ async function pollEvents() {
       }
 
       if (result.nextCursor) {
-        db.setCursor(cursorKey, JSON.stringify(result.nextCursor));
+        await db.setCursor(cursorKey, JSON.stringify(result.nextCursor));
       }
     } catch (err) {
       if (!err.message?.includes("not found")) {
@@ -164,67 +164,112 @@ app.get("/health", (req, res) => {
 });
 
 // Platform stats
-app.get("/api/stats", (req, res) => {
-  res.json(db.getStats());
+app.get("/api/stats", async (req, res) => {
+  try {
+    const stats = await db.getStats();
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // All lots
-app.get("/api/lots", (req, res) => {
-  const status = req.query.status;
-  if (status === "active") {
-    res.json(db.getActiveLots());
-  } else {
-    res.json(db.getAllLots());
+app.get("/api/lots", async (req, res) => {
+  try {
+    const status = req.query.status;
+    if (status === "active") {
+      const lots = await db.getActiveLots();
+      res.json(lots);
+    } else {
+      const lots = await db.getAllLots();
+      res.json(lots);
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
 // Single lot
-app.get("/api/lots/:id", (req, res) => {
-  const lot = db.getLot(req.params.id);
-  if (!lot) return res.status(404).json({ error: "Lot not found" });
-  res.json(lot);
+app.get("/api/lots/:id", async (req, res) => {
+  try {
+    const lot = await db.getLot(req.params.id);
+    if (!lot) return res.status(404).json({ error: "Lot not found" });
+    res.json(lot);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Deliveries for a lot
-app.get("/api/lots/:id/deliveries", (req, res) => {
-  res.json(db.getDeliveriesByLot(req.params.id));
+app.get("/api/lots/:id/deliveries", async (req, res) => {
+  try {
+    const deliveries = await db.getDeliveriesByLot(req.params.id);
+    res.json(deliveries);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Token holders for a lot
-app.get("/api/lots/:id/holders", (req, res) => {
-  res.json(db.getParticipantsByLot(req.params.id));
+app.get("/api/lots/:id/holders", async (req, res) => {
+  try {
+    const holders = await db.getParticipantsByLot(req.params.id);
+    res.json(holders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Farmer portfolio (all balances + deliveries)
-app.get("/api/farmers/:address", (req, res) => {
-  const address = req.params.address;
-  res.json({
-    participation: db.getParticipationByAddress(address),
-    deliveries: db.getDeliveriesByFarmer(address),
-  });
+app.get("/api/farmers/:address", async (req, res) => {
+  try {
+    const address = req.params.address;
+    const participation = await db.getParticipationByAddress(address);
+    const deliveries = await db.getDeliveriesByFarmer(address);
+    res.json({
+      participation,
+      deliveries,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Asset types
-app.get("/api/asset-types", (req, res) => {
-  res.json(db.getAssetTypes());
+app.get("/api/asset-types", async (req, res) => {
+  try {
+    const assetTypes = await db.getAssetTypes();
+    res.json(assetTypes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // CaribCoin burn history
-app.get("/api/carib/burns", (req, res) => {
-  const burns = db
-    .getDb()
-    .prepare("SELECT * FROM carib_burns ORDER BY timestamp DESC LIMIT 100")
-    .all();
-  res.json({ burns, totalBurned: db.getTotalBurned() });
+app.get("/api/carib/burns", async (req, res) => {
+  try {
+    const dbInstance = db.getDb();
+    const burns = await dbInstance.query(
+      "SELECT * FROM carib_burns ORDER BY timestamp DESC LIMIT 100",
+    );
+    const totalBurned = await db.getTotalBurned();
+    res.json({ burns, totalBurned });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Fee collection history
-app.get("/api/carib/fees", (req, res) => {
-  const fees = db
-    .getDb()
-    .prepare("SELECT * FROM fee_collections ORDER BY timestamp DESC LIMIT 100")
-    .all();
-  res.json(fees);
+app.get("/api/carib/fees", async (req, res) => {
+  try {
+    const dbInstance = db.getDb();
+    const fees = await dbInstance.query(
+      "SELECT * FROM fee_collections ORDER BY timestamp DESC LIMIT 100",
+    );
+    res.json(fees);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ============ Start ============
@@ -234,7 +279,7 @@ async function start() {
   console.log("Spice Indexer");
   console.log(`Network: ${config.suiRpcUrl}`);
   console.log(`Packages: ${packageIds.join(", ")}`);
-  console.log(`Database: ${config.dbPath}`);
+  console.log(`Database: PostgreSQL (${config.dbUrl.split("@")[1] || "localhost"})`);
   console.log("=".repeat(50));
 
   // Start API server

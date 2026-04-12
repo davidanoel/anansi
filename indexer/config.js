@@ -9,8 +9,8 @@ export const config = {
   packageId: process.env.PACKAGE_ID || "0x0",
   originalPackageId: process.env.ORIGINAL_PACKAGE_ID || process.env.PACKAGE_ID || "0x0",
 
-  // Database
-  dbPath: process.env.DB_PATH || "./spice.db",
+  // Database (PostgreSQL)
+  dbUrl: process.env.DATABASE_URL || "postgres://user:password@localhost:5432/spice_indexer",
 
   // API server
   port: parseInt(process.env.PORT || "4000"),
