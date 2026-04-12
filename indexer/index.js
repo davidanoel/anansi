@@ -41,7 +41,6 @@ function processEvent(event, txDigest, timestamp) {
         timestamp,
       });
       db.updateLotDelivery(data.lot_id, Number(data.units), Number(data.tokens_minted));
-      db.updateTokenBalance(data.farmer, data.lot_id, Number(data.tokens_minted));
       console.log(`[DELIVERY] ${data.units} units to ${data.farmer.slice(0, 8)}...`);
     } else if (type === eventTypes.LOT_STATUS_CHANGED) {
       db.updateLotStatus(data.lot_id, Number(data.new_status));
@@ -193,14 +192,14 @@ app.get("/api/lots/:id/deliveries", (req, res) => {
 
 // Token holders for a lot
 app.get("/api/lots/:id/holders", (req, res) => {
-  res.json(db.getBalancesByLot(req.params.id));
+  res.json(db.getParticipantsByLot(req.params.id));
 });
 
 // Farmer portfolio (all balances + deliveries)
 app.get("/api/farmers/:address", (req, res) => {
   const address = req.params.address;
   res.json({
-    balances: db.getBalancesByAddress(address),
+    participation: db.getParticipationByAddress(address),
     deliveries: db.getDeliveriesByFarmer(address),
   });
 });

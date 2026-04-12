@@ -102,33 +102,54 @@ export function getDeliveriesByFarmer(farmer) {
 
 // ============ Token Balances ============
 
-export function updateTokenBalance(address, lotId, delta) {
-  const db = getDb();
-  const existing = db
-    .prepare("SELECT balance FROM token_balances WHERE address = ? AND lot_id = ?")
-    .get(address, lotId);
-
-  if (existing) {
-    db.prepare(
-      "UPDATE token_balances SET balance = balance + ?, updated_at = strftime('%s','now') * 1000 WHERE address = ? AND lot_id = ?",
-    ).run(delta, address, lotId);
-  } else {
-    db.prepare(
-      "INSERT INTO token_balances (address, lot_id, balance, updated_at) VALUES (?, ?, ?, strftime('%s','now') * 1000)",
-    ).run(address, lotId, delta);
-  }
-}
-
-export function getBalancesByAddress(address) {
+export function getParticipantsByLot(lotId) {
   return getDb()
-    .prepare("SELECT * FROM token_balances WHERE address = ? AND balance > 0")
-    .all(address);
-}
-
-export function getBalancesByLot(lotId) {
-  return getDb()
-    .prepare("SELECT * FROM token_balances WHERE lot_id = ? AND balance > 0 ORDER BY balance DESC")
+    .prepare(
+      `
+      SELECT
+        d.farmer as address,
+        SUM(d.units) as delivered_units,
+        SUM(d.tokens_minted) as tokens_minted,
+        COUNT(*) as delivery_count,
+        COALESCE((
+          SELECT SUM(sc.amount_received)
+          FROM surplus_claims sc
+          WHERE sc.lot_id = d.lot_id AND sc.claimant = d.farmer
+        ), 0) as total_claimed,
+        MAX(d.timestamp) as last_delivery_at
+      FROM deliveries d
+      WHERE d.lot_id = ?
+      GROUP BY d.farmer
+      ORDER BY tokens_minted DESC, delivered_units DESC
+    `,
+    )
     .all(lotId);
+}
+
+export function getParticipationByAddress(address) {
+  return getDb()
+    .prepare(
+      `
+      SELECT
+        d.lot_id,
+        l.asset_type_symbol,
+        SUM(d.units) as delivered_units,
+        SUM(d.tokens_minted) as tokens_minted,
+        COUNT(*) as delivery_count,
+        COALESCE((
+          SELECT SUM(sc.amount_received)
+          FROM surplus_claims sc
+          WHERE sc.lot_id = d.lot_id AND sc.claimant = d.farmer
+        ), 0) as total_claimed,
+        MAX(d.timestamp) as last_delivery_at
+      FROM deliveries d
+      LEFT JOIN lots l ON l.id = d.lot_id
+      WHERE d.farmer = ?
+      GROUP BY d.lot_id, l.asset_type_symbol
+      ORDER BY last_delivery_at DESC
+    `,
+    )
+    .all(address);
 }
 
 // ============ Surplus ============

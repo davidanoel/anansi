@@ -38,15 +38,6 @@ db.exec(`
     FOREIGN KEY (lot_id) REFERENCES lots(id)
   );
 
-  -- Token balances (aggregated view — updated on each transfer/mint event)
-  CREATE TABLE IF NOT EXISTS token_balances (
-    address TEXT,
-    lot_id TEXT,
-    balance INTEGER DEFAULT 0,
-    updated_at INTEGER,
-    PRIMARY KEY (address, lot_id)
-  );
-
   -- Surplus distributions
   CREATE TABLE IF NOT EXISTS surplus_deposits (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -115,7 +106,6 @@ db.exec(`
   -- Indexes for common queries
   CREATE INDEX IF NOT EXISTS idx_deliveries_farmer ON deliveries(farmer);
   CREATE INDEX IF NOT EXISTS idx_deliveries_lot ON deliveries(lot_id);
-  CREATE INDEX IF NOT EXISTS idx_token_balances_address ON token_balances(address);
   CREATE INDEX IF NOT EXISTS idx_lots_status ON lots(status);
   CREATE INDEX IF NOT EXISTS idx_lots_symbol ON lots(asset_type_symbol);
 `);
