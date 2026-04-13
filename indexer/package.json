@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch index.js",
-    "start": "node index.js",
-    "migrate": "node migrate.js"
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f",
+    "db:migrate": "node migrate.js",
+    "start": "node index.js"
   },
   "dependencies": {
     "@mysten/sui": "^1.0.0",
