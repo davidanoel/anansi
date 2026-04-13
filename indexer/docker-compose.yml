@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: anansi-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: spice_indexer
+    ports:
+      - "5432:5432"
+    volumes:
+      - anansi_pg_data:/var/lib/postgresql/data
+
+volumes:
+  anansi_pg_data:

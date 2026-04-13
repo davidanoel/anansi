@@ -164,7 +164,8 @@ export async function getParticipationByAddress(address) {
 
 export async function insertSurplusDeposit(deposit) {
   const db = getDb();
-  await db.query(
+
+  const inserted = await db.result(
     `
     INSERT INTO surplus_deposits (
       deposit_id, lot_id, gross_amount, fee_amount, net_amount, tokens_snapshot, tx_digest, timestamp
@@ -184,24 +185,28 @@ export async function insertSurplusDeposit(deposit) {
     ],
   );
 
-  await db.query(
-    `
-    UPDATE lots
-    SET total_surplus_deposited = total_surplus_deposited + $1
-    WHERE id = $2
-  `,
-    [deposit.gross_amount, deposit.lot_id],
-  );
+  if (inserted.rowCount > 0) {
+    await db.query(
+      `
+      UPDATE lots
+      SET total_surplus_deposited = total_surplus_deposited + $1
+      WHERE id = $2
+    `,
+      [deposit.gross_amount, deposit.lot_id],
+    );
+  }
 }
 
 export async function insertSurplusClaim(claim) {
   const db = getDb();
-  await db.query(
+
+  const inserted = await db.result(
     `
     INSERT INTO surplus_claims (
       deposit_id, lot_id, claimant, tokens_held, amount_received, tx_digest, timestamp
     )
     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    ON CONFLICT(tx_digest) DO NOTHING
   `,
     [
       claim.deposit_id,
@@ -214,14 +219,16 @@ export async function insertSurplusClaim(claim) {
     ],
   );
 
-  await db.query(
-    `
-    UPDATE lots
-    SET total_surplus_distributed = total_surplus_distributed + $1
-    WHERE id = $2
-  `,
-    [claim.amount_received, claim.lot_id],
-  );
+  if (inserted.rowCount > 0) {
+    await db.query(
+      `
+      UPDATE lots
+      SET total_surplus_distributed = total_surplus_distributed + $1
+      WHERE id = $2
+    `,
+      [claim.amount_received, claim.lot_id],
+    );
+  }
 }
 
 // ============ CaribCoin ============

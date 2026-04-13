@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config({ path: new URL("./.env", import.meta.url).pathname });
+
 import pgp from "pg-promise";
 import { config } from "./config.js";
 
@@ -61,7 +64,7 @@ async function migrate() {
         claimant TEXT,
         tokens_held BIGINT,
         amount_received BIGINT,
-        tx_digest TEXT,
+        tx_digest TEXT UNIQUE,
         timestamp BIGINT
       )
     `);
