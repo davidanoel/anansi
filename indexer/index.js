@@ -225,6 +225,44 @@ app.get("/api/lots/:id/holders", async (req, res) => {
   }
 });
 
+// Farmer directory (email/name/address lookup for custodians)
+app.get("/api/farmers/directory", async (req, res) => {
+  try {
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(Math.max(requestedLimit, 1), 100)
+      : 25;
+    const farmers = await db.getFarmerDirectory({
+      assetTypeSymbol: req.query.assetTypeSymbol || null,
+      search: req.query.search || "",
+      limit,
+    });
+    res.json(farmers);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/farmers/directory", async (req, res) => {
+  try {
+    const address = typeof req.body?.address === "string" ? req.body.address.trim() : "";
+    if (!address) {
+      return res.status(400).json({ error: "address is required" });
+    }
+
+    await db.upsertUserProfile({
+      address,
+      email: req.body?.email || null,
+      name: req.body?.name || null,
+      picture: req.body?.picture || null,
+    });
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Farmer portfolio (all balances + deliveries)
 app.get("/api/farmers/:address", async (req, res) => {
   try {
@@ -239,6 +277,7 @@ app.get("/api/farmers/:address", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // Asset types
 app.get("/api/asset-types", async (req, res) => {

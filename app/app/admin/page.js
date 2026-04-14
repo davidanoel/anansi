@@ -119,9 +119,92 @@ export default function AdminPage() {
 function RecordDeliveryForm({ custodianCaps }) {
   const [form, setForm] = useState({ lotId: "", farmerAddress: "", units: "", grade: "A" });
   const [selectedCap, setSelectedCap] = useState(custodianCaps[0]?.id || "");
+  const [availableLots, setAvailableLots] = useState([]);
+  const [knownFarmers, setKnownFarmers] = useState([]);
+  const [loadingLots, setLoadingLots] = useState(true);
+  const [loadingFarmers, setLoadingFarmers] = useState(true);
+  const [showManualLot, setShowManualLot] = useState(false);
+  const [showManualFarmer, setShowManualFarmer] = useState(false);
   const [receiptFile, setReceiptFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
+
+  const currentCap = custodianCaps.find((cap) => cap.id === selectedCap) || custodianCaps[0];
+  const visibleLots = availableLots.filter(
+    (lot) => !currentCap || lot.assetTypeSymbol === currentCap.assetTypeSymbol,
+  );
+  const selectedLot = visibleLots.find((lot) => lot.id === form.lotId);
+  const selectedFarmer = knownFarmers.find((farmer) => farmer.address === form.farmerAddress);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadLots() {
+      setLoadingLots(true);
+      try {
+        const authorizedSymbols = new Set(custodianCaps.map((cap) => cap.assetTypeSymbol));
+        const lots = await getActiveLots();
+        if (!cancelled) {
+          setAvailableLots(lots.filter((lot) => authorizedSymbols.has(lot.assetTypeSymbol)));
+        }
+      } catch (err) {
+        console.error("Failed to load lots:", err);
+        if (!cancelled) setAvailableLots([]);
+      } finally {
+        if (!cancelled) setLoadingLots(false);
+      }
+    }
+
+    loadLots();
+    return () => {
+      cancelled = true;
+    };
+  }, [custodianCaps]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadFarmers() {
+      setLoadingFarmers(true);
+      try {
+        const params = new URLSearchParams({ limit: "50" });
+        if (currentCap?.assetTypeSymbol) {
+          params.set("assetTypeSymbol", currentCap.assetTypeSymbol);
+        }
+
+        const res = await fetch(`/api/farmers/directory?${params.toString()}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to load farmers");
+        if (!cancelled) setKnownFarmers(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to load farmer directory:", err);
+        if (!cancelled) setKnownFarmers([]);
+      } finally {
+        if (!cancelled) setLoadingFarmers(false);
+      }
+    }
+
+    loadFarmers();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentCap?.assetTypeSymbol]);
+
+  useEffect(() => {
+    if (!showManualLot && form.lotId && !visibleLots.some((lot) => lot.id === form.lotId)) {
+      setForm((prev) => ({ ...prev, lotId: "" }));
+    }
+  }, [form.lotId, showManualLot, visibleLots]);
+
+  useEffect(() => {
+    if (
+      !showManualFarmer &&
+      form.farmerAddress &&
+      !knownFarmers.some((farmer) => farmer.address === form.farmerAddress)
+    ) {
+      setForm((prev) => ({ ...prev, farmerAddress: "" }));
+    }
+  }, [form.farmerAddress, knownFarmers, showManualFarmer]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -133,10 +216,6 @@ function RecordDeliveryForm({ custodianCaps }) {
         receiptHash = (await uploadToIPFS(receiptFile)).hash;
       }
 
-      // FIX 1: Grab the actual symbol for the currently selected Cap
-      const currentCap = custodianCaps.find((c) => c.id === selectedCap) || custodianCaps[0];
-
-      // FIX 2: Pass currentCap.assetTypeSymbol as the 7th argument!
       const txResult = await recordDelivery(
         selectedCap,
         form.lotId,
@@ -153,7 +232,7 @@ function RecordDeliveryForm({ custodianCaps }) {
         tokens: form.units,
         symbol: currentCap.assetTypeSymbol,
       });
-      setForm((p) => ({ ...p, farmerAddress: "", units: "" }));
+      setForm((prev) => ({ ...prev, farmerAddress: "", units: "" }));
       setReceiptFile(null);
     } catch (err) {
       setResult({ success: false, error: err.message });
@@ -187,25 +266,105 @@ function RecordDeliveryForm({ custodianCaps }) {
         </div>
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Field
-          label="Lot ID"
-          value={form.lotId}
-          onChange={(v) => setForm((p) => ({ ...p, lotId: v }))}
-          placeholder="0x..."
-          mono
-        />
-        <Field
-          label="Farmer Address"
-          value={form.farmerAddress}
-          onChange={(v) => setForm((p) => ({ ...p, farmerAddress: v }))}
-          placeholder="0x..."
-          mono
-        />
+        <div>
+          <div className="flex items-center justify-between gap-3 mb-1.5">
+            <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider">
+              Lot
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowManualLot((prev) => !prev)}
+              className="text-xs text-anansi-red hover:underline"
+            >
+              {showManualLot ? "Use lot picker" : "Enter lot id manually"}
+            </button>
+          </div>
+          {!showManualLot && visibleLots.length > 0 ? (
+            <select
+              value={form.lotId}
+              onChange={(e) => setForm((prev) => ({ ...prev, lotId: e.target.value }))}
+              className="input-field"
+              disabled={loadingLots}
+            >
+              <option value="">Choose an open lot</option>
+              {visibleLots.map((lot) => (
+                <option key={lot.id} value={lot.id}>
+                  {formatLotOption(lot)}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <Field
+              label=""
+              value={form.lotId}
+              onChange={(v) => setForm((prev) => ({ ...prev, lotId: v }))}
+              placeholder="0x..."
+              mono
+            />
+          )}
+          <p className="text-xs text-anansi-muted mt-1">
+            {loadingLots
+              ? "Loading open lots..."
+              : selectedLot
+                ? selectedLot.id
+                : visibleLots.length === 0 && !showManualLot
+                  ? "No open lots found for this asset type. You can paste a lot id manually."
+                  : "Pick a lot by name and number. The object id stays under the hood."}
+          </p>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between gap-3 mb-1.5">
+            <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider">
+              Farmer
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowManualFarmer((prev) => !prev)}
+              className="text-xs text-anansi-red hover:underline"
+            >
+              {showManualFarmer ? "Use saved farmers" : "Enter wallet address manually"}
+            </button>
+          </div>
+          {!showManualFarmer && knownFarmers.length > 0 ? (
+            <select
+              value={form.farmerAddress}
+              onChange={(e) => setForm((prev) => ({ ...prev, farmerAddress: e.target.value }))}
+              className="input-field"
+              disabled={loadingFarmers}
+            >
+              <option value="">Choose a farmer</option>
+              {knownFarmers.map((farmer) => (
+                <option key={farmer.address} value={farmer.address}>
+                  {formatFarmerOption(farmer)}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <Field
+              label=""
+              value={form.farmerAddress}
+              onChange={(v) => setForm((prev) => ({ ...prev, farmerAddress: v }))}
+              placeholder="0x..."
+              mono
+            />
+          )}
+          <p className="text-xs text-anansi-muted mt-1">
+            {loadingFarmers
+              ? "Loading known farmers..."
+              : selectedFarmer
+                ? `${selectedFarmer.address} | ${selectedFarmer.prior_deliveries || 0} prior deliver${Number(selectedFarmer.prior_deliveries || 0) === 1 ? "y" : "ies"}`
+                : knownFarmers.length === 0 && !showManualFarmer
+                  ? "No saved farmer profiles yet. A farmer appears here after signing in with Google once."
+                  : "Use email/name when available, with wallet address as the fallback."}
+          </p>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <Field
             label="Weight (kg)"
             value={form.units}
-            onChange={(v) => setForm((p) => ({ ...p, units: v }))}
+            onChange={(v) => setForm((prev) => ({ ...prev, units: v }))}
             placeholder="564"
             type="number"
           />
@@ -215,7 +374,7 @@ function RecordDeliveryForm({ custodianCaps }) {
             </label>
             <select
               value={form.grade}
-              onChange={(e) => setForm((p) => ({ ...p, grade: e.target.value }))}
+              onChange={(e) => setForm((prev) => ({ ...prev, grade: e.target.value }))}
               className="input-field"
             >
               <option value="A">Grade A</option>
@@ -250,7 +409,7 @@ function RecordDeliveryForm({ custodianCaps }) {
           {result.success ? (
             <>
               <span className="font-medium">Recorded.</span> {result.tokens} {result.symbol} minted.{" "}
-              <span className="font-mono text-xs">Tx: {result.digest?.slice(0, 20)}…</span>
+              <span className="font-mono text-xs">Tx: {result.digest?.slice(0, 20)}...</span>
             </>
           ) : (
             `Error: ${result.error}`
@@ -259,6 +418,26 @@ function RecordDeliveryForm({ custodianCaps }) {
       )}
     </div>
   );
+}
+
+function formatLotOption(lot) {
+  return `${lot.assetTypeSymbol} | Lot #${lot.lotNumber} | ${lot.statusLabel}`;
+}
+
+function formatFarmerOption(farmer) {
+  const primary = farmer.name || farmer.email || shortAddress(farmer.address);
+  const secondary =
+    farmer.name && farmer.email
+      ? farmer.email
+      : farmer.email || (primary === shortAddress(farmer.address) ? "" : shortAddress(farmer.address));
+  const priorDeliveries = Number(farmer.prior_deliveries || 0);
+  return `${primary}${secondary ? ` | ${secondary}` : ""}${priorDeliveries > 0 ? ` | ${priorDeliveries} prior deliver${priorDeliveries === 1 ? "y" : "ies"}` : ""}`;
+}
+
+function shortAddress(address) {
+  if (!address) return "--";
+  if (address.length <= 12) return address;
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
 function LotManager({ custodianCaps }) {

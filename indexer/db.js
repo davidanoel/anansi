@@ -307,6 +307,76 @@ export async function getAssetTypes() {
   return await db.query("SELECT * FROM asset_types");
 }
 
+
+// ============ User Profiles ============
+
+export async function upsertUserProfile(profile) {
+  const db = getDb();
+  const now = Date.now();
+  const email = typeof profile.email === "string" ? profile.email.trim().toLowerCase() : null;
+  const name = typeof profile.name === "string" ? profile.name.trim() : null;
+  const picture = typeof profile.picture === "string" ? profile.picture.trim() : null;
+
+  await db.query(
+    `
+      INSERT INTO user_profiles (address, email, name, picture, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT(address) DO UPDATE SET
+        email = COALESCE(excluded.email, user_profiles.email),
+        name = COALESCE(excluded.name, user_profiles.name),
+        picture = COALESCE(excluded.picture, user_profiles.picture),
+        updated_at = excluded.updated_at
+    `,
+    [profile.address, email, name, picture, now, now],
+  );
+}
+
+export async function getFarmerDirectory(options = {}) {
+  const db = getDb();
+  const assetTypeSymbol = options.assetTypeSymbol || null;
+  const search = options.search ? `%${options.search.trim().toLowerCase()}%` : null;
+  const limit = Number.isFinite(options.limit) ? options.limit : 25;
+
+  return await db.query(
+    `
+      WITH delivery_rollup AS (
+        SELECT
+          d.farmer AS address,
+          COUNT(*) AS prior_deliveries,
+          COUNT(DISTINCT d.lot_id) AS lots_participated,
+          MAX(d.timestamp) AS last_delivery_at,
+          STRING_AGG(DISTINCT COALESCE(l.asset_type_symbol, ''), ', ') FILTER (WHERE l.asset_type_symbol IS NOT NULL) AS asset_types
+        FROM deliveries d
+        LEFT JOIN lots l ON l.id = d.lot_id
+        WHERE ($1::TEXT IS NULL OR l.asset_type_symbol = $1)
+        GROUP BY d.farmer
+      )
+      SELECT
+        COALESCE(u.address, d.address) AS address,
+        u.email,
+        u.name,
+        u.picture,
+        COALESCE(d.prior_deliveries, 0) AS prior_deliveries,
+        COALESCE(d.lots_participated, 0) AS lots_participated,
+        d.last_delivery_at,
+        COALESCE(d.asset_types, '') AS asset_types,
+        u.updated_at
+      FROM user_profiles u
+      FULL OUTER JOIN delivery_rollup d ON d.address = u.address
+      WHERE ($2::TEXT IS NULL
+        OR LOWER(COALESCE(u.email, '')) LIKE $2
+        OR LOWER(COALESCE(u.name, '')) LIKE $2
+        OR LOWER(COALESCE(COALESCE(u.address, d.address), '')) LIKE $2)
+      ORDER BY
+        CASE WHEN u.email IS NOT NULL OR u.name IS NOT NULL THEN 0 ELSE 1 END,
+        GREATEST(COALESCE(u.updated_at, 0), COALESCE(d.last_delivery_at, 0)) DESC,
+        COALESCE(u.email, COALESCE(u.address, d.address)) ASC
+      LIMIT $3
+    `,
+    [assetTypeSymbol, search, limit],
+  );
+}
+
 // ============ Indexer State ============
 
 export async function getCursor(key) {
