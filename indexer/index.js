@@ -54,7 +54,7 @@ async function processEvent(event, txDigest, timestamp) {
       console.log(`[VALUATION] ${data.lot_id.slice(0, 8)}... → $${Number(data.new_value) / 1e6}`);
     } else if (type === allEventTypes.SURPLUS_RECEIVED) {
       await db.insertSurplusDeposit({
-        deposit_id: null,
+        deposit_id: data.deposit_id || null,
         lot_id: data.lot_id,
         gross_amount: Number(data.gross_amount),
         fee_amount: Number(data.fee_amount),
@@ -100,8 +100,9 @@ async function processEvent(event, txDigest, timestamp) {
     } else if (type === allEventTypes.ASSET_TYPE_CREATED) {
       await db.upsertAssetType({
         symbol: data.symbol,
+        object_id: data.asset_type_id || null,
         name: data.name,
-        unit: null,
+        unit: data.unit || null,
         region: data.region,
         custodian: data.custodian,
         active: 1,
@@ -244,6 +245,73 @@ app.get("/api/asset-types", async (req, res) => {
   try {
     const assetTypes = await db.getAssetTypes();
     res.json(assetTypes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============ Analytics API ============
+
+app.get("/api/analytics/overview", async (req, res) => {
+  try {
+    const overview = await db.getAnalyticsOverview();
+    res.json({ ...overview, poll_interval_ms: config.pollInterval });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/analytics/deliveries-over-time", async (req, res) => {
+  try {
+    const requestedDays = Number.parseInt(req.query.days, 10);
+    const days = Number.isFinite(requestedDays) ? Math.min(Math.max(requestedDays, 1), 90) : 14;
+    const deliveries = await db.getDeliveriesOverTime(days);
+    res.json(deliveries);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/analytics/by-asset-type", async (req, res) => {
+  try {
+    const rows = await db.getAnalyticsByAssetType();
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/analytics/farmers", async (req, res) => {
+  try {
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(Math.max(requestedLimit, 1), 100)
+      : 10;
+    const farmers = await db.getAnalyticsFarmers(limit);
+    res.json(farmers);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/analytics/lots/:id/summary", async (req, res) => {
+  try {
+    const summary = await db.getLotAnalyticsSummary(req.params.id);
+    if (!summary) return res.status(404).json({ error: "Lot not found" });
+    res.json(summary);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/analytics/recent-activity", async (req, res) => {
+  try {
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(Math.max(requestedLimit, 1), 100)
+      : 25;
+    const activity = await db.getRecentActivity(limit);
+    res.json(activity);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

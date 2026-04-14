@@ -23,6 +23,9 @@ services:
       - "8080:80"
     depends_on:
       - postgres
+    volumes:
+      - anansi_pgadmin_data:/var/lib/pgadmin
 
 volumes:
   anansi_pg_data:
+  anansi_pgadmin_data:
