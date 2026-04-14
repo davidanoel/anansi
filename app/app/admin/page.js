@@ -121,6 +121,7 @@ function RecordDeliveryForm({ custodianCaps }) {
   const [selectedCap, setSelectedCap] = useState(custodianCaps[0]?.id || "");
   const [availableLots, setAvailableLots] = useState([]);
   const [knownFarmers, setKnownFarmers] = useState([]);
+  const [farmerSearch, setFarmerSearch] = useState("");
   const [loadingLots, setLoadingLots] = useState(true);
   const [loadingFarmers, setLoadingFarmers] = useState(true);
   const [showManualLot, setShowManualLot] = useState(false);
@@ -171,6 +172,9 @@ function RecordDeliveryForm({ custodianCaps }) {
         if (currentCap?.assetTypeSymbol) {
           params.set("assetTypeSymbol", currentCap.assetTypeSymbol);
         }
+        if (farmerSearch.trim()) {
+          params.set("search", farmerSearch.trim());
+        }
 
         const res = await fetch(`/api/farmers/directory?${params.toString()}`);
         const data = await res.json();
@@ -184,11 +188,12 @@ function RecordDeliveryForm({ custodianCaps }) {
       }
     }
 
-    loadFarmers();
+    const timeoutId = setTimeout(loadFarmers, farmerSearch.trim() ? 180 : 0);
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
     };
-  }, [currentCap?.assetTypeSymbol]);
+  }, [currentCap?.assetTypeSymbol, farmerSearch]);
 
   useEffect(() => {
     if (!showManualLot && form.lotId && !visibleLots.some((lot) => lot.id === form.lotId)) {
@@ -205,6 +210,10 @@ function RecordDeliveryForm({ custodianCaps }) {
       setForm((prev) => ({ ...prev, farmerAddress: "" }));
     }
   }, [form.farmerAddress, knownFarmers, showManualFarmer]);
+
+  useEffect(() => {
+    setFarmerSearch("");
+  }, [currentCap?.assetTypeSymbol]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -326,20 +335,39 @@ function RecordDeliveryForm({ custodianCaps }) {
               {showManualFarmer ? "Use saved farmers" : "Enter wallet address manually"}
             </button>
           </div>
-          {!showManualFarmer && knownFarmers.length > 0 ? (
-            <select
-              value={form.farmerAddress}
-              onChange={(e) => setForm((prev) => ({ ...prev, farmerAddress: e.target.value }))}
-              className="input-field"
-              disabled={loadingFarmers}
-            >
-              <option value="">Choose a farmer</option>
-              {knownFarmers.map((farmer) => (
-                <option key={farmer.address} value={farmer.address}>
-                  {formatFarmerOption(farmer)}
-                </option>
-              ))}
-            </select>
+          {!showManualFarmer ? (
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={farmerSearch}
+                onChange={(e) => setFarmerSearch(e.target.value)}
+                placeholder="Search by email, name, or wallet"
+                className="input-field"
+              />
+              {knownFarmers.length > 0 ? (
+                <select
+                  value={form.farmerAddress}
+                  onChange={(e) => setForm((prev) => ({ ...prev, farmerAddress: e.target.value }))}
+                  className="input-field"
+                  disabled={loadingFarmers}
+                >
+                  <option value="">Choose a farmer</option>
+                  {knownFarmers.map((farmer) => (
+                    <option key={farmer.address} value={farmer.address}>
+                      {formatFarmerOption(farmer)}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="input-field text-sm text-anansi-muted flex items-center">
+                  {loadingFarmers
+                    ? "Searching saved farmers..."
+                    : farmerSearch.trim()
+                      ? "No farmers matched that search."
+                      : "No saved farmers yet. Use manual entry or wait for farmers to sign in."}
+                </div>
+              )}
+            </div>
           ) : (
             <Field
               label=""
@@ -355,7 +383,9 @@ function RecordDeliveryForm({ custodianCaps }) {
               : selectedFarmer
                 ? `${selectedFarmer.address} | ${selectedFarmer.prior_deliveries || 0} prior deliver${Number(selectedFarmer.prior_deliveries || 0) === 1 ? "y" : "ies"}`
                 : knownFarmers.length === 0 && !showManualFarmer
-                  ? "No saved farmer profiles yet. A farmer appears here after signing in with Google once."
+                  ? farmerSearch.trim()
+                    ? "No saved farmer matched that search. You can still paste a wallet address manually."
+                    : "No saved farmer profiles yet. A farmer appears here after signing in with Google once."
                   : "Use email/name when available, with wallet address as the fallback."}
           </p>
         </div>
