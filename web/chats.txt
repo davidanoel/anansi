@@ -1,0 +1,40 @@
+chats with codex
+
+“in the web subproject, do you think the spider logo in the section Why Anansi is prominent enough? like it's opacity? Discuss first”
+“you are the ux expert”
+“statement”
+“let me see balanced”
+“what would tesla or spacex do here?”
+“and what do you think about the spacing (vertical) of that section?”
+“ok i made the changes. now help me with the header navigation. It doesn't seem to work right. The in page nav to sections work right but if i go to /caribcoin for example, the page is just blank sections and while there if i click on the spice link i see /caribcoin#spice and nothing loads.”
+“when i go to /caribcoin i still have to do a hard refresh to see any content. And while on /caribcoin if i click spice, i go to the correct section now i.e. /#spice but no content (unless i hard refresh)”
+“that worked. another missed functionality is navigating to the /spice page. i don't see a link for it. i can navigate to the #spice subsection which provides a link to lauch the actual product but not the /spice where you can readup more about it. From a UX perspective, what minimal change can be done here”
+“yes i like both, do it”
+“on the /spice page, some of the bulleted items like below are not showing up correctly. they don't look disparate 'Grenada Nutmeg · Jamaica Coffee · Grenada Cocoa · Mace · Spices'”
+“sure show me”
+“ok on the homepage, there is a button called Launch App, it is meant to launch the spice app for the /spice product. It seems out of place. Thoughts?”
+“Done. Ok tell me your honest view of the homepage/landing.”
+“Well this is positioned as a global tech company with a caribbean founder who used to go with his uncle and pick up nutmeg as a kid. I want anansi to be the most dominant tech company caribbean founded but also appeal to global investors. The founder lives in Miami FL”
+“That sounds good. Also a few other products are already build just not productized yet; cognicare (mental health platform for licensed therapists using 6 AI agents), thryve (personal mental health app with all insights AI based), dollarbank (a web3 savings platform built on ethereum backed by aave - testnet now)”
+“Yes”
+“How would you frame it?”
+“sure. but i was actually asking about the stats section but do both”
+“Leave the Why anansi ssection. I think it makes sense the way it is. I want this design to be what elon musk would do (think tesla, spacex). Also focus more on AI since the founder has a phd in computer science specializing in AI/ML and he's also on the computer science phd dissertation committee for a prominent university in Ft lauderdale hence the product for anansi is providing a 2-3 day course for working professionals to learn AI and charge between $500 - $2500 per person; the selling point would be a local face to face intense 2 or 3 day course. Many working professionals hear about AI and have to clue what it is or now to use it.”
+“Let's do it. I like Technology for markets the world has ignored, and Why now. For the stats i would remove the pricing for ai intensive course and keep $40B+ Trapped value in Caribbean real assets because remember spice is an RWA platform we also need to sell”
+“In the stats section, does the 6 agents for cognicare makes more sense than <Stat number="83" unit="%" label="Workers who say AI will affect their jobs" ? Just asking. Think hard. Also the i forgot to mention the founder is a senior AI/ML and cybersecurity engineer for american express.”
+“what do you think about the coming soon section? is it in the right location. we want to tease that anasi will launch a crypto to power its entire ecosystem. that is one of the core products that the found envisioned for over 10 years”
+“ok i moved it: after Academy, before Why Anansi. ALso what do you think about the final call to action?”
+“sure”
+“why not the musk one? just asking.”
+“let me see it”
+“do the Investor-Facing one”
+“should there be a section line / border after caribcoin teaser and after why anansi? just asking”
+“tell me”
+“done”
+“is there an easier way to change the fonts from global.css and tailwind.config.js ?”
+“yes”
+“what if i want to use Syne”
+“what about the clash one”
+“there is extralight, light, regular etc. which one do i choose from the download?”
+“done. now show me general sans and satoshi”
+“write out all my chats here (my requests) as bullet points. Not your responses just my asks.”
