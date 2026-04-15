@@ -1,72 +1,113 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [overLight, setOverLight] = useState(false);
+  const navRef = useRef(null);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 80);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
+    const checkBackground = () => {
+      setScrolled(window.scrollY > 80);
+
+      // Find all light-background sections by common class patterns
+      const navBottom = navRef.current?.getBoundingClientRect()?.bottom || 64;
+      const lightSections = document.querySelectorAll(
+        '.section-light, [class*="bg-anansi-white"], [class*="bg-white"]',
+      );
+      let isOverLight = false;
+
+      for (const section of lightSections) {
+        const rect = section.getBoundingClientRect();
+        if (rect.top < navBottom && rect.bottom > 0) {
+          isOverLight = true;
+          break;
+        }
+      }
+
+      setOverLight(isOverLight);
+    };
+
+    window.addEventListener("scroll", checkBackground, { passive: true });
+    checkBackground();
+    return () => window.removeEventListener("scroll", checkBackground);
   }, []);
+
+  const light = overLight && scrolled;
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${
-        scrolled ? "py-3 bg-anansi-deep/92 backdrop-blur-xl border-b border-white/[0.03]" : "py-6"
+      ref={navRef}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? "py-3" : "py-6"
+      } ${
+        scrolled
+          ? overLight
+            ? "backdrop-blur-xl border-b border-black/[0.06]"
+            : "backdrop-blur-xl border-b border-white/[0.06]"
+          : ""
       }`}
+      style={
+        scrolled
+          ? { backgroundColor: overLight ? "rgba(255,255,255,0.92)" : "rgba(20,20,20,0.95)" }
+          : undefined
+      }
     >
       <div className="max-w-[1200px] mx-auto px-6 md:px-12 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3.5 group">
           <Image
-            src="/logo-dark.png"
+            src={light ? "/logo-mark.png" : "/logo-dark.png"}
             alt="Anansi"
             width={32}
             height={32}
             className="transition-transform group-hover:scale-105"
           />
-          <span className="font-display font-bold text-[15px] tracking-[0.12em] text-white">
+          <span
+            className={`font-display font-bold text-[15px] tracking-[0.12em] transition-colors duration-300 ${
+              light ? "text-[#0A0A0A]" : "text-white"
+            }`}
+          >
             ANANSI
           </span>
         </Link>
 
-        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-9">
-          <Link
-            href="#pillars"
-            className="text-white/35 text-[12px] tracking-[0.1em] uppercase hover:text-white transition-colors"
-          >
-            Products
-          </Link>
-          <Link
-            href="#spice"
-            className="text-white/35 text-[12px] tracking-[0.1em] uppercase hover:text-white transition-colors"
-          >
-            Spice
-          </Link>
-          <Link
-            href="#academy"
-            className="text-white/35 text-[12px] tracking-[0.1em] uppercase hover:text-white transition-colors"
-          >
-            Academy
-          </Link>
+          {[
+            { label: "Products", href: "#pillars" },
+            { label: "Spice", href: "#spice" },
+            { label: "Academy", href: "#academy" },
+          ].map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              className={`text-[12px] tracking-[0.1em] uppercase transition-colors duration-300 ${
+                light ? "text-[#0A0A0A]/40 hover:text-[#0A0A0A]" : "text-white/35 hover:text-white"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
           <a
             href="https://anansi-navy.vercel.app"
-            className="text-white text-[12px] tracking-[0.1em] uppercase font-display font-semibold
-                       px-6 py-2.5 border border-white/12 rounded-sm
-                       hover:bg-white hover:text-anansi-black hover:border-white transition-all"
+            className={`text-[12px] tracking-[0.1em] uppercase font-display font-semibold
+                       px-6 py-2.5 rounded-sm transition-all duration-300 border ${
+                         light
+                           ? "text-[#0A0A0A] border-[#0A0A0A]/15 hover:bg-[#0A0A0A] hover:text-white hover:border-[#0A0A0A]"
+                           : "text-white border-white/12 hover:bg-white hover:text-[#0A0A0A] hover:border-white"
+                       }`}
           >
             Launch App
           </a>
         </nav>
 
-        {/* Mobile toggle */}
         <button
-          className="md:hidden text-white/60 text-xl p-2"
+          className={`md:hidden text-xl p-2 transition-colors duration-300 ${
+            light ? "text-[#0A0A0A]/60" : "text-white/60"
+          }`}
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu"
         >
@@ -74,34 +115,29 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden bg-anansi-deep/95 backdrop-blur-xl border-t border-white/[0.03] px-6 py-6 space-y-4">
-          <Link
-            href="#pillars"
-            className="block text-white/50 text-sm uppercase tracking-widest hover:text-white"
-            onClick={() => setMenuOpen(false)}
-          >
-            Products
-          </Link>
-          <Link
-            href="#spice"
-            className="block text-white/50 text-sm uppercase tracking-widest hover:text-white"
-            onClick={() => setMenuOpen(false)}
-          >
-            Spice
-          </Link>
-          <Link
-            href="#academy"
-            className="block text-white/50 text-sm uppercase tracking-widest hover:text-white"
-            onClick={() => setMenuOpen(false)}
-          >
-            Academy
-          </Link>
+        <div
+          className={`md:hidden backdrop-blur-xl px-6 py-6 space-y-4 border-t ${
+            light ? "bg-white/95 border-black/[0.06]" : "bg-[#060606]/95 border-white/[0.03]"
+          }`}
+        >
+          {["Products", "Spice", "Academy"].map((item) => (
+            <Link
+              key={item}
+              href={`#${item.toLowerCase()}`}
+              className={`block text-sm uppercase tracking-widest ${
+                light ? "text-[#0A0A0A]/50" : "text-white/50"
+              }`}
+              onClick={() => setMenuOpen(false)}
+            >
+              {item}
+            </Link>
+          ))}
           <a
             href="https://anansi-navy.vercel.app"
-            className="block text-center text-white text-sm uppercase tracking-widest
-                       py-3 border border-white/12 rounded-sm hover:bg-white hover:text-anansi-black transition-all"
+            className={`block text-center text-sm uppercase tracking-widest py-3 rounded-sm border ${
+              light ? "text-[#0A0A0A] border-[#0A0A0A]/15" : "text-white border-white/12"
+            }`}
             onClick={() => setMenuOpen(false)}
           >
             Launch App

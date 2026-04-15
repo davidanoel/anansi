@@ -124,7 +124,7 @@ export default function Home() {
       </section>
 
       {/* ===== SPICE FEATURE ===== */}
-      <section className="bg-anansi-white text-anansi-black py-40" id="spice">
+      <section className="section-light bg-anansi-white text-anansi-black py-40" id="spice">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="reveal">
             <Eyebrow>Featured — Live</Eyebrow>
