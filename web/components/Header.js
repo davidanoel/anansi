@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -10,22 +11,31 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [overLight, setOverLight] = useState(false);
   const navRef = useRef(null);
+  const pathname = usePathname();
+  const isHomePage = pathname === "/";
+
+  const navLinks = [
+    { label: "Products", href: isHomePage ? "#pillars" : "/#pillars" },
+    { label: "Spice", href: "/spice" },
+    { label: "CaribCoin", href: "/caribcoin" },
+    { label: "Academy", href: isHomePage ? "#academy" : "/#academy" },
+  ];
 
   useEffect(() => {
     const checkState = () => {
       setScrolled(window.scrollY > 80);
 
-      // Check if we've scrolled past the hero section
+      // Check if we've scrolled past the hero section.
       const hero = document.querySelector(".hero-section");
       if (hero) {
         const heroBottom = hero.getBoundingClientRect().bottom;
         setPastHero(heroBottom < 80);
       } else {
-        // No hero on this page (e.g., /spice, /caribcoin) — always show logo
+        // No hero on this page (for example, /caribcoin), so always show the logo.
         setPastHero(true);
       }
 
-      // Check if nav is over a light section
+      // Check if the nav is sitting over a light section.
       const navBottom = navRef.current?.getBoundingClientRect()?.bottom || 64;
       const lightSections = document.querySelectorAll(
         '.section-light, [class*="bg-anansi-white"]',
@@ -44,7 +54,11 @@ export default function Header() {
     window.addEventListener("scroll", checkState, { passive: true });
     checkState();
     return () => window.removeEventListener("scroll", checkState);
-  }, []);
+  }, [pathname]);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   const light = overLight && scrolled;
 
@@ -68,7 +82,7 @@ export default function Header() {
     >
       <div className="max-w-[1200px] mx-auto px-6 md:px-12 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3.5 group">
-          {/* Spider mark — hidden while hero is visible, fades in on scroll */}
+          {/* Spider mark - hidden while the hero is visible, fades in on scroll. */}
           <div
             className="transition-all duration-500 overflow-hidden"
             style={{
@@ -94,12 +108,7 @@ export default function Header() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-9">
-          {[
-            { label: "Products", href: "#pillars" },
-            { label: "Spice", href: "#spice" },
-            { label: "CaribCoin", href: "#caribcoin" },
-            { label: "Academy", href: "#academy" },
-          ].map((link) => (
+          {navLinks.map((link) => (
             <Link
               key={link.label}
               href={link.href}
@@ -132,7 +141,7 @@ export default function Header() {
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu"
         >
-          {menuOpen ? "✕" : "☰"}
+          {menuOpen ? "\u2715" : "\u2630"}
         </button>
       </div>
 
@@ -144,12 +153,7 @@ export default function Header() {
               : "bg-[#060606]/95 border-white/[0.03]"
           }`}
         >
-          {[
-            { label: "Products", href: "#pillars" },
-            { label: "Spice", href: "#spice" },
-            { label: "CaribCoin", href: "#caribcoin" },
-            { label: "Academy", href: "#academy" },
-          ].map((item) => (
+          {navLinks.map((item) => (
             <Link
               key={item.label}
               href={item.href}

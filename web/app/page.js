@@ -69,7 +69,7 @@ export default function Home() {
             </h2>
             <p className="text-[17px] text-anansi-gray max-w-[520px] mt-12 leading-[1.75]">
               Anansi is an AI and software company. We find markets where value is trapped,
-              invisible, or inaccessible — and we build the technology to unlock it. Finance.
+              invisible, or inaccessible and we build the technology to unlock it. Finance.
               Intelligence. Identity.
             </p>
           </div>
@@ -154,16 +154,24 @@ export default function Home() {
                 delivers nutmeg, receives tokens on his phone, and can sell for USDC instantly. No
                 wallet. No gas fees. Sign in with Google. That's it.
               </p>
-              <a
-                href="https://anansi-navy.vercel.app"
-                className="inline-flex items-center gap-3 mt-10 px-9 py-4
-                           font-display font-semibold text-[13px] tracking-[0.1em] uppercase
-                           text-anansi-black border border-black/15 rounded-sm
-                           hover:bg-anansi-black hover:text-white hover:border-anansi-black transition-all group"
-              >
-                Launch Spice{" "}
-                <span className="transition-transform group-hover:translate-x-1">→</span>
-              </a>
+              <div className="mt-10 flex flex-wrap items-center gap-6">
+                <a
+                  href="https://anansi-navy.vercel.app"
+                  className="inline-flex items-center gap-3 px-9 py-4
+                             font-display font-semibold text-[13px] tracking-[0.1em] uppercase
+                             text-anansi-black border border-black/15 rounded-sm
+                             hover:bg-anansi-black hover:text-white hover:border-anansi-black transition-all group"
+                >
+                  Launch Spice{" "}
+                  <span className="transition-transform group-hover:translate-x-1">→</span>
+                </a>
+                <Link
+                  href="/spice"
+                  className="font-display font-semibold text-[13px] tracking-[0.1em] uppercase text-anansi-black/55 hover:text-anansi-black transition-colors"
+                >
+                  How Spice Works
+                </Link>
+              </div>
             </div>
             <div className="reveal">
               <ul className="space-y-0">
@@ -253,7 +261,7 @@ export default function Home() {
               <p className="text-[17px] text-anansi-gray max-w-[440px] mt-6 leading-[1.75]">
                 An intensive 2–3 day course for working professionals. Not slides. Not theory.
                 Hands-on, face-to-face training from engineers who deploy AI systems in production.
-                You leave knowing how to use it — not just what it is.
+                You leave knowing how to use it and not just what it is.
               </p>
               <a
                 href="mailto:academy@anansi.tech"
@@ -269,7 +277,7 @@ export default function Home() {
               {[
                 { label: "Format", value: "In-person" },
                 { label: "Duration", value: "2–3 days" },
-                { label: "Investment", value: "$500 – $2,500" },
+                { label: "Investment", value: "$500 - $2,500" },
                 { label: "Audience", value: "Professionals" },
               ].map((d, i) => (
                 <div key={i} className="pt-5 border-t border-anansi-line">
@@ -292,9 +300,9 @@ export default function Home() {
               <Image
                 src="/logo-dark.png"
                 alt=""
-                width={100}
-                height={100}
-                className="opacity-[0.12] mb-9"
+                width={120}
+                height={120}
+                className="opacity-[0.22] mb-10"
               />
               <h2 className="font-display font-bold text-4xl leading-[1.2]">Why Anansi</h2>
               <p className="text-[16px] text-anansi-gray leading-[1.8] mt-6">
@@ -343,10 +351,6 @@ export default function Home() {
     </>
   );
 }
-
-// ============================================================
-// Components
-// ============================================================
 
 function Eyebrow({ children }) {
   return (
