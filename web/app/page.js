@@ -5,21 +5,52 @@ export default function Home() {
   return (
     <>
       {/* ===== HERO ===== */}
-      <section className="h-screen flex flex-col items-center justify-center relative overflow-hidden">
-        {/* Subtle radial glow */}
-        <div className="absolute w-[600px] h-[600px] rounded-full bg-[radial-gradient(circle,rgba(122,15,20,0.05)_0%,transparent_70%)] pointer-events-none" />
+      <section className="hero-section h-screen flex flex-col items-center justify-center relative overflow-hidden">
+        {/* Web threads radiating from center */}
+        <div className="absolute inset-0 pointer-events-none">
+          <svg className="w-full h-full" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <radialGradient id="glow" cx="50%" cy="50%" r="35%">
+                <stop offset="0%" stopColor="#7A0F14" stopOpacity="0.07" />
+                <stop offset="100%" stopColor="#7A0F14" stopOpacity="0" />
+              </radialGradient>
+              <linearGradient id="thread" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="white" stopOpacity="0.04" />
+                <stop offset="100%" stopColor="white" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {/* Radial glow behind logo */}
+            <circle cx="960" cy="540" r="400" fill="url(#glow)" />
+            {/* Thread lines */}
+            <line x1="960" y1="540" x2="150" y2="80" stroke="url(#thread)" strokeWidth="0.5" />
+            <line x1="960" y1="540" x2="1770" y2="120" stroke="url(#thread)" strokeWidth="0.5" />
+            <line x1="960" y1="540" x2="80" y2="750" stroke="url(#thread)" strokeWidth="0.5" />
+            <line x1="960" y1="540" x2="1840" y2="850" stroke="url(#thread)" strokeWidth="0.5" />
+            <line x1="960" y1="540" x2="300" y2="30" stroke="url(#thread)" strokeWidth="0.3" />
+            <line x1="960" y1="540" x2="1620" y2="1000" stroke="url(#thread)" strokeWidth="0.3" />
+            <line x1="960" y1="540" x2="50" y2="400" stroke="url(#thread)" strokeWidth="0.3" />
+            <line x1="960" y1="540" x2="1870" y2="500" stroke="url(#thread)" strokeWidth="0.3" />
+            {/* Orbit rings */}
+            <circle cx="960" cy="540" r="200" fill="none" stroke="white" strokeOpacity="0.02" strokeWidth="0.5" />
+            <circle cx="960" cy="540" r="340" fill="none" stroke="white" strokeOpacity="0.015" strokeWidth="0.5" />
+            <circle cx="960" cy="540" r="480" fill="none" stroke="white" strokeOpacity="0.01" strokeWidth="0.5" />
+          </svg>
+        </div>
 
         <Image
           src="/logo-dark.png"
           alt="Anansi"
-          width={200}
-          height={200}
+          width={240}
+          height={240}
           priority
-          className="animate-fade-up animate-fade-up-delay-1"
+          className="relative animate-fade-up animate-fade-up-delay-1"
         />
-        <h1 className="font-display font-extrabold text-[clamp(28px,4vw,48px)] tracking-[0.18em] uppercase mt-9 animate-fade-up animate-fade-up-delay-2">
+        <h1 className="relative font-display font-extrabold text-[clamp(32px,5vw,56px)] tracking-[0.2em] uppercase mt-10 animate-fade-up animate-fade-up-delay-2">
           ANANSI
         </h1>
+        <p className="relative text-[13px] tracking-[0.3em] uppercase text-white/20 mt-4 animate-fade-up animate-fade-up-delay-2">
+          Technology Corporation
+        </p>
 
         {/* Scroll indicator */}
         <div className="absolute bottom-10 flex flex-col items-center gap-3 animate-fade-up animate-fade-up-delay-3">
@@ -72,30 +103,17 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-px bg-anansi-line mt-16 reveal-stagger">
             <Pillar
               num="01"
-              title={
-                <>
-                  Finance &amp;
-                  <br />
-                  Real Assets
-                </>
-              }
+              title={<>Finance &amp;<br />Real Assets</>}
               desc="Technology that makes real-world value liquid, transparent, and globally accessible. From tokenized commodities to dollar savings."
               products={[
                 { name: "Spice", status: "Live", live: true },
                 { name: "DollarBank", status: "Building" },
-                { name: "CaribCoin", status: "Building" },
                 { name: "CaribStone", status: "Planned" },
               ]}
             />
             <Pillar
               num="02"
-              title={
-                <>
-                  AI &amp;
-                  <br />
-                  Intelligence
-                </>
-              }
+              title={<>AI &amp;<br />Intelligence</>}
               desc="Building AI for companies that need it. Teaching professionals who want to understand it. Custom solutions and education."
               products={[
                 { name: "AI Academy", status: "Enrolling", live: true },
@@ -105,13 +123,7 @@ export default function Home() {
             />
             <Pillar
               num="03"
-              title={
-                <>
-                  Identity &amp;
-                  <br />
-                  Wellbeing
-                </>
-              }
+              title={<>Identity &amp;<br />Wellbeing</>}
               desc="Software for the parts of life that matter most. Privacy, mental health, personal sovereignty. Built with zero-knowledge proofs."
               products={[
                 { name: "CogniCare", status: "Building" },
@@ -156,63 +168,71 @@ export default function Home() {
             <div className="reveal">
               <ul className="space-y-0">
                 {[
-                  {
-                    num: "01",
-                    text: (
-                      <>
-                        <strong className="text-anansi-black font-medium">
-                          Farmer delivers commodity
-                        </strong>{" "}
-                        to local custodian. Gets advance as usual. Nothing changes.
-                      </>
-                    ),
-                  },
-                  {
-                    num: "02",
-                    text: (
-                      <>
-                        <strong className="text-anansi-black font-medium">
-                          Custodian records delivery
-                        </strong>{" "}
-                        on Spice. Farmer receives tokens on his phone automatically.
-                      </>
-                    ),
-                  },
-                  {
-                    num: "03",
-                    text: (
-                      <>
-                        <strong className="text-anansi-black font-medium">
-                          Farmer holds or sells early.
-                        </strong>{" "}
-                        Wait for full surplus, or swap for USDC instantly on the DEX.
-                      </>
-                    ),
-                  },
-                  {
-                    num: "04",
-                    text: (
-                      <>
-                        <strong className="text-anansi-black font-medium">
-                          Lot sells overseas.
-                        </strong>{" "}
-                        Surplus distributed to all token holders. Transparent. Automatic.
-                      </>
-                    ),
-                  },
+                  { num: "01", text: <><strong className="text-anansi-black font-medium">Farmer delivers commodity</strong> to local custodian. Gets advance as usual. Nothing changes.</> },
+                  { num: "02", text: <><strong className="text-anansi-black font-medium">Custodian records delivery</strong> on Spice. Farmer receives tokens on his phone automatically.</> },
+                  { num: "03", text: <><strong className="text-anansi-black font-medium">Farmer holds or sells early.</strong> Wait for full surplus, or swap for USDC instantly on the DEX.</> },
+                  { num: "04", text: <><strong className="text-anansi-black font-medium">Lot sells overseas.</strong> Surplus distributed to all token holders. Transparent. Automatic.</> },
                 ].map((step, i) => (
-                  <li
-                    key={i}
-                    className="flex gap-5 items-baseline py-6 border-b border-anansi-line-light first:border-t"
-                  >
-                    <span className="font-display font-bold text-[11px] text-anansi-red tracking-[0.1em] shrink-0">
-                      {step.num}
-                    </span>
+                  <li key={i} className="flex gap-5 items-baseline py-6 border-b border-anansi-line-light first:border-t">
+                    <span className="font-display font-bold text-[11px] text-anansi-red tracking-[0.1em] shrink-0">{step.num}</span>
                     <p className="text-[15px] text-[#555] leading-[1.6]">{step.text}</p>
                   </li>
                 ))}
               </ul>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== CARIBCOIN TEASER ===== */}
+      <section className="relative overflow-hidden" id="caribcoin">
+        {/* Dramatic red glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(122,15,20,0.12) 0%, rgba(122,15,20,0.03) 40%, transparent 70%)' }} />
+        </div>
+
+        <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-48 relative">
+          <div className="reveal text-center">
+            <p className="text-[10px] tracking-[0.4em] uppercase text-anansi-red font-medium mb-8">
+              Coming Soon
+            </p>
+            <h2 className="font-display font-extrabold text-[clamp(48px,8vw,96px)] leading-[0.95] tracking-tight">
+              CARIB
+              <span className="text-anansi-red">COIN</span>
+            </h2>
+            <p className="text-[18px] text-white/40 mt-6 max-w-[480px] mx-auto leading-relaxed">
+              The protocol token that powers everything Anansi builds.
+              Fixed supply. Deflationary burns. One token across every product.
+            </p>
+
+            <div className="flex items-center justify-center gap-12 mt-14">
+              <div className="text-center">
+                <p className="font-display font-bold text-2xl">10B</p>
+                <p className="text-[10px] text-white/25 uppercase tracking-widest mt-1">Fixed Supply</p>
+              </div>
+              <div className="w-px h-10 bg-white/10" />
+              <div className="text-center">
+                <p className="font-display font-bold text-2xl">50%</p>
+                <p className="text-[10px] text-white/25 uppercase tracking-widest mt-1">Fee Burn Rate</p>
+              </div>
+              <div className="w-px h-10 bg-white/10" />
+              <div className="text-center">
+                <p className="font-display font-bold text-2xl">∞</p>
+                <p className="text-[10px] text-white/25 uppercase tracking-widest mt-1">Deflationary</p>
+              </div>
+            </div>
+
+            <Link
+              href="/caribcoin"
+              className="inline-flex items-center gap-3 mt-14 px-9 py-4
+                         font-display font-semibold text-[13px] tracking-[0.1em] uppercase
+                         text-white border border-anansi-red/40 rounded-sm
+                         hover:bg-anansi-red hover:border-anansi-red transition-all group"
+            >
+              Read the Charter{" "}
+              <span className="transition-transform group-hover:translate-x-1">→</span>
+            </Link>
           </div>
         </div>
       </section>
@@ -300,7 +320,8 @@ export default function Home() {
 
       {/* ===== FINAL ===== */}
       <section className="py-52 text-center relative">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-[radial-gradient(circle,rgba(122,15,20,0.04)_0%,transparent_60%)] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(122,15,20,0.04) 0%, transparent 60%)' }} />
         <div className="max-w-[1200px] mx-auto px-6 md:px-12 reveal relative">
           <h2 className="font-display font-bold text-[clamp(32px,4vw,56px)] leading-[1.1]">
             AI and software

@@ -6,21 +6,31 @@ import Image from "next/image";
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
+  const [pastHero, setPastHero] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [overLight, setOverLight] = useState(false);
   const navRef = useRef(null);
 
   useEffect(() => {
-    const checkBackground = () => {
+    const checkState = () => {
       setScrolled(window.scrollY > 80);
 
-      // Find all light-background sections by common class patterns
+      // Check if we've scrolled past the hero section
+      const hero = document.querySelector(".hero-section");
+      if (hero) {
+        const heroBottom = hero.getBoundingClientRect().bottom;
+        setPastHero(heroBottom < 80);
+      } else {
+        // No hero on this page (e.g., /spice, /caribcoin) — always show logo
+        setPastHero(true);
+      }
+
+      // Check if nav is over a light section
       const navBottom = navRef.current?.getBoundingClientRect()?.bottom || 64;
       const lightSections = document.querySelectorAll(
-        '.section-light, [class*="bg-anansi-white"], [class*="bg-white"]',
+        '.section-light, [class*="bg-anansi-white"]',
       );
       let isOverLight = false;
-
       for (const section of lightSections) {
         const rect = section.getBoundingClientRect();
         if (rect.top < navBottom && rect.bottom > 0) {
@@ -28,13 +38,12 @@ export default function Header() {
           break;
         }
       }
-
       setOverLight(isOverLight);
     };
 
-    window.addEventListener("scroll", checkBackground, { passive: true });
-    checkBackground();
-    return () => window.removeEventListener("scroll", checkBackground);
+    window.addEventListener("scroll", checkState, { passive: true });
+    checkState();
+    return () => window.removeEventListener("scroll", checkState);
   }, []);
 
   const light = overLight && scrolled;
@@ -59,13 +68,22 @@ export default function Header() {
     >
       <div className="max-w-[1200px] mx-auto px-6 md:px-12 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3.5 group">
-          <Image
-            src={light ? "/logo-mark.png" : "/logo-dark.png"}
-            alt="Anansi"
-            width={32}
-            height={32}
-            className="transition-transform group-hover:scale-105"
-          />
+          {/* Spider mark — hidden while hero is visible, fades in on scroll */}
+          <div
+            className="transition-all duration-500 overflow-hidden"
+            style={{
+              width: pastHero ? 32 : 0,
+              opacity: pastHero ? 1 : 0,
+            }}
+          >
+            <Image
+              src={light ? "/logo-mark.png" : "/logo-dark.png"}
+              alt="Anansi"
+              width={32}
+              height={32}
+              className="transition-transform group-hover:scale-105"
+            />
+          </div>
           <span
             className={`font-display font-bold text-[15px] tracking-[0.12em] transition-colors duration-300 ${
               light ? "text-[#0A0A0A]" : "text-white"
@@ -79,13 +97,16 @@ export default function Header() {
           {[
             { label: "Products", href: "#pillars" },
             { label: "Spice", href: "#spice" },
+            { label: "CaribCoin", href: "#caribcoin" },
             { label: "Academy", href: "#academy" },
           ].map((link) => (
             <Link
               key={link.label}
               href={link.href}
               className={`text-[12px] tracking-[0.1em] uppercase transition-colors duration-300 ${
-                light ? "text-[#0A0A0A]/40 hover:text-[#0A0A0A]" : "text-white/35 hover:text-white"
+                light
+                  ? "text-[#0A0A0A]/40 hover:text-[#0A0A0A]"
+                  : "text-white/35 hover:text-white"
               }`}
             >
               {link.label}
@@ -118,19 +139,26 @@ export default function Header() {
       {menuOpen && (
         <div
           className={`md:hidden backdrop-blur-xl px-6 py-6 space-y-4 border-t ${
-            light ? "bg-white/95 border-black/[0.06]" : "bg-[#060606]/95 border-white/[0.03]"
+            light
+              ? "bg-white/95 border-black/[0.06]"
+              : "bg-[#060606]/95 border-white/[0.03]"
           }`}
         >
-          {["Products", "Spice", "Academy"].map((item) => (
+          {[
+            { label: "Products", href: "#pillars" },
+            { label: "Spice", href: "#spice" },
+            { label: "CaribCoin", href: "#caribcoin" },
+            { label: "Academy", href: "#academy" },
+          ].map((item) => (
             <Link
-              key={item}
-              href={`#${item.toLowerCase()}`}
+              key={item.label}
+              href={item.href}
               className={`block text-sm uppercase tracking-widest ${
                 light ? "text-[#0A0A0A]/50" : "text-white/50"
               }`}
               onClick={() => setMenuOpen(false)}
             >
-              {item}
+              {item.label}
             </Link>
           ))}
           <a
