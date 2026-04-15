@@ -21,10 +21,9 @@ module.exports = {
         },
       },
       fontFamily: {
-        /* FONT SWAP — change 'Syne' to 'Clash Display', 'General Sans', or 'Satoshi' */
-        display: ["Clash Display", "system-ui", "sans-serif"],
-        body: ["DM Sans", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
+        display: ["var(--font-display)", "system-ui", "sans-serif"],
+        body: ["var(--font-body)", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "monospace"],
       },
     },
   },
