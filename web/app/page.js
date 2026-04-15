@@ -8,7 +8,11 @@ export default function Home() {
       <section className="hero-section h-screen flex flex-col items-center justify-center relative overflow-hidden">
         {/* Web threads radiating from center */}
         <div className="absolute inset-0 pointer-events-none">
-          <svg className="w-full h-full" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+          <svg
+            className="w-full h-full"
+            viewBox="0 0 1920 1080"
+            preserveAspectRatio="xMidYMid slice"
+          >
             <defs>
               <radialGradient id="glow" cx="50%" cy="50%" r="35%">
                 <stop offset="0%" stopColor="#7A0F14" stopOpacity="0.07" />
@@ -31,9 +35,33 @@ export default function Home() {
             <line x1="960" y1="540" x2="50" y2="400" stroke="url(#thread)" strokeWidth="0.3" />
             <line x1="960" y1="540" x2="1870" y2="500" stroke="url(#thread)" strokeWidth="0.3" />
             {/* Orbit rings */}
-            <circle cx="960" cy="540" r="200" fill="none" stroke="white" strokeOpacity="0.02" strokeWidth="0.5" />
-            <circle cx="960" cy="540" r="340" fill="none" stroke="white" strokeOpacity="0.015" strokeWidth="0.5" />
-            <circle cx="960" cy="540" r="480" fill="none" stroke="white" strokeOpacity="0.01" strokeWidth="0.5" />
+            <circle
+              cx="960"
+              cy="540"
+              r="200"
+              fill="none"
+              stroke="white"
+              strokeOpacity="0.02"
+              strokeWidth="0.5"
+            />
+            <circle
+              cx="960"
+              cy="540"
+              r="340"
+              fill="none"
+              stroke="white"
+              strokeOpacity="0.015"
+              strokeWidth="0.5"
+            />
+            <circle
+              cx="960"
+              cy="540"
+              r="480"
+              fill="none"
+              stroke="white"
+              strokeOpacity="0.01"
+              strokeWidth="0.5"
+            />
           </svg>
         </div>
 
@@ -48,8 +76,11 @@ export default function Home() {
         <h1 className="relative font-display font-extrabold text-[clamp(32px,5vw,56px)] tracking-[0.2em] uppercase mt-10 animate-fade-up animate-fade-up-delay-2">
           ANANSI
         </h1>
-        <p className="relative text-[13px] tracking-[0.3em] uppercase text-white/20 mt-4 animate-fade-up animate-fade-up-delay-2">
-          Technology Corporation
+        <p className="relative max-w-[680px] text-center text-[16px] md:text-[20px] leading-[1.5] text-white/60 mt-6 animate-fade-up animate-fade-up-delay-2">
+          Technology for markets the world has ignored.
+        </p>
+        <p className="relative text-[11px] tracking-[0.22em] uppercase text-white/18 mt-5 animate-fade-up animate-fade-up-delay-3">
+          Applied AI. Financial Infrastructure. Built in Miami.
         </p>
 
         {/* Scroll indicator */}
@@ -62,28 +93,39 @@ export default function Home() {
       <section className="min-h-screen flex items-center py-40" id="mission">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="reveal">
-            <Eyebrow>The Mission</Eyebrow>
+            <Eyebrow>Global Thesis</Eyebrow>
             <h2 className="font-display font-bold text-[clamp(32px,4.5vw,58px)] leading-[1.1] max-w-[940px]">
-              We build software for systems that{" "}
-              <span className="text-anansi-red">don't exist yet.</span>
+              We build AI systems and financial infrastructure for markets the world has{" "}
+              <span className="text-anansi-red">ignored.</span>
             </h2>
-            <p className="text-[17px] text-anansi-gray max-w-[520px] mt-12 leading-[1.75]">
-              Anansi is an AI and software company. We find markets where value is trapped,
-              invisible, or inaccessible and we build the technology to unlock it. Finance.
-              Intelligence. Identity.
+            <p className="text-[17px] text-anansi-gray max-w-[560px] mt-12 leading-[1.75]">
+              Anansi is a Miami-based technology company founded from Caribbean insight. We build
+              applied AI, real-world asset infrastructure, and software for markets where trust,
+              access, and intelligence still lag demand.
             </p>
           </div>
         </div>
       </section>
 
-      {/* ===== STATS ===== */}
-      <section className="py-20 border-t border-b border-anansi-line">
+      {/* ===== WHY NOW ===== */}
+      <section className="py-24 border-t border-b border-anansi-line">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
+          <div className="reveal mb-14">
+            <Eyebrow>Why Now</Eyebrow>
+            <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.1] max-w-[760px]">
+              AI is becoming practical. Real assets are moving on-chain.
+            </h2>
+          </div>
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 reveal-stagger">
             <Stat number="$40B" unit="+" label="Trapped value in Caribbean real assets" />
             <Stat number="$12B" unit="+" label="Tokenized RWA on-chain globally" />
-            <Stat number="83" unit="%" label="Workers who say AI will affect their jobs" />
-            <Stat number="0" label="Infrastructure that connects it all" />
+            <Stat number="6" label="AI agents powering CogniCare for licensed therapists" />
+            <Stat
+              number="2-3"
+              unit="Days"
+              label="In-person AI intensive for working professionals"
+            />
           </div>
         </div>
       </section>
@@ -103,31 +145,49 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-px bg-anansi-line mt-16 reveal-stagger">
             <Pillar
               num="01"
-              title={<>Finance &amp;<br />Real Assets</>}
-              desc="Technology that makes real-world value liquid, transparent, and globally accessible. From tokenized commodities to dollar savings."
+              title={
+                <>
+                  AI &amp;
+                  <br />
+                  Intelligence
+                </>
+              }
+              desc="Applied AI systems for professionals, institutions, and teams that need leverage fast, not theory."
               products={[
-                { name: "Spice", status: "Live", live: true },
-                { name: "DollarBank", status: "Building" },
-                { name: "CaribStone", status: "Planned" },
+                { name: "CogniCare", status: "Built" },
+                { name: "Thryve", status: "Built" },
+                { name: "AI Academy", status: "Enrolling", live: true },
               ]}
             />
             <Pillar
               num="02"
-              title={<>AI &amp;<br />Intelligence</>}
-              desc="Building AI for companies that need it. Teaching professionals who want to understand it. Custom solutions and education."
+              title={
+                <>
+                  Finance &amp;
+                  <br />
+                  Real Assets
+                </>
+              }
+              desc="Financial infrastructure for people and markets shut out of modern capital. From tokenized commodities to web3 savings products."
               products={[
-                { name: "AI Academy", status: "Enrolling", live: true },
-                { name: "Custom AI Solutions", status: "Active" },
-                { name: "IslandPulse", status: "Planned" },
+                { name: "Spice", status: "Live", live: true },
+                { name: "DollarBank", status: "Testnet" },
+                { name: "CaribStone", status: "Planned" },
               ]}
             />
             <Pillar
               num="03"
-              title={<>Identity &amp;<br />Wellbeing</>}
-              desc="Software for the parts of life that matter most. Privacy, mental health, personal sovereignty. Built with zero-knowledge proofs."
+              title={
+                <>
+                  Software &amp;
+                  <br />
+                  Trust
+                </>
+              }
+              desc="Custom systems, identity rails, and software for institutions operating where trust, security, and precision matter."
               products={[
-                { name: "CogniCare", status: "Building" },
-                { name: "Thryve", status: "Building" },
+                { name: "Custom AI Solutions", status: "Active" },
+                { name: "IslandPulse", status: "Planned" },
                 { name: "ZK Identity", status: "Research" },
               ]}
             />
@@ -176,13 +236,58 @@ export default function Home() {
             <div className="reveal">
               <ul className="space-y-0">
                 {[
-                  { num: "01", text: <><strong className="text-anansi-black font-medium">Farmer delivers commodity</strong> to local custodian. Gets advance as usual. Nothing changes.</> },
-                  { num: "02", text: <><strong className="text-anansi-black font-medium">Custodian records delivery</strong> on Spice. Farmer receives tokens on his phone automatically.</> },
-                  { num: "03", text: <><strong className="text-anansi-black font-medium">Farmer holds or sells early.</strong> Wait for full surplus, or swap for USDC instantly on the DEX.</> },
-                  { num: "04", text: <><strong className="text-anansi-black font-medium">Lot sells overseas.</strong> Surplus distributed to all token holders. Transparent. Automatic.</> },
+                  {
+                    num: "01",
+                    text: (
+                      <>
+                        <strong className="text-anansi-black font-medium">
+                          Farmer delivers commodity
+                        </strong>{" "}
+                        to local custodian. Gets advance as usual. Nothing changes.
+                      </>
+                    ),
+                  },
+                  {
+                    num: "02",
+                    text: (
+                      <>
+                        <strong className="text-anansi-black font-medium">
+                          Custodian records delivery
+                        </strong>{" "}
+                        on Spice. Farmer receives tokens on his phone automatically.
+                      </>
+                    ),
+                  },
+                  {
+                    num: "03",
+                    text: (
+                      <>
+                        <strong className="text-anansi-black font-medium">
+                          Farmer holds or sells early.
+                        </strong>{" "}
+                        Wait for full surplus, or swap for USDC instantly on the DEX.
+                      </>
+                    ),
+                  },
+                  {
+                    num: "04",
+                    text: (
+                      <>
+                        <strong className="text-anansi-black font-medium">
+                          Lot sells overseas.
+                        </strong>{" "}
+                        Surplus distributed to all token holders. Transparent. Automatic.
+                      </>
+                    ),
+                  },
                 ].map((step, i) => (
-                  <li key={i} className="flex gap-5 items-baseline py-6 border-b border-anansi-line-light first:border-t">
-                    <span className="font-display font-bold text-[11px] text-anansi-red tracking-[0.1em] shrink-0">{step.num}</span>
+                  <li
+                    key={i}
+                    className="flex gap-5 items-baseline py-6 border-b border-anansi-line-light first:border-t"
+                  >
+                    <span className="font-display font-bold text-[11px] text-anansi-red tracking-[0.1em] shrink-0">
+                      {step.num}
+                    </span>
                     <p className="text-[15px] text-[#555] leading-[1.6]">{step.text}</p>
                   </li>
                 ))}
@@ -192,12 +297,65 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== ACADEMY ===== */}
+      <section className="py-28 border-t border-b border-anansi-line" id="academy">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-12">
+          <div className="grid md:grid-cols-2 gap-20 items-center reveal">
+            <div>
+              <Eyebrow>AI Academy</Eyebrow>
+              <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.15]">
+                Learn AI.
+                <br />
+                Face to face.
+                <br />
+                In 2-3 days.
+              </h2>
+              <p className="text-[17px] text-anansi-gray max-w-[500px] mt-6 leading-[1.75]">
+                A local intensive for working professionals who keep hearing about AI and still do
+                not have a practical framework for using it. Led by builders with deep AI and
+                academic experience. No fluff. No passive slides. You leave knowing what AI is,
+                where it fits, and how to apply it in real work immediately.
+              </p>
+              <a
+                href="mailto:academy@anansi.tech"
+                className="inline-flex items-center gap-3 mt-9 px-9 py-4
+                           font-display font-semibold text-[13px] tracking-[0.1em] uppercase
+                           text-white border border-white/12 rounded-sm
+                           hover:bg-white hover:text-anansi-black hover:border-white transition-all group"
+              >
+                Inquire <span className="transition-transform group-hover:translate-x-1">→</span>
+              </a>
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              {[
+                { label: "Format", value: "In-person" },
+                { label: "Duration", value: "2-3 days" },
+                { label: "Audience", value: "Working professionals" },
+                { label: "Location", value: "Miami / Caribbean" },
+              ].map((d, i) => (
+                <div key={i} className="pt-5 border-t border-anansi-line">
+                  <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray mb-1.5">
+                    {d.label}
+                  </p>
+                  <p className="font-display font-bold text-xl">{d.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ===== CARIBCOIN TEASER ===== */}
       <section className="relative overflow-hidden" id="caribcoin">
         {/* Dramatic red glow */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(122,15,20,0.12) 0%, rgba(122,15,20,0.03) 40%, transparent 70%)' }} />
+          <div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] rounded-full"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(122,15,20,0.12) 0%, rgba(122,15,20,0.03) 40%, transparent 70%)",
+            }}
+          />
         </div>
 
         <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-48 relative">
@@ -210,24 +368,30 @@ export default function Home() {
               <span className="text-anansi-red">COIN</span>
             </h2>
             <p className="text-[18px] text-white/40 mt-6 max-w-[480px] mx-auto leading-relaxed">
-              The protocol token that powers everything Anansi builds.
-              Fixed supply. Deflationary burns. One token across every product.
+              The protocol token that powers everything Anansi builds. Fixed supply. Deflationary
+              burns. One token across every product.
             </p>
 
             <div className="flex items-center justify-center gap-12 mt-14">
               <div className="text-center">
                 <p className="font-display font-bold text-2xl">10B</p>
-                <p className="text-[10px] text-white/25 uppercase tracking-widest mt-1">Fixed Supply</p>
+                <p className="text-[10px] text-white/25 uppercase tracking-widest mt-1">
+                  Fixed Supply
+                </p>
               </div>
               <div className="w-px h-10 bg-white/10" />
               <div className="text-center">
                 <p className="font-display font-bold text-2xl">50%</p>
-                <p className="text-[10px] text-white/25 uppercase tracking-widest mt-1">Fee Burn Rate</p>
+                <p className="text-[10px] text-white/25 uppercase tracking-widest mt-1">
+                  Fee Burn Rate
+                </p>
               </div>
               <div className="w-px h-10 bg-white/10" />
               <div className="text-center">
                 <p className="font-display font-bold text-2xl">∞</p>
-                <p className="text-[10px] text-white/25 uppercase tracking-widest mt-1">Deflationary</p>
+                <p className="text-[10px] text-white/25 uppercase tracking-widest mt-1">
+                  Deflationary
+                </p>
               </div>
             </div>
 
@@ -245,55 +409,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== ACADEMY ===== */}
-      <section className="py-28 border-t border-b border-anansi-line" id="academy">
-        <div className="max-w-[1200px] mx-auto px-6 md:px-12">
-          <div className="grid md:grid-cols-2 gap-20 items-center reveal">
-            <div>
-              <Eyebrow>AI Academy</Eyebrow>
-              <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.15]">
-                Learn AI.
-                <br />
-                From people who
-                <br />
-                build with it.
-              </h2>
-              <p className="text-[17px] text-anansi-gray max-w-[440px] mt-6 leading-[1.75]">
-                An intensive 2–3 day course for working professionals. Not slides. Not theory.
-                Hands-on, face-to-face training from engineers who deploy AI systems in production.
-                You leave knowing how to use it and not just what it is.
-              </p>
-              <a
-                href="mailto:academy@anansi.tech"
-                className="inline-flex items-center gap-3 mt-9 px-9 py-4
-                           font-display font-semibold text-[13px] tracking-[0.1em] uppercase
-                           text-white border border-white/12 rounded-sm
-                           hover:bg-white hover:text-anansi-black hover:border-white transition-all group"
-              >
-                Inquire <span className="transition-transform group-hover:translate-x-1">→</span>
-              </a>
-            </div>
-            <div className="grid grid-cols-2 gap-6">
-              {[
-                { label: "Format", value: "In-person" },
-                { label: "Duration", value: "2–3 days" },
-                { label: "Investment", value: "$500 - $2,500" },
-                { label: "Audience", value: "Professionals" },
-              ].map((d, i) => (
-                <div key={i} className="pt-5 border-t border-anansi-line">
-                  <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray mb-1.5">
-                    {d.label}
-                  </p>
-                  <p className="font-display font-bold text-xl">{d.value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ===== ORIGIN ===== */}
-      <section className="py-40">
+      <section className="py-40 border-t border-anansi-line">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="grid md:grid-cols-2 gap-20 reveal">
             <div>
@@ -328,15 +445,22 @@ export default function Home() {
 
       {/* ===== FINAL ===== */}
       <section className="py-52 text-center relative">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(122,15,20,0.04) 0%, transparent 60%)' }} />
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full pointer-events-none"
+          style={{
+            background: "radial-gradient(circle, rgba(122,15,20,0.04) 0%, transparent 60%)",
+          }}
+        />
         <div className="max-w-[1200px] mx-auto px-6 md:px-12 reveal relative">
           <h2 className="font-display font-bold text-[clamp(32px,4vw,56px)] leading-[1.1]">
-            AI and software
+            Built from insight.
             <br />
-            for the real world.
+            Designed for scale.
           </h2>
-          <p className="text-[16px] text-anansi-gray mt-5">Miami, FL</p>
+          <p className="text-[16px] text-anansi-gray mt-5 max-w-[620px] mx-auto leading-[1.7]">
+            From AI systems to real-world asset infrastructure, Anansi is building a technology
+            ecosystem for markets the world has overlooked.
+          </p>
           <a
             href="mailto:hello@anansi.tech"
             className="inline-flex items-center gap-3 mt-12 px-9 py-4

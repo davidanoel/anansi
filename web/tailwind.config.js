@@ -22,7 +22,7 @@ module.exports = {
       },
       fontFamily: {
         /* FONT SWAP — change 'Syne' to 'Clash Display', 'General Sans', or 'Satoshi' */
-        display: ["Satoshi", "system-ui", "sans-serif"],
+        display: ["Clash Display", "system-ui", "sans-serif"],
         body: ["DM Sans", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
       },

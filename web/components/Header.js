@@ -37,9 +37,7 @@ export default function Header() {
 
       // Check if the nav is sitting over a light section.
       const navBottom = navRef.current?.getBoundingClientRect()?.bottom || 64;
-      const lightSections = document.querySelectorAll(
-        '.section-light, [class*="bg-anansi-white"]',
-      );
+      const lightSections = document.querySelectorAll('.section-light, [class*="bg-anansi-white"]');
       let isOverLight = false;
       for (const section of lightSections) {
         const rect = section.getBoundingClientRect();
@@ -113,9 +111,7 @@ export default function Header() {
               key={link.label}
               href={link.href}
               className={`text-[12px] tracking-[0.1em] uppercase transition-colors duration-300 ${
-                light
-                  ? "text-[#0A0A0A]/40 hover:text-[#0A0A0A]"
-                  : "text-white/35 hover:text-white"
+                light ? "text-[#0A0A0A]/40 hover:text-[#0A0A0A]" : "text-white/35 hover:text-white"
               }`}
             >
               {link.label}
@@ -123,6 +119,7 @@ export default function Header() {
           ))}
           <a
             href="https://anansi-navy.vercel.app"
+            target="_blank"
             className={`text-[12px] tracking-[0.1em] uppercase font-display font-semibold
                        px-6 py-2.5 rounded-sm transition-all duration-300 border ${
                          light
@@ -130,7 +127,7 @@ export default function Header() {
                            : "text-white border-white/12 hover:bg-white hover:text-[#0A0A0A] hover:border-white"
                        }`}
           >
-            Launch App
+            Launch Spice
           </a>
         </nav>
 
@@ -148,9 +145,7 @@ export default function Header() {
       {menuOpen && (
         <div
           className={`md:hidden backdrop-blur-xl px-6 py-6 space-y-4 border-t ${
-            light
-              ? "bg-white/95 border-black/[0.06]"
-              : "bg-[#060606]/95 border-white/[0.03]"
+            light ? "bg-white/95 border-black/[0.06]" : "bg-[#060606]/95 border-white/[0.03]"
           }`}
         >
           {navLinks.map((item) => (
@@ -172,7 +167,7 @@ export default function Header() {
             }`}
             onClick={() => setMenuOpen(false)}
           >
-            Launch App
+            Launch Spice
           </a>
         </div>
       )}
