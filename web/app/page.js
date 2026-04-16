@@ -5,8 +5,7 @@ export default function Home() {
   return (
     <>
       {/* ===== HERO ===== */}
-      <section className="hero-section h-screen flex flex-col items-center justify-center relative overflow-hidden">
-        {/* Web threads radiating from center */}
+      <section className="hero-section min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <svg
             className="w-full h-full"
@@ -15,17 +14,16 @@ export default function Home() {
           >
             <defs>
               <radialGradient id="glow" cx="50%" cy="50%" r="35%">
-                <stop offset="0%" stopColor="#7A0F14" stopOpacity="0.07" />
+                <stop offset="0%" stopColor="#7A0F14" stopOpacity="0.09" />
                 <stop offset="100%" stopColor="#7A0F14" stopOpacity="0" />
               </radialGradient>
               <linearGradient id="thread" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="white" stopOpacity="0.04" />
+                <stop offset="0%" stopColor="white" stopOpacity="0.045" />
                 <stop offset="100%" stopColor="white" stopOpacity="0" />
               </linearGradient>
             </defs>
-            {/* Radial glow behind logo */}
-            <circle cx="960" cy="540" r="400" fill="url(#glow)" />
-            {/* Thread lines */}
+
+            <circle cx="960" cy="540" r="420" fill="url(#glow)" />
             <line x1="960" y1="540" x2="150" y2="80" stroke="url(#thread)" strokeWidth="0.5" />
             <line x1="960" y1="540" x2="1770" y2="120" stroke="url(#thread)" strokeWidth="0.5" />
             <line x1="960" y1="540" x2="80" y2="750" stroke="url(#thread)" strokeWidth="0.5" />
@@ -34,11 +32,11 @@ export default function Home() {
             <line x1="960" y1="540" x2="1620" y2="1000" stroke="url(#thread)" strokeWidth="0.3" />
             <line x1="960" y1="540" x2="50" y2="400" stroke="url(#thread)" strokeWidth="0.3" />
             <line x1="960" y1="540" x2="1870" y2="500" stroke="url(#thread)" strokeWidth="0.3" />
-            {/* Orbit rings */}
+
             <circle
               cx="960"
               cy="540"
-              r="200"
+              r="210"
               fill="none"
               stroke="white"
               strokeOpacity="0.02"
@@ -47,7 +45,7 @@ export default function Home() {
             <circle
               cx="960"
               cy="540"
-              r="340"
+              r="350"
               fill="none"
               stroke="white"
               strokeOpacity="0.015"
@@ -56,7 +54,7 @@ export default function Home() {
             <circle
               cx="960"
               cy="540"
-              r="480"
+              r="500"
               fill="none"
               stroke="white"
               strokeOpacity="0.01"
@@ -73,37 +71,21 @@ export default function Home() {
           priority
           className="relative animate-fade-up animate-fade-up-delay-1"
         />
+
         <h1 className="relative font-display font-extrabold text-[clamp(32px,5vw,56px)] tracking-[0.2em] uppercase mt-10 animate-fade-up animate-fade-up-delay-2">
           ANANSI
         </h1>
-        <p className="relative max-w-[680px] text-center text-[16px] md:text-[20px] leading-[1.5] text-white/60 mt-6 animate-fade-up animate-fade-up-delay-2">
-          Technology for markets the world has ignored.
-        </p>
-        <p className="relative text-[11px] tracking-[0.22em] uppercase text-white/18 mt-5 animate-fade-up animate-fade-up-delay-3">
-          Applied AI. Financial Infrastructure. Built in Miami.
+
+        <h2 className="relative max-w-[760px] text-center font-display font-bold text-[clamp(26px,3.9vw,50px)] leading-[1.06] mt-8 animate-fade-up animate-fade-up-delay-2">
+          Technology for markets the world has <span className="text-anansi-red">ignored.</span>
+        </h2>
+
+        <p className="relative text-[11px] tracking-[0.22em] uppercase text-white/18 mt-7 animate-fade-up animate-fade-up-delay-3">
+          AI-first · Real Assets · Caribbean-founded
         </p>
 
-        {/* Scroll indicator */}
         <div className="absolute bottom-10 flex flex-col items-center gap-3 animate-fade-up animate-fade-up-delay-3">
           <span className="block w-px h-10 bg-gradient-to-b from-white/20 to-transparent animate-scroll-pulse" />
-        </div>
-      </section>
-
-      {/* ===== MISSION ===== */}
-      <section className="min-h-screen flex items-center py-40" id="mission">
-        <div className="max-w-[1200px] mx-auto px-6 md:px-12">
-          <div className="reveal">
-            <Eyebrow>Global Thesis</Eyebrow>
-            <h2 className="font-display font-bold text-[clamp(32px,4.5vw,58px)] leading-[1.1] max-w-[940px]">
-              We build AI systems and financial infrastructure for markets the world has{" "}
-              <span className="text-anansi-red">ignored.</span>
-            </h2>
-            <p className="text-[17px] text-anansi-gray max-w-[560px] mt-12 leading-[1.75]">
-              Anansi is a Miami-based technology company founded from Caribbean insight. We build
-              applied AI, real-world asset infrastructure, and software for markets where trust,
-              access, and intelligence still lag demand.
-            </p>
-          </div>
         </div>
       </section>
 
@@ -115,116 +97,52 @@ export default function Home() {
             <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.1] max-w-[760px]">
               AI is becoming practical. Real assets are moving on-chain.
             </h2>
+            <p className="text-[16px] text-anansi-gray max-w-[620px] mt-6 leading-[1.75]">
+              The tools now exist to build serious technology for markets that were too fragmented,
+              too analog, or too overlooked to attract meaningful product investment.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 reveal-stagger">
             <Stat number="$40B" unit="+" label="Trapped value in Caribbean real assets" />
             <Stat number="$12B" unit="+" label="Tokenized RWA on-chain globally" />
-            <Stat number="6" label="AI agents powering CogniCare for licensed therapists" />
-            <Stat
-              number="2-3"
-              unit="Days"
-              label="In-person AI intensive for working professionals"
-            />
+            <Stat number="83" unit="%" label="Workers who say AI will affect their jobs" />
+            <Stat number="0" label="Infrastructure that connects it all" />
           </div>
         </div>
       </section>
 
-      {/* ===== THREE PILLARS ===== */}
-      <section className="py-40" id="pillars">
-        <div className="max-w-[1200px] mx-auto px-6 md:px-12">
-          <div className="reveal">
-            <Eyebrow>What We Build</Eyebrow>
-            <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.1] max-w-[600px]">
-              Three pillars.
-              <br />
-              One company.
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-px bg-anansi-line mt-16 reveal-stagger">
-            <Pillar
-              num="01"
-              title={
-                <>
-                  AI &amp;
-                  <br />
-                  Intelligence
-                </>
-              }
-              desc="Applied AI systems for professionals, institutions, and teams that need leverage fast, not theory."
-              products={[
-                { name: "CogniCare", status: "Built" },
-                { name: "Thryve", status: "Built" },
-                { name: "AI Academy", status: "Enrolling", live: true },
-              ]}
-            />
-            <Pillar
-              num="02"
-              title={
-                <>
-                  Finance &amp;
-                  <br />
-                  Real Assets
-                </>
-              }
-              desc="Financial infrastructure for people and markets shut out of modern capital. From tokenized commodities to web3 savings products."
-              products={[
-                { name: "Spice", status: "Live", live: true },
-                { name: "DollarBank", status: "Testnet" },
-                { name: "CaribStone", status: "Planned" },
-              ]}
-            />
-            <Pillar
-              num="03"
-              title={
-                <>
-                  Software &amp;
-                  <br />
-                  Trust
-                </>
-              }
-              desc="Custom systems, identity rails, and software for institutions operating where trust, security, and precision matter."
-              products={[
-                { name: "Custom AI Solutions", status: "Active" },
-                { name: "IslandPulse", status: "Planned" },
-                { name: "ZK Identity", status: "Research" },
-              ]}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ===== SPICE FEATURE ===== */}
+      {/* ===== SPICE ===== */}
       <section className="section-light bg-anansi-white text-anansi-black py-40" id="spice">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="reveal">
-            <Eyebrow>Featured — Live</Eyebrow>
+            <Eyebrow>Flagship Product</Eyebrow>
             <h2 className="font-display font-bold text-[clamp(36px,5vw,60px)] leading-[1.05]">
               Real-world assets.
               <br />
-              Global liquidity.
+              <span className="text-anansi-red">Global liquidity.</span>
             </h2>
           </div>
 
           <div className="grid md:grid-cols-2 gap-20 mt-16">
             <div className="reveal">
-              <p className="text-[17px] text-[#555] leading-[1.75] max-w-[540px]">
+              <p className="text-[17px] text-[#555] leading-[1.75] max-w-[560px]">
                 Spice tokenizes physical commodities, property, and revenue streams. A farmer
-                delivers nutmeg, receives tokens on his phone, and can sell for USDC instantly. No
-                wallet. No gas fees. Sign in with Google. That's it.
+                delivers nutmeg, receives tokens on a phone, and can exit into USDC instantly. No
+                wallet setup. No gas fees. Sign in with Google.
               </p>
+
+              <div className="grid grid-cols-2 gap-5 mt-10 max-w-[520px]">
+                {["Google sign-in", "No gas fees", "Live product", "Built on Sui"].map(
+                  (item, i) => (
+                    <div key={i} className="pt-4 border-t border-black/10">
+                      <p className="text-[11px] tracking-[0.12em] uppercase text-[#777]">{item}</p>
+                    </div>
+                  ),
+                )}
+              </div>
+
               <div className="mt-10 flex flex-wrap items-center gap-6">
-                <a
-                  href="https://anansi-navy.vercel.app"
-                  className="inline-flex items-center gap-3 px-9 py-4
-                             font-display font-semibold text-[13px] tracking-[0.1em] uppercase
-                             text-anansi-black border border-black/15 rounded-sm
-                             hover:bg-anansi-black hover:text-white hover:border-anansi-black transition-all group"
-                >
-                  Launch Spice{" "}
-                  <span className="transition-transform group-hover:translate-x-1">→</span>
-                </a>
                 <Link
                   href="/spice"
                   className="font-display font-semibold text-[13px] tracking-[0.1em] uppercase text-anansi-black/55 hover:text-anansi-black transition-colors"
@@ -233,6 +151,7 @@ export default function Home() {
                 </Link>
               </div>
             </div>
+
             <div className="reveal">
               <ul className="space-y-0">
                 {[
@@ -243,7 +162,7 @@ export default function Home() {
                         <strong className="text-anansi-black font-medium">
                           Farmer delivers commodity
                         </strong>{" "}
-                        to local custodian. Gets advance as usual. Nothing changes.
+                        to local custodian. The existing workflow stays familiar.
                       </>
                     ),
                   },
@@ -254,7 +173,7 @@ export default function Home() {
                         <strong className="text-anansi-black font-medium">
                           Custodian records delivery
                         </strong>{" "}
-                        on Spice. Farmer receives tokens on his phone automatically.
+                        on Spice. Tokens appear on the farmer’s phone automatically.
                       </>
                     ),
                   },
@@ -263,9 +182,9 @@ export default function Home() {
                     text: (
                       <>
                         <strong className="text-anansi-black font-medium">
-                          Farmer holds or sells early.
+                          Farmer holds or exits early.
                         </strong>{" "}
-                        Wait for full surplus, or swap for USDC instantly on the DEX.
+                        Wait for full surplus, or swap out for USDC.
                       </>
                     ),
                   },
@@ -274,9 +193,9 @@ export default function Home() {
                     text: (
                       <>
                         <strong className="text-anansi-black font-medium">
-                          Lot sells overseas.
+                          Lot sells globally.
                         </strong>{" "}
-                        Surplus distributed to all token holders. Transparent. Automatic.
+                        Surplus is distributed transparently to token holders.
                       </>
                     ),
                   },
@@ -297,6 +216,66 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== WHAT ANANSI BUILDS ===== */}
+      <section className="py-40" id="pillars">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-12">
+          <div className="reveal">
+            <Eyebrow>What Anansi Builds</Eyebrow>
+            <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.1] max-w-[720px]">
+              One company.
+              <br />
+              Three <span className="text-anansi-red">engines.</span>
+            </h2>
+            <p className="text-[16px] text-anansi-gray max-w-[560px] mt-6 leading-[1.75]">
+              Anansi builds across applied AI, financial rails, and niche software — with each area
+              reinforcing the others.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-px bg-anansi-line mt-16 reveal-stagger">
+            <Capability
+              num="01"
+              title={
+                <>
+                  AI &amp;
+                  <br />
+                  Intelligence
+                </>
+              }
+              desc="Applied AI products and systems for professionals, institutions, and teams that need leverage fast."
+              primary="CogniCare"
+              secondary="Thryve"
+            />
+            <Capability
+              num="02"
+              title={
+                <>
+                  Finance &amp;
+                  <br />
+                  Real Assets
+                </>
+              }
+              desc="Financial rails for people and markets shut out of modern capital. From tokenized commodities to web3 savings products."
+              primary="Spice"
+              secondary="DollarBank"
+            />
+            <Capability
+              num="03"
+              title={
+                <>
+                  Software &amp;
+                  <br />
+                  Trust
+                </>
+              }
+              desc="Custom systems, identity rails, and software for institutions operating where trust and precision matter."
+              primary="Custom AI Solutions"
+              secondary="ZK Identity"
+            />
+          </div>
+        </div>
+      </section>
+
       {/* ===== ACADEMY ===== */}
       <section className="py-28 border-t border-b border-anansi-line" id="academy">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
@@ -311,10 +290,9 @@ export default function Home() {
                 In 2-3 days.
               </h2>
               <p className="text-[17px] text-anansi-gray max-w-[500px] mt-6 leading-[1.75]">
-                A local intensive for working professionals who keep hearing about AI and still do
-                not have a practical framework for using it. Led by builders with deep AI and
-                academic experience. No fluff. No passive slides. You leave knowing what AI is,
-                where it fits, and how to apply it in real work immediately.
+                A practical intensive for working professionals who keep hearing about AI and still
+                do not have a clear framework for using it. No fluff. No passive slides. You leave
+                knowing what AI is, where it fits, and how to apply it immediately.
               </p>
               <a
                 href="mailto:academy@anansi.tech"
@@ -345,7 +323,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== CARIBCOIN TEASER ===== */}
+      {/* ===== CARIBCOIN ===== */}
       <section className="relative overflow-hidden" id="caribcoin">
         {/* Dramatic red glow */}
         <div className="absolute inset-0 pointer-events-none">
@@ -368,8 +346,8 @@ export default function Home() {
               <span className="text-anansi-red">COIN</span>
             </h2>
             <p className="text-[18px] text-white/40 mt-6 max-w-[480px] mx-auto leading-relaxed">
-              The protocol token that powers everything Anansi builds. Fixed supply. Deflationary
-              burns. One token across every product.
+              The protocol token for everything Anansi builds. Fixed supply. Deflationary burns. One
+              token across the ecosystem.
             </p>
 
             <div className="flex items-center justify-center gap-12 mt-14">
@@ -409,7 +387,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== ORIGIN ===== */}
+      {/* ===== WHY ANANSI ===== */}
       <section className="py-40 border-t border-anansi-line">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="grid md:grid-cols-2 gap-20 reveal">
@@ -424,52 +402,64 @@ export default function Home() {
               <h2 className="font-display font-bold text-4xl leading-[1.2]">Why Anansi</h2>
               <p className="text-[16px] text-anansi-gray leading-[1.8] mt-6">
                 Anansi — the spider from West African and Caribbean folklore. The trickster who
-                outsmarts bigger powers through cleverness, not force. He builds webs that connect
+                outsmarts larger powers through cleverness, not force. He builds webs that connect
                 what was disconnected. He turns nothing into something valuable.
               </p>
             </div>
             <div>
               <p className="text-[16px] text-anansi-gray leading-[1.8]">
-                The figure in our logo is both spider and human — arms raised, inspired by
-                indigenous Carib petroglyphs found across the islands. Technology rooted in culture.
-                Intelligence that comes from the edges, not the center.
+                The figure in our mark is both spider and human, inspired by indigenous Carib
+                petroglyphs found across the islands. Technology rooted in culture. Intelligence
+                from the edges, not the center.
               </p>
               <p className="text-[16px] text-anansi-gray leading-[1.8] mt-6">
-                We named the company after a character who builds networks no one thought possible.
-                That felt right.
+                We named the company after a figure who turns insight into leverage. That felt
+                right.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ===== FINAL ===== */}
+      {/* ===== FINAL CTA ===== */}
       <section className="py-52 text-center relative">
         <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full pointer-events-none"
           style={{
-            background: "radial-gradient(circle, rgba(122,15,20,0.04) 0%, transparent 60%)",
+            background: "radial-gradient(circle, rgba(122,15,20,0.05) 0%, transparent 60%)",
           }}
         />
         <div className="max-w-[1200px] mx-auto px-6 md:px-12 reveal relative">
           <h2 className="font-display font-bold text-[clamp(32px,4vw,56px)] leading-[1.1]">
             Built from insight.
             <br />
-            Designed for scale.
+            Designed for <span className="text-anansi-red">scale.</span>
           </h2>
-          <p className="text-[16px] text-anansi-gray mt-5 max-w-[620px] mx-auto leading-[1.7]">
-            From AI systems to real-world asset infrastructure, Anansi is building a technology
-            ecosystem for markets the world has overlooked.
+          <p className="text-[16px] text-anansi-gray mt-5 max-w-[680px] mx-auto leading-[1.75]">
+            From AI systems to real-world asset rails, Anansi is building technology for markets the
+            world has overlooked for too long.
           </p>
-          <a
-            href="mailto:hello@anansi.tech"
-            className="inline-flex items-center gap-3 mt-12 px-9 py-4
-                       font-display font-semibold text-[13px] tracking-[0.1em] uppercase
-                       text-white border border-white/12 rounded-sm
-                       hover:bg-white hover:text-anansi-black hover:border-white transition-all group"
-          >
-            Get in touch <span className="transition-transform group-hover:translate-x-1">→</span>
-          </a>
+          <div className="flex flex-wrap items-center justify-center gap-5 mt-12">
+            <a
+              href="mailto:hello@anansi.tech"
+              className="inline-flex items-center gap-3 px-9 py-4
+                         font-display font-semibold text-[13px] tracking-[0.1em] uppercase
+                         text-white border border-white/12 rounded-sm
+                         hover:bg-white hover:text-anansi-black hover:border-white transition-all group"
+            >
+              Partner with us{" "}
+              <span className="transition-transform group-hover:translate-x-1">→</span>
+            </a>
+            <Link
+              href="/spice"
+              className="inline-flex items-center gap-3 px-9 py-4
+                         font-display font-semibold text-[13px] tracking-[0.1em] uppercase
+                         text-white/65 border border-white/8 rounded-sm
+                         hover:text-white hover:border-white/20 transition-all"
+            >
+              Explore Spice
+            </Link>
+          </div>
         </div>
       </section>
     </>
@@ -498,7 +488,7 @@ function Stat({ number, unit, label }) {
   );
 }
 
-function Pillar({ num, title, desc, products }) {
+function Capability({ num, title, desc, primary, secondary }) {
   return (
     <div className="bg-anansi-deep p-12 md:p-11 hover:bg-[#0f0f0f] transition-colors">
       <p className="font-display font-bold text-[11px] text-anansi-red tracking-[0.15em] mb-6">
@@ -506,17 +496,16 @@ function Pillar({ num, title, desc, products }) {
       </p>
       <h3 className="font-display font-bold text-[26px] leading-[1.2]">{title}</h3>
       <p className="text-[14px] text-anansi-gray leading-[1.7] mt-4">{desc}</p>
-      <div className="mt-8 pt-6 border-t border-anansi-line space-y-0">
-        {products.map((p, i) => (
-          <div key={i} className="flex items-baseline justify-between py-2.5">
-            <span className="text-[14px] font-medium">{p.name}</span>
-            <span
-              className={`text-[9px] tracking-[0.15em] uppercase ${p.live ? "text-anansi-red font-medium" : "text-anansi-gray"}`}
-            >
-              {p.status}
-            </span>
-          </div>
-        ))}
+
+      <div className="mt-8 pt-6 border-t border-anansi-line space-y-3">
+        <div>
+          <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray mb-1">Flagship</p>
+          <p className="text-[15px] font-medium">{primary}</p>
+        </div>
+        <div>
+          <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray mb-1">Also</p>
+          <p className="text-[15px] font-medium text-white/75">{secondary}</p>
+        </div>
       </div>
     </div>
   );
