@@ -1,6 +1,6 @@
 # Anansi Technology Corporation — Company Blueprint
 
-**Internal Planning Document — v0.2**
+**Internal Planning Document — v2**
 **Status: Pre-launch / Active planning**
 
 ---
@@ -13,7 +13,7 @@ It defines what Anansi is, what it builds, in what order, and why. Every product
 
 This is not a pitch deck. It is not a whitepaper. It is the honest, private answer to: "What are we actually building, and how do we get there without killing ourselves?"
 
-**What changed in v0.2:** The product portfolio has been fully inventoried, named, and placed. Three formal divisions replace the informal product list. The mission has been tightened. The education vertical has been elevated from "informal Academy" to an immediate revenue source. ZK Identity has been given a home. The agricultural AI product has been named. The phase roadmap reflects a more realistic solo-founder sequencing.
+**What changed in v2:** The product portfolio has been fully inventoried, named, and placed. Three formal divisions replace the informal product list. The mission has been tightened. The education vertical has been elevated from "informal Academy" to an immediate revenue source. ZK Identity has been given a home. The agricultural AI product has been named. The phase roadmap reflects a more realistic solo-founder sequencing.
 
 ---
 
@@ -38,7 +38,7 @@ This framing matters for three reasons:
 
 **2. Resilience.** If crypto markets contract, Anansi survives on AI SaaS revenue, education programs, and software contracts. If AI markets commoditize, the Web3 infrastructure products still create real utility. The company is not existentially dependent on any single technology cycle.
 
-**3. Founder fit.** The founder's credentials span PhD-level AI/ML research, enterprise data science, software engineering, and teaching. Anansi's product portfolio is the natural expression of that range — not a sprawl, but a deliberate deployment of a rare set of skills.
+**3. Founder fit.** The founder's credentials span PhD-level AI/ML research, enterprise data science, software engineering, cybersecurity and teaching. Anansi's product portfolio is the natural expression of that range — not a sprawl, but a deliberate deployment of a rare set of skills.
 
 ### 1.3 The Mission
 
@@ -77,7 +77,7 @@ Anansi operates across three divisions. Each division has its own product logic,
 
 Software that uses artificial intelligence to solve domain-specific problems. Products in this division are primarily SaaS businesses — subscription revenue, global addressable markets, and defensible moats built through proprietary data and AI depth.
 
-The founder's PhD, Amex data science experience, and ML specialization are the credibility foundation for everything built here. These are not API wrappers. They are real AI engineering.
+The founder's PhD, Corporate data science experience, and ML specialization are the credibility foundation for everything built here. These are not API wrappers. They are real AI engineering.
 
 **Products:**
 
