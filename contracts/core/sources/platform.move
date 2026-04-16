@@ -1,120 +1,113 @@
 /// Platform — System-level admin controls, emergency pause, and configuration.
 /// Coordinates across all other modules.
-module anansi::platform {
-    use sui::event;
-    use std::string::{Self, String};
+module anansi::platform;
 
-    // ============ Objects ============
+use std::string::{Self, String};
+use sui::event;
 
-    /// Global platform state. Shared object.
-    public struct Platform has key {
-        id: UID,
-        /// Whether the platform is paused (emergency stop)
-        paused: bool,
-        /// Platform version string
-        version: String,
-        /// Pause reason (empty if not paused)
-        pause_reason: String,
-    }
+// ============ Objects ============
 
-    /// Super admin capability — can pause/unpause the platform.
-    /// Should be held by a multi-sig in production.
-    public struct SuperAdmin has key, store {
-        id: UID,
-    }
+/// Global platform state. Shared object.
+public struct Platform has key {
+    id: UID,
+    /// Whether the platform is paused (emergency stop)
+    paused: bool,
+    /// Platform version string
+    version: String,
+    /// Pause reason (empty if not paused)
+    pause_reason: String,
+}
 
-    // ============ Errors ============
+/// Super admin capability — can pause/unpause the platform.
+/// Should be held by a multi-sig in production.
+public struct SuperAdmin has key, store {
+    id: UID,
+}
 
-    const EPlatformPaused: u64 = 400;
+// ============ Errors ============
 
-    // ============ Events ============
+const EPlatformPaused: u64 = 400;
 
-    public struct PlatformPaused has copy, drop {
-        reason: String,
-        paused_by: address,
-    }
+// ============ Events ============
 
-    public struct PlatformUnpaused has copy, drop {
-        unpaused_by: address,
-    }
+public struct PlatformPaused has copy, drop {
+    reason: String,
+    paused_by: address,
+}
 
-    // ============ Init ============
+public struct PlatformUnpaused has copy, drop {
+    unpaused_by: address,
+}
 
-    fun init(ctx: &mut TxContext) {
-        let platform = Platform {
-            id: object::new(ctx),
-            paused: false,
-            version: string::utf8(b"0.1.0"),
-            pause_reason: string::utf8(b""),
-        };
+// ============ Init ============
 
-        let admin = SuperAdmin {
-            id: object::new(ctx),
-        };
+fun init(ctx: &mut TxContext) {
+    let platform = Platform {
+        id: object::new(ctx),
+        paused: false,
+        version: string::utf8(b"0.1.0"),
+        pause_reason: string::utf8(b""),
+    };
 
-        transfer::share_object(platform);
-        transfer::transfer(admin, ctx.sender());
-    }
+    let admin = SuperAdmin {
+        id: object::new(ctx),
+    };
 
-    // ============ Admin Functions ============
+    transfer::share_object(platform);
+    transfer::transfer(admin, ctx.sender());
+}
 
-    /// Emergency pause — stops all platform operations.
-    public fun pause(
-        _admin: &SuperAdmin,
-        platform: &mut Platform,
-        reason: vector<u8>,
-        ctx: &TxContext,
-    ) {
-        platform.paused = true;
-        platform.pause_reason = string::utf8(reason);
+// ============ Admin Functions ============
 
-        event::emit(PlatformPaused {
-            reason: string::utf8(reason),
-            paused_by: ctx.sender(),
-        });
-    }
+/// Emergency pause — stops all platform operations.
+public fun pause(
+    _admin: &SuperAdmin,
+    platform: &mut Platform,
+    reason: vector<u8>,
+    ctx: &TxContext,
+) {
+    platform.paused = true;
+    platform.pause_reason = string::utf8(reason);
 
-    /// Unpause the platform.
-    public fun unpause(
-        _admin: &SuperAdmin,
-        platform: &mut Platform,
-        ctx: &TxContext,
-    ) {
-        platform.paused = false;
-        platform.pause_reason = string::utf8(b"");
+    event::emit(PlatformPaused {
+        reason: string::utf8(reason),
+        paused_by: ctx.sender(),
+    });
+}
 
-        event::emit(PlatformUnpaused {
-            unpaused_by: ctx.sender(),
-        });
-    }
+/// Unpause the platform.
+public fun unpause(_admin: &SuperAdmin, platform: &mut Platform, ctx: &TxContext) {
+    platform.paused = false;
+    platform.pause_reason = string::utf8(b"");
 
-    /// Transfer super admin to a new address (e.g., multi-sig).
-    public fun transfer_super_admin(
-        admin: SuperAdmin,
-        recipient: address,
-    ) {
-        transfer::transfer(admin, recipient);
-    }
+    event::emit(PlatformUnpaused {
+        unpaused_by: ctx.sender(),
+    });
+}
 
-    // ============ Check Functions ============
+/// Transfer super admin to a new address (e.g., multi-sig).
+public fun transfer_super_admin(admin: SuperAdmin, recipient: address) {
+    transfer::transfer(admin, recipient);
+}
 
-    /// Assert platform is not paused. Call this at the start of critical operations.
-    public fun assert_not_paused(platform: &Platform) {
-        assert!(!platform.paused, EPlatformPaused);
-    }
+// ============ Check Functions ============
 
-    public fun is_paused(platform: &Platform): bool {
-        platform.paused
-    }
+/// Assert platform is not paused. Call this at the start of critical operations.
+public fun assert_not_paused(platform: &Platform) {
+    assert!(!platform.paused, EPlatformPaused);
+}
 
-    public fun version(platform: &Platform): String {
-        platform.version
-    }
+public fun is_paused(platform: &Platform): bool {
+    platform.paused
+}
 
-    // ============ Test Helpers ============
+public fun version(platform: &Platform): String {
+    platform.version
+}
 
-    #[test_only]
-    public fun init_for_testing(ctx: &mut TxContext) {
-        init(ctx);
-    }
+// ============ Test Helpers ============
+
+#[test_only]
+public fun init_for_testing(ctx: &mut TxContext) {
+    init(ctx);
 }

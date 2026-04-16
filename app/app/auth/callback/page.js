@@ -19,6 +19,25 @@ export default function AuthCallback() {
         setStatus("Creating your Spice account...");
         setSession(session);
 
+        try {
+          const profileRes = await fetch("/api/farmers/directory", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              address: session.address,
+              email: session.email,
+              name: session.name,
+              picture: session.picture,
+            }),
+          });
+          if (!profileRes.ok) {
+            const profileData = await profileRes.json().catch(() => ({}));
+            console.error("Failed to save user profile:", profileData.error || profileRes.statusText);
+          }
+        } catch (profileErr) {
+          console.error("Failed to save user profile:", profileErr);
+        }
+
         // Small delay so user sees success state
         await new Promise((r) => setTimeout(r, 500));
         router.push("/");

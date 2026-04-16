@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 html {
   scroll-behavior: smooth;
@@ -14,6 +13,84 @@ body {
 }
 
 ::selection {
-  background-color: #7A0F14;
+  background-color: #7a0f14;
   color: white;
+}
+
+/* ===== Scroll reveal ===== */
+.reveal {
+  opacity: 0;
+  transform: translateY(48px);
+  transition:
+    opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered children */
+.reveal-stagger > * {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-stagger.visible > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-stagger.visible > *:nth-child(1) {
+  transition-delay: 0s;
+}
+.reveal-stagger.visible > *:nth-child(2) {
+  transition-delay: 0.1s;
+}
+.reveal-stagger.visible > *:nth-child(3) {
+  transition-delay: 0.2s;
+}
+.reveal-stagger.visible > *:nth-child(4) {
+  transition-delay: 0.3s;
+}
+.reveal-stagger.visible > *:nth-child(5) {
+  transition-delay: 0.4s;
+}
+
+/* ===== Hero animations ===== */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes scrollPulse {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+.animate-fade-up {
+  opacity: 0;
+  animation: fadeUp 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-fade-up-delay-1 {
+  animation-delay: 0.2s;
+}
+.animate-fade-up-delay-2 {
+  animation-delay: 0.7s;
+}
+.animate-fade-up-delay-3 {
+  animation-delay: 1.6s;
+}
+.animate-scroll-pulse {
+  animation: scrollPulse 2.5s ease-in-out infinite;
 }

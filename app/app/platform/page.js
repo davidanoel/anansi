@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import PlatformAnalyticsPanel from "../../components/PlatformAnalyticsPanel";
 
 export default function PlatformPage() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -87,6 +88,7 @@ function PlatformDashboard({ platformKey, onLogout }) {
     { id: "compliance", label: "Compliance" },
     { id: "deposits", label: "Surplus Deposits" },
     { id: "dex", label: "DEX Pools" },
+    { id: "analytics", label: "Analytics" },
     { id: "overview", label: "Overview" },
   ];
 
@@ -156,6 +158,7 @@ function PlatformDashboard({ platformKey, onLogout }) {
         {tab === "compliance" && <CompliancePanel api={api} />}
         {tab === "deposits" && <DepositsPanel api={api} />}
         {tab === "dex" && <DexPanel api={api} />}
+        {tab === "analytics" && <PlatformAnalyticsPanel api={api} />}
         {tab === "overview" && <OverviewPanel stats={stats} />}
       </div>
     </div>

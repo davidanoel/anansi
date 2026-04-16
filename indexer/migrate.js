@@ -112,10 +112,23 @@ async function migrate() {
       )
     `);
 
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS user_profiles (
+        address TEXT PRIMARY KEY,
+        email TEXT,
+        name TEXT,
+        picture TEXT,
+        created_at BIGINT,
+        updated_at BIGINT
+      )
+    `);
+
     await db.query(`CREATE INDEX IF NOT EXISTS idx_deliveries_farmer ON deliveries(farmer)`);
     await db.query(`CREATE INDEX IF NOT EXISTS idx_deliveries_lot ON deliveries(lot_id)`);
     await db.query(`CREATE INDEX IF NOT EXISTS idx_lots_status ON lots(status)`);
     await db.query(`CREATE INDEX IF NOT EXISTS idx_lots_symbol ON lots(asset_type_symbol)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON user_profiles(email)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_user_profiles_updated_at ON user_profiles(updated_at)`);
 
     console.log("Database migrated successfully");
   } catch (error) {

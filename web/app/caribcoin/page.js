@@ -1,190 +1,476 @@
-import Link from 'next/link'
+import Link from "next/link";
 
 export const metadata = {
-  title: 'CaribCoin — Protocol Token | Anansi',
-  description: 'The token that powers every Anansi product. Fixed supply. Deflationary burns. Participation, not permission.',
-}
+  title: "CaribCoin — The Charter | Anansi",
+  description:
+    "The protocol token that powers every Anansi product. Fixed supply. Deflationary burns. Participation, not permission.",
+};
 
 const ALLOCATIONS = [
-  { label: 'Community & Ecosystem', pct: 40, color: 'bg-anansi-black' },
-  { label: 'Foundation Treasury', pct: 20, color: 'bg-anansi-red' },
-  { label: 'Contributors / Core Team', pct: 15, color: 'bg-anansi-gray' },
-  { label: 'Early Backers', pct: 10, color: 'bg-anansi-gray/60' },
-  { label: 'Public Launch Liquidity', pct: 10, color: 'bg-anansi-border' },
-  { label: 'Strategic Partners', pct: 5, color: 'bg-anansi-light border border-anansi-border' },
-]
+  { label: "Community & Ecosystem", pct: 40, tokens: "4B", vest: "Gradual emission, 5–10 years", color: "bg-white" },
+  { label: "Foundation Treasury", pct: 20, tokens: "2B", vest: "Locked. Released by governance.", color: "bg-anansi-red" },
+  { label: "Contributors / Core Team", pct: 15, tokens: "1.5B", vest: "1-year cliff, 4-year linear", color: "bg-anansi-gray" },
+  { label: "Early Backers (SAFT)", pct: 10, tokens: "1B", vest: "6–12 month cliff, 2–3 year linear", color: "bg-anansi-gray/60" },
+  { label: "Public Launch Liquidity", pct: 10, tokens: "1B", vest: "No cliff. At public launch.", color: "bg-white/20" },
+  { label: "Strategic Partners", pct: 5, tokens: "500M", vest: "Case-by-case, 1–2 year", color: "bg-white/10 border border-white/20" },
+];
 
 export default function CaribCoinPage() {
   return (
     <>
-      {/* Hero */}
-      <section className="max-w-6xl mx-auto px-6 pt-24 pb-16">
-        <p className="text-anansi-red font-mono text-sm mb-4">CARIBCOIN (CARIB)</p>
-        <h1 className="text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight max-w-3xl">
-          Participation,
-          <br />
-          <span className="text-anansi-red">not permission.</span>
-        </h1>
-        <p className="text-xl text-anansi-gray mt-6 max-w-2xl leading-relaxed">
-          CaribCoin is the protocol token that powers every product Anansi builds.
-          Fixed supply. Deflationary burns. No promises — only participation.
-        </p>
+      {/* ===== HERO ===== */}
+      <section className="max-w-[1200px] mx-auto px-6 md:px-12 pt-40 pb-20">
+        <div className="reveal">
+          <p className="text-[10px] tracking-[0.25em] uppercase text-anansi-red font-medium mb-7">
+            CaribCoin (CARIB) — The Charter
+          </p>
+          <h1 className="font-display font-bold text-[clamp(40px,5.5vw,72px)] leading-[1.05] max-w-[700px]">
+            Participation,
+            <br />
+            <span className="text-anansi-red">not permission.</span>
+          </h1>
+          <p className="text-[18px] text-anansi-gray mt-8 max-w-[600px] leading-[1.75]">
+            CaribCoin is the protocol token that powers every product Anansi builds.
+            It captures value from real economic activity — not promises. Fixed supply.
+            Deflationary burns. Open to anyone.
+          </p>
+        </div>
       </section>
 
-      {/* Charter Summary */}
-      <section className="bg-white border-y border-anansi-border">
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <p className="text-anansi-red font-mono text-sm mb-4">THE CHARTER</p>
-          <h2 className="text-3xl font-bold mb-8">What CaribCoin is — and is not.</h2>
+      {/* ===== CHARTER — IS / IS NOT ===== */}
+      <section className="section-light bg-anansi-white text-anansi-black border-y border-anansi-line-light">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-24">
+          <div className="reveal">
+            <Eyebrow dark>The Charter</Eyebrow>
+            <h2 className="font-display font-bold text-3xl mb-12">
+              What CaribCoin is — and is not.
+            </h2>
+          </div>
 
-          <div className="grid md:grid-cols-2 gap-12">
+          <div className="grid md:grid-cols-2 gap-16 reveal">
             <div>
-              <h3 className="font-semibold mb-3">CaribCoin IS:</h3>
-              <ul className="space-y-2 text-anansi-gray">
-                <li className="flex gap-2"><span className="text-anansi-red">→</span> A protocol fee token across all Anansi products</li>
-                <li className="flex gap-2"><span className="text-anansi-red">→</span> A staking token for governance and priority access</li>
-                <li className="flex gap-2"><span className="text-anansi-red">→</span> A cultural coordination primitive for the Caribbean</li>
-                <li className="flex gap-2"><span className="text-anansi-red">→</span> Open to anyone — retail and institutional</li>
-                <li className="flex gap-2"><span className="text-anansi-red">→</span> Market-discovered in value</li>
+              <h3 className="font-display font-semibold mb-5">CaribCoin IS:</h3>
+              <ul className="space-y-3">
+                {[
+                  "A protocol fee token across all Anansi products",
+                  "A staking token for governance and priority access",
+                  "A coordination primitive for builders and participants",
+                  "Open to anyone — retail and institutional",
+                  "Market-discovered in value — no price management",
+                  "Deflationary by design — fees are partially burned",
+                  "Chain-agnostic — Sui at launch, expandable",
+                ].map((item, i) => (
+                  <li key={i} className="flex gap-3 text-[15px] text-[#555]">
+                    <span className="text-anansi-red shrink-0 mt-0.5">→</span> {item}
+                  </li>
+                ))}
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-3">CaribCoin is NOT:</h3>
-              <ul className="space-y-2 text-anansi-gray">
-                <li className="flex gap-2"><span className="text-anansi-gray">✕</span> A stablecoin</li>
-                <li className="flex gap-2"><span className="text-anansi-gray">✕</span> A guaranteed investment</li>
-                <li className="flex gap-2"><span className="text-anansi-gray">✕</span> A dividend or revenue-sharing instrument</li>
-                <li className="flex gap-2"><span className="text-anansi-gray">✕</span> A replacement for local currencies</li>
-                <li className="flex gap-2"><span className="text-anansi-gray">✕</span> A promise of returns</li>
+              <h3 className="font-display font-semibold mb-5">CaribCoin is NOT:</h3>
+              <ul className="space-y-3">
+                {[
+                  "A stablecoin",
+                  "A guaranteed investment",
+                  "A dividend or revenue-sharing instrument",
+                  "A replacement for local currencies",
+                  "A promise of returns, yield, or price appreciation",
+                  "A centrally managed financial product",
+                  "Required to use Anansi products — USDC is always accepted",
+                ].map((item, i) => (
+                  <li key={i} className="flex gap-3 text-[15px] text-[#555]">
+                    <span className="text-[#999] shrink-0 mt-0.5">✕</span> {item}
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Tokenomics */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <p className="text-anansi-red font-mono text-sm mb-4">TOKENOMICS</p>
-        <h2 className="text-3xl font-bold mb-2">10,000,000,000 CARIB</h2>
-        <p className="text-anansi-gray mb-10">Fixed supply. No inflation. Burns are permanent.</p>
+      {/* ===== CORE PRINCIPLES ===== */}
+      <section className="max-w-[1200px] mx-auto px-6 md:px-12 py-24">
+        <div className="reveal">
+          <Eyebrow>Core Principles</Eyebrow>
+          <h2 className="font-display font-bold text-3xl mb-12">
+            The rules that define CaribCoin.
+          </h2>
+        </div>
 
-        <div className="space-y-3">
-          {ALLOCATIONS.map((a) => (
-            <div key={a.label} className="flex items-center gap-4">
-              <div className="w-48 text-sm shrink-0">{a.label}</div>
-              <div className="flex-1 bg-anansi-light rounded-full h-8 overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${a.color} flex items-center justify-end pr-3`}
-                  style={{ width: `${a.pct}%` }}
-                >
-                  <span className="text-xs font-mono text-white drop-shadow">{a.pct}%</span>
+        <div className="grid md:grid-cols-2 gap-px bg-anansi-line reveal-stagger">
+          {[
+            {
+              title: "Open Participation",
+              body: "Anyone can acquire, use, build with, or speculate on CaribCoin. No permission required. No KYC to hold — only to use regulated products.",
+            },
+            {
+              title: "Free Markets",
+              body: "CaribCoin embraces price discovery, volatility, disagreement, and experimentation. There is no attempt to control price, guarantee stability, or suppress speculation.",
+            },
+            {
+              title: "Use Before Narrative",
+              body: "Usage over hype. Builders over promoters. Action over promises. Belief is optional. Participation is sufficient.",
+            },
+            {
+              title: "Voluntary Adoption",
+              body: "No individual, business, or community is required to use CaribCoin. Participation is opt-in. USDC is always accepted. Exit is always allowed.",
+            },
+          ].map((p, i) => (
+            <div key={i} className="bg-anansi-deep p-10">
+              <h3 className="font-display font-semibold text-lg mb-2">{p.title}</h3>
+              <p className="text-[14px] text-anansi-gray leading-relaxed">{p.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ===== TOKENOMICS ===== */}
+      <section className="border-t border-anansi-line">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-24">
+          <div className="reveal">
+            <Eyebrow>Tokenomics</Eyebrow>
+            <h2 className="font-display font-bold text-3xl mb-2">10,000,000,000 CARIB</h2>
+            <p className="text-anansi-gray mb-12">
+              Fixed supply. No inflation. All tokens minted at genesis. Burns are permanent.
+            </p>
+          </div>
+
+          {/* Allocation bars */}
+          <div className="space-y-3 reveal">
+            {ALLOCATIONS.map((a) => (
+              <div key={a.label} className="flex items-center gap-4">
+                <div className="w-52 text-[13px] shrink-0 text-anansi-gray">{a.label}</div>
+                <div className="flex-1 bg-anansi-line rounded-full h-8 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${a.color} flex items-center justify-end pr-3`}
+                    style={{ width: `${a.pct}%` }}
+                  >
+                    <span className="text-[11px] font-display font-bold text-anansi-black drop-shadow">
+                      {a.pct}%
+                    </span>
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+
+          {/* Token specs */}
+          <div className="grid md:grid-cols-4 gap-px bg-anansi-line mt-14 reveal-stagger">
+            {[
+              { label: "Blockchain", value: "Sui" },
+              { label: "Standard", value: "Coin<CARIB>" },
+              { label: "Decimals", value: "9" },
+              { label: "Inflation", value: "None, ever" },
+            ].map((s, i) => (
+              <div key={i} className="bg-anansi-deep p-6">
+                <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray mb-1">
+                  {s.label}
+                </p>
+                <p className="font-display font-bold text-lg">{s.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Vesting timeline */}
+          <div className="mt-14 reveal">
+            <h3 className="font-display font-semibold text-lg mb-6">Vesting & Supply Schedule</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-[13px]">
+                <thead>
+                  <tr className="border-b border-anansi-line text-left">
+                    <th className="pb-3 pr-6 text-anansi-gray font-medium tracking-wider uppercase text-[10px]">Category</th>
+                    <th className="pb-3 pr-6 text-anansi-gray font-medium tracking-wider uppercase text-[10px]">Tokens</th>
+                    <th className="pb-3 pr-6 text-anansi-gray font-medium tracking-wider uppercase text-[10px]">Vesting</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ALLOCATIONS.map((a, i) => (
+                    <tr key={i} className="border-b border-anansi-line/50">
+                      <td className="py-3 pr-6 font-medium">{a.label}</td>
+                      <td className="py-3 pr-6 text-anansi-gray font-display">{a.tokens}</td>
+                      <td className="py-3 text-anansi-gray">{a.vest}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-[13px] text-anansi-gray/60 mt-4">
+              Initial circulating supply at launch: ~600–700M CARIB (6–7% of total).
+              Conservative float by design — less sell pressure, disciplined price discovery.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== FEE ARCHITECTURE ===== */}
+      <section className="bg-anansi-deep border-t border-anansi-line">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-24">
+          <div className="reveal">
+            <Eyebrow>Economics</Eyebrow>
+            <h2 className="font-display font-bold text-3xl mb-6">How CaribCoin captures value.</h2>
+            <p className="text-anansi-gray max-w-[560px] mb-12 leading-relaxed">
+              Every Anansi product generates fees. All fees are auto-converted to CaribCoin
+              via DEX — users never need to buy or hold CARIB. The protocol does it behind
+              the scenes in a single atomic transaction.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-16 reveal">
+            <div className="space-y-0">
+              {[
+                {
+                  title: "Every product generates fees",
+                  body: "Spice minting (0.1%), surplus distribution (1%), CaribStone NFT sales (2.5%), DollarBank yield (0.5%), SaaS subscriptions — all create fee events.",
+                },
+                {
+                  title: "Fees auto-convert to CARIB",
+                  body: "Within one Sui PTB: fee USDC is swapped to CARIB on the DEX. The user sees the net amount. The conversion is invisible but fully auditable on-chain.",
+                },
+                {
+                  title: "50% is burned permanently",
+                  body: "Half of every fee is destroyed — sent to a null address, permanently reducing the supply of CARIB that will ever exist.",
+                },
+                {
+                  title: "50% funds the ecosystem",
+                  body: "The other half goes to the treasury — funding grants, development, infrastructure, and ecosystem growth. The ratio is adjustable by governance.",
+                },
+              ].map((step, i) => (
+                <div key={i} className="border-l-2 border-anansi-red pl-5 py-5">
+                  <h3 className="font-display font-semibold mb-1">{step.title}</h3>
+                  <p className="text-anansi-gray text-[14px] leading-relaxed">{step.body}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-7xl font-display font-bold text-anansi-red">∞</p>
+                <p className="text-anansi-gray mt-6 max-w-xs text-[15px] leading-relaxed">
+                  More products → more fees → more burns → less supply.
+                  Every product Anansi ships strengthens the cycle.
+                </p>
+                <div className="grid grid-cols-3 gap-6 mt-10 pt-8 border-t border-anansi-line">
+                  {[
+                    { label: "Spice", fee: "0.1% – 1%" },
+                    { label: "CaribStone", fee: "2.5%" },
+                    { label: "DollarBank", fee: "0.5%" },
+                  ].map((f, i) => (
+                    <div key={i}>
+                      <p className="text-[10px] text-anansi-gray uppercase tracking-widest">{f.label}</p>
+                      <p className="font-display font-bold text-sm mt-1">{f.fee}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== STAKING ===== */}
+      <section className="max-w-[1200px] mx-auto px-6 md:px-12 py-24">
+        <div className="reveal">
+          <Eyebrow>Staking</Eyebrow>
+          <h2 className="font-display font-bold text-3xl mb-3">Participation has advantages.</h2>
+          <p className="text-anansi-gray max-w-[560px] mb-12">
+            Staking CARIB is voluntary. It locks tokens for a chosen duration in exchange for
+            protocol-level benefits. It does not promise yield or returns.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-px bg-anansi-line reveal-stagger">
+          {[
+            { title: "Reduced fees", desc: "Stake ≥ 10,000 CARIB for up to 50% reduction on all platform fees across Spice, CaribStone, and future products.", tier: "10K CARIB" },
+            { title: "Priority access", desc: "Stake ≥ 50,000 CARIB for 24-hour early access to new asset pools before public availability.", tier: "50K CARIB" },
+            { title: "Governance voting", desc: "Stake ≥ 1,000 CARIB to vote on protocol parameters: fee rates, burn ratio, new asset approvals, treasury spending.", tier: "1K CARIB" },
+            { title: "Ecosystem rewards", desc: "Stake any amount for eligibility for periodic airdrops from the Community & Ecosystem allocation. Proportional to stake.", tier: "Any amount" },
+          ].map((b, i) => (
+            <div key={i} className="bg-anansi-deep p-8">
+              <div className="flex items-baseline justify-between mb-2">
+                <h3 className="font-display font-semibold">{b.title}</h3>
+                <span className="text-[9px] tracking-[0.15em] uppercase text-anansi-red font-medium">{b.tier}</span>
+              </div>
+              <p className="text-[14px] text-anansi-gray leading-relaxed">{b.desc}</p>
             </div>
           ))}
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mt-12">
-          <StatBox label="Blockchain" value="Sui" />
-          <StatBox label="Decimals" value="9" />
-          <StatBox label="Inflation" value="None, ever" />
+        <div className="mt-8 grid md:grid-cols-4 gap-px bg-anansi-line reveal-stagger">
+          {[
+            { label: "30 days", multiplier: "1×" },
+            { label: "90 days", multiplier: "1.5×" },
+            { label: "180 days", multiplier: "2×" },
+            { label: "365 days", multiplier: "3×" },
+          ].map((l, i) => (
+            <div key={i} className="bg-anansi-deep p-6 text-center">
+              <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray mb-1">Lock Period</p>
+              <p className="font-display font-bold text-lg">{l.label}</p>
+              <p className="text-[11px] text-anansi-red mt-1 font-medium">{l.multiplier} benefit weight</p>
+            </div>
+          ))}
         </div>
+
+        <p className="text-[13px] text-anansi-gray/60 mt-4 reveal">
+          Early unstaking incurs a 10% slash. Slashed tokens are burned — further reducing supply.
+        </p>
       </section>
 
-      {/* How Value Flows */}
-      <section className="bg-anansi-black text-white">
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <p className="text-anansi-red font-mono text-sm mb-4">ECONOMICS</p>
-          <h2 className="text-3xl font-bold mb-10">How CaribCoin captures value.</h2>
+      {/* ===== GOVERNANCE ===== */}
+      <section className="border-t border-anansi-line">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-24">
+          <div className="reveal">
+            <Eyebrow>Governance</Eyebrow>
+            <h2 className="font-display font-bold text-3xl mb-12">Evolving, not premature.</h2>
+          </div>
 
-          <div className="grid md:grid-cols-2 gap-12">
-            <div className="space-y-6">
-              <FlowStep title="Every product generates fees">
-                When Spice mints tokens, distributes surplus, or processes trades,
-                a small fee is collected.
-              </FlowStep>
-              <FlowStep title="Fees auto-convert to CARIB">
-                Behind the scenes, fee USDC is swapped to CARIB via DEX liquidity
-                in one atomic transaction. Users never see this.
-              </FlowStep>
-              <FlowStep title="50% is burned permanently">
-                Half of every fee is destroyed — permanently reducing the supply
-                of CARIB that will ever exist.
-              </FlowStep>
-              <FlowStep title="50% funds the ecosystem">
-                The other half goes to the treasury — funding grants, development,
-                and ecosystem growth.
-              </FlowStep>
+          <div className="grid md:grid-cols-2 gap-16 reveal">
+            <div>
+              <h3 className="font-display font-semibold mb-4">What's governed</h3>
+              <ul className="space-y-2">
+                {[
+                  "Fee rates across all products",
+                  "Burn-to-treasury ratio",
+                  "New asset type approvals on Spice",
+                  "Community & Ecosystem spending",
+                  "Protocol upgrade approvals",
+                  "Addition of new products to the fee stack",
+                ].map((item, i) => (
+                  <li key={i} className="flex gap-3 text-[14px] text-anansi-gray">
+                    <span className="text-anansi-red shrink-0">→</span> {item}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-6xl font-bold text-anansi-red">∞</p>
-                <p className="text-gray-400 mt-4 max-w-xs">
-                  More products → more fees → more burns → less supply.
-                  Every island, every asset, every user strengthens the cycle.
-                </p>
+            <div>
+              <h3 className="font-display font-semibold mb-4">What's never governed</h3>
+              <ul className="space-y-2">
+                {[
+                  "Minting new CARIB — no function exists",
+                  "Overriding Foundation multi-sig",
+                  "Forcing custodians to act",
+                  "Changing the charter's core principles",
+                  "Intervening in market pricing",
+                ].map((item, i) => (
+                  <li key={i} className="flex gap-3 text-[14px] text-anansi-gray">
+                    <span className="text-anansi-gray/40 shrink-0">✕</span> {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-px bg-anansi-line mt-12 reveal-stagger">
+            {[
+              { phase: "Phase 1 — MVP", desc: "No on-chain governance. Decisions made transparently by the founder with community input. Avoids governance theater before there's a real community." },
+              { phase: "Phase 2 — Post-Launch", desc: "Soft governance — snapshot voting by CARIB stakers on key parameters. Results are advisory. Foundation implements if reasonable." },
+              { phase: "Phase 3 — Maturity", desc: "Binding on-chain governance for defined parameters. Foundation retains veto only for existential threats: security, legal compliance." },
+            ].map((g, i) => (
+              <div key={i} className="bg-anansi-deep p-8">
+                <p className="font-display font-semibold text-sm text-anansi-red mb-2">{g.phase}</p>
+                <p className="text-[13px] text-anansi-gray leading-relaxed">{g.desc}</p>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Staking */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <p className="text-anansi-red font-mono text-sm mb-4">STAKING</p>
-        <h2 className="text-3xl font-bold mb-6">Participation has advantages.</h2>
-        <p className="text-anansi-gray max-w-2xl mb-10">
-          Staking CARIB is voluntary. It does not promise yield or returns.
-          It provides protocol-level benefits for active participants.
-        </p>
+      {/* ===== ECONOMIC INVARIANTS ===== */}
+      <section className="bg-anansi-deep border-t border-anansi-line">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-24">
+          <div className="reveal">
+            <Eyebrow>Invariants</Eyebrow>
+            <h2 className="font-display font-bold text-3xl mb-12">
+              Rules that never change.
+            </h2>
+          </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          <BenefitCard title="Reduced fees" description="Up to 50% reduction on all Spice and CaribStone platform fees." />
-          <BenefitCard title="Priority access" description="Early access to new asset pools before public availability." />
-          <BenefitCard title="Governance" description="Vote on protocol parameters: fee rates, new assets, treasury spending." />
-          <BenefitCard title="Ecosystem rewards" description="Eligibility for airdrops from the Community & Ecosystem allocation." />
+          <div className="space-y-0 reveal">
+            {[
+              "Total supply is fixed at 10B CARIB. No function exists to mint more. Ever.",
+              "Burns are permanent. Burned tokens cannot be recovered.",
+              "Staking never promises yield. Benefits are fee reductions and access, not returns.",
+              "Fees are always a percentage, never a flat tax that scales badly.",
+              "USDC is always accepted. CaribCoin is never the only payment method.",
+              "Auto-conversion is transparent. Every fee conversion is visible as a Sui event.",
+              "The charter governs. No economic change can contradict these core principles.",
+            ].map((rule, i) => (
+              <div
+                key={i}
+                className="flex gap-5 items-baseline py-5 border-b border-anansi-line first:border-t"
+              >
+                <span className="font-display font-bold text-[11px] text-anansi-red tracking-[0.1em] shrink-0">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <p className="text-[15px] text-anansi-gray leading-relaxed">{rule}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Risk Disclosure */}
-      <section className="max-w-6xl mx-auto px-6 py-12 mb-12">
-        <div className="p-6 bg-anansi-light border border-anansi-border rounded-xl text-sm text-anansi-gray">
-          <p className="font-semibold text-anansi-black mb-2">Risk Disclosure</p>
-          <p>
-            CaribCoin does not promise returns, yield, dividends, or price appreciation.
-            Participation involves risk including market volatility, technical risk,
-            and regulatory uncertainty. Participation is voluntary and at your own risk.
-            Do your own research.
+      {/* ===== STEWARDSHIP ===== */}
+      <section className="max-w-[1200px] mx-auto px-6 md:px-12 py-24">
+        <div className="grid md:grid-cols-2 gap-16 reveal">
+          <div>
+            <Eyebrow>Stewardship</Eyebrow>
+            <h2 className="font-display font-bold text-3xl mb-6">
+              The Foundation
+            </h2>
+            <p className="text-[16px] text-anansi-gray leading-[1.8]">
+              CaribCoin is stewarded by a foundation that exists to support ecosystem
+              development, fund public goods and grants, maintain protocol infrastructure,
+              and represent the network externally when necessary.
+            </p>
+          </div>
+          <div>
+            <p className="text-[16px] text-anansi-gray leading-[1.8]">
+              The Foundation does not manage token price, promise returns, control markets,
+              or override voluntary activity. Stewardship is not ownership. The network's
+              direction is shaped by participants — not by any single entity.
+            </p>
+            <p className="text-[16px] text-anansi-gray leading-[1.8] mt-6">
+              In its early stages, governance is informal and transparent. It is expected
+              to evolve gradually as the network grows. No governance model is assumed
+              to be final.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== RISK DISCLOSURE ===== */}
+      <section className="max-w-[1200px] mx-auto px-6 md:px-12 pb-24">
+        <div className="reveal p-10 border border-anansi-line rounded">
+          <p className="font-display font-semibold text-white mb-4">Risk Disclosure</p>
+          <div className="space-y-3 text-[14px] text-anansi-gray leading-relaxed">
+            <p>
+              CaribCoin does not promise returns, yield, dividends, or price appreciation.
+              Its value, if any, is determined by how people choose to use it.
+            </p>
+            <p>
+              Participation involves risk including market volatility, technical risk,
+              regulatory uncertainty, and social dynamics. Participation is voluntary
+              and at your own risk.
+            </p>
+            <p>
+              We do not predict market outcomes. The economic design creates conditions
+              where usage drives demand and burns reduce supply. What the market does
+              with that information is the market's business.
+            </p>
+          </div>
+          <p className="text-[12px] text-anansi-gray/40 mt-6 italic">
+            Participation, not permission. Usage, not promises. The market decides what CaribCoin becomes.
           </p>
         </div>
       </section>
     </>
-  )
+  );
 }
 
-function StatBox({ label, value }) {
-  return (
-    <div className="p-4 border border-anansi-border rounded-lg">
-      <p className="text-xs text-anansi-gray font-mono">{label}</p>
-      <p className="text-lg font-bold mt-1">{value}</p>
-    </div>
-  )
-}
+// ============================================================
 
-function FlowStep({ title, children }) {
+function Eyebrow({ children, dark }) {
   return (
-    <div className="border-l-2 border-anansi-red pl-4">
-      <h3 className="font-semibold mb-1">{title}</h3>
-      <p className="text-gray-400 text-sm leading-relaxed">{children}</p>
-    </div>
-  )
-}
-
-function BenefitCard({ title, description }) {
-  return (
-    <div className="p-5 border border-anansi-border rounded-xl">
-      <h3 className="font-semibold mb-1">{title}</h3>
-      <p className="text-sm text-anansi-gray">{description}</p>
-    </div>
-  )
+    <p className={`text-[10px] tracking-[0.25em] uppercase font-medium mb-7 ${dark ? "text-anansi-red" : "text-anansi-red"}`}>
+      {children}
+    </p>
+  );
 }

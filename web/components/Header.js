@@ -1,60 +1,176 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
+import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false);
+  const [pastHero, setPastHero] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [overLight, setOverLight] = useState(false);
+  const navRef = useRef(null);
+  const pathname = usePathname();
+  const isHomePage = pathname === "/";
+
+  const navLinks = [
+    { label: "Products", href: isHomePage ? "#pillars" : "/#pillars" },
+    { label: "Spice", href: "/spice" },
+    { label: "CaribCoin", href: "/caribcoin" },
+    { label: "Academy", href: isHomePage ? "#academy" : "/#academy" },
+  ];
+
+  useEffect(() => {
+    const checkState = () => {
+      setScrolled(window.scrollY > 80);
+
+      // Check if we've scrolled past the hero section.
+      const hero = document.querySelector(".hero-section");
+      if (hero) {
+        const heroBottom = hero.getBoundingClientRect().bottom;
+        setPastHero(heroBottom < 80);
+      } else {
+        // No hero on this page (for example, /caribcoin), so always show the logo.
+        setPastHero(true);
+      }
+
+      // Check if the nav is sitting over a light section.
+      const navBottom = navRef.current?.getBoundingClientRect()?.bottom || 64;
+      const lightSections = document.querySelectorAll('.section-light, [class*="bg-anansi-white"]');
+      let isOverLight = false;
+      for (const section of lightSections) {
+        const rect = section.getBoundingClientRect();
+        if (rect.top < navBottom && rect.bottom > 0) {
+          isOverLight = true;
+          break;
+        }
+      }
+      setOverLight(isOverLight);
+    };
+
+    window.addEventListener("scroll", checkState, { passive: true });
+    checkState();
+    return () => window.removeEventListener("scroll", checkState);
+  }, [pathname]);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  const light = overLight && scrolled;
 
   return (
-    <header className="sticky top-0 z-50 bg-anansi-cream/95 backdrop-blur-sm border-b border-anansi-border">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3">
-          {/* Spider mark — replace with actual logo image */}
-          <div className="w-9 h-9 rounded bg-gradient-to-b from-anansi-black to-anansi-red" />
-          <span className="font-bold text-lg tracking-tight">ANANSI</span>
+    <header
+      ref={navRef}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? "py-3" : "py-6"
+      } ${
+        scrolled
+          ? overLight
+            ? "backdrop-blur-xl border-b border-black/[0.06]"
+            : "backdrop-blur-xl border-b border-white/[0.06]"
+          : ""
+      }`}
+      style={
+        scrolled
+          ? { backgroundColor: overLight ? "rgba(255,255,255,0.92)" : "rgba(20,20,20,0.95)" }
+          : undefined
+      }
+    >
+      <div className="max-w-[1200px] mx-auto px-6 md:px-12 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-3.5 group">
+          {/* Spider mark - hidden while the hero is visible, fades in on scroll. */}
+          <div
+            className="transition-all duration-500 overflow-hidden"
+            style={{
+              width: pastHero ? 32 : 0,
+              opacity: pastHero ? 1 : 0,
+            }}
+          >
+            <Image
+              src={light ? "/logo-mark.png" : "/logo-dark.png"}
+              alt="Anansi"
+              width={32}
+              height={32}
+              className="transition-transform group-hover:scale-105"
+            />
+          </div>
+          <span
+            className={`font-display font-bold text-[15px] tracking-[0.12em] transition-colors duration-300 ${
+              light ? "text-[#0A0A0A]" : "text-white"
+            }`}
+          >
+            ANANSI
+          </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8 text-sm">
-          <Link href="/spice" className="hover:text-anansi-red transition-colors">
-            Spice
-          </Link>
-          <Link href="/caribcoin" className="hover:text-anansi-red transition-colors">
-            CaribCoin
-          </Link>
+        <nav className="hidden md:flex items-center gap-9">
+          {navLinks.map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              className={`text-[12px] tracking-[0.1em] uppercase transition-colors duration-300 ${
+                light ? "text-[#0A0A0A]/40 hover:text-[#0A0A0A]" : "text-white/35 hover:text-white"
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
           <a
-            href="https://app.spice.anansi.tech"
-            className="px-4 py-2 bg-anansi-black text-white rounded-lg text-sm hover:bg-anansi-red transition-colors"
+            href="https://anansi-navy.vercel.app"
+            target="_blank"
+            className={`text-[12px] tracking-[0.1em] uppercase font-display font-semibold
+                       px-6 py-2.5 rounded-sm transition-all duration-300 border ${
+                         light
+                           ? "text-[#0A0A0A] border-[#0A0A0A]/15 hover:bg-[#0A0A0A] hover:text-white hover:border-[#0A0A0A]"
+                           : "text-white border-white/12 hover:bg-white hover:text-[#0A0A0A] hover:border-white"
+                       }`}
           >
-            Launch App
+            Launch Spice
           </a>
         </nav>
 
         <button
-          className="md:hidden text-2xl"
+          className={`md:hidden text-xl p-2 transition-colors duration-300 ${
+            light ? "text-[#0A0A0A]/60" : "text-white/60"
+          }`}
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu"
         >
-          {menuOpen ? '✕' : '☰'}
+          {menuOpen ? "\u2715" : "\u2630"}
         </button>
       </div>
 
       {menuOpen && (
-        <div className="md:hidden border-t border-anansi-border bg-anansi-cream px-6 py-4 space-y-3">
-          <Link href="/spice" className="block py-2" onClick={() => setMenuOpen(false)}>
-            Spice
-          </Link>
-          <Link href="/caribcoin" className="block py-2" onClick={() => setMenuOpen(false)}>
-            CaribCoin
-          </Link>
+        <div
+          className={`md:hidden backdrop-blur-xl px-6 py-6 space-y-4 border-t ${
+            light ? "bg-white/95 border-black/[0.06]" : "bg-[#060606]/95 border-white/[0.03]"
+          }`}
+        >
+          {navLinks.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`block text-sm uppercase tracking-widest ${
+                light ? "text-[#0A0A0A]/50" : "text-white/50"
+              }`}
+              onClick={() => setMenuOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
           <a
-            href="https://app.spice.anansi.tech"
-            className="block py-2 px-4 bg-anansi-black text-white rounded-lg text-center"
+            href="https://anansi-navy.vercel.app"
+            className={`block text-center text-sm uppercase tracking-widest py-3 rounded-sm border ${
+              light ? "text-[#0A0A0A] border-[#0A0A0A]/15" : "text-white border-white/12"
+            }`}
+            onClick={() => setMenuOpen(false)}
           >
-            Launch App
+            Launch Spice
           </a>
         </div>
       )}
     </header>
-  )
+  );
 }
