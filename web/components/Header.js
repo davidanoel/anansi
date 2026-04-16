@@ -15,10 +15,10 @@ export default function Header() {
   const isHomePage = pathname === "/";
 
   const navLinks = [
-    { label: "Products", href: isHomePage ? "#pillars" : "/#pillars" },
+    { label: "What We Build", href: isHomePage ? "#pillars" : "/#pillars" },
     { label: "Spice", href: "/spice" },
-    { label: "CaribCoin", href: "/caribcoin" },
     { label: "Academy", href: isHomePage ? "#academy" : "/#academy" },
+    { label: "CaribCoin", href: "/caribcoin" },
   ];
 
   useEffect(() => {
@@ -127,7 +127,7 @@ export default function Header() {
                            : "text-white border-white/12 hover:bg-white hover:text-[#0A0A0A] hover:border-white"
                        }`}
           >
-            Launch Spice
+            Explore Spice
           </a>
         </nav>
 
@@ -167,7 +167,7 @@ export default function Header() {
             }`}
             onClick={() => setMenuOpen(false)}
           >
-            Launch Spice
+            Explore Spice
           </a>
         </div>
       )}
