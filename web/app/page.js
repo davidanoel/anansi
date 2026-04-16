@@ -76,12 +76,13 @@ export default function Home() {
           ANANSI
         </h1>
 
-        <h2 className="relative max-w-[760px] text-center font-display font-bold text-[clamp(26px,3.9vw,50px)] leading-[1.06] mt-8 animate-fade-up animate-fade-up-delay-2">
-          Technology for markets the world has <span className="text-anansi-red">ignored.</span>
+        <h2 className="relative max-w-[820px] text-center font-display font-medium text-[clamp(22px,3.2vw,42px)] leading-[1.15] mt-7 px-6 animate-fade-up animate-fade-up-delay-2">
+          Technology for markets the world has{" "}
+          <span className="text-anansi-red font-semibold">ignored.</span>
         </h2>
 
         <p className="relative text-[11px] tracking-[0.22em] uppercase text-white/18 mt-7 animate-fade-up animate-fade-up-delay-3">
-          AI-first · Real Assets · Caribbean-founded
+          Applied AI · Real Assets · Built in Miami
         </p>
 
         <div className="absolute bottom-10 flex flex-col items-center gap-3 animate-fade-up animate-fade-up-delay-3">
@@ -98,15 +99,16 @@ export default function Home() {
               AI is becoming practical. Real assets are moving on-chain.
             </h2>
             <p className="text-[16px] text-anansi-gray max-w-[620px] mt-6 leading-[1.75]">
-              The tools now exist to build serious technology for markets that were too fragmented,
-              too analog, or too overlooked to attract meaningful product investment.
+              Trillions in real-world value are locked in markets that traditional software never
+              reached. AI is finally cheap enough to deploy. Blockchain is finally fast enough to
+              use. We build for the gap.
             </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 reveal-stagger">
+            <Stat number="$15.7T" label="AI contribution to global GDP by 2030 (PwC)" />
+            <Stat number="$16T" label="Projected RWA tokenization market by 2030 (BCG)" />
             <Stat number="$40B" unit="+" label="Trapped value in Caribbean real assets" />
-            <Stat number="$12B" unit="+" label="Tokenized RWA on-chain globally" />
-            <Stat number="83" unit="%" label="Workers who say AI will affect their jobs" />
             <Stat number="0" label="Infrastructure that connects it all" />
           </div>
         </div>
@@ -173,7 +175,7 @@ export default function Home() {
                         <strong className="text-anansi-black font-medium">
                           Custodian records delivery
                         </strong>{" "}
-                        on Spice. Tokens appear on the farmer’s phone automatically.
+                        on Spice. Tokens appear on the farmer's phone automatically.
                       </>
                     ),
                   },
@@ -211,6 +213,53 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== ACADEMY ===== */}
+      <section className="py-28 border-b border-anansi-line" id="academy">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-12">
+          <div className="grid md:grid-cols-2 gap-20 items-center reveal">
+            <div>
+              <Eyebrow>AI Academy</Eyebrow>
+              <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.15]">
+                Learn AI.
+                <br />
+                Face to face.
+                <br />
+                In 2-3 days.
+              </h2>
+              <p className="text-[17px] text-anansi-gray max-w-[500px] mt-6 leading-[1.75]">
+                A practical intensive for working professionals who keep hearing about AI and still
+                do not have a clear framework for using it. No fluff. No passive slides. You leave
+                knowing what AI is, where it fits, and how to apply it immediately.
+              </p>
+              <a
+                href="mailto:academy@anansi.tech"
+                className="inline-flex items-center gap-3 mt-9 px-9 py-4
+                           font-display font-semibold text-[13px] tracking-[0.1em] uppercase
+                           text-white border border-white/12 rounded-sm
+                           hover:bg-white hover:text-anansi-black hover:border-white transition-all group"
+              >
+                Inquire <span className="transition-transform group-hover:translate-x-1">→</span>
+              </a>
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              {[
+                { label: "Format", value: "In-person" },
+                { label: "Duration", value: "2-3 days" },
+                { label: "Audience", value: "Working professionals" },
+                { label: "Location", value: "Miami / Caribbean" },
+              ].map((d, i) => (
+                <div key={i} className="pt-5 border-t border-anansi-line">
+                  <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray mb-1.5">
+                    {d.label}
+                  </p>
+                  <p className="font-display font-bold text-xl">{d.value}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -276,56 +325,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== ACADEMY ===== */}
-      <section className="py-28 border-t border-b border-anansi-line" id="academy">
-        <div className="max-w-[1200px] mx-auto px-6 md:px-12">
-          <div className="grid md:grid-cols-2 gap-20 items-center reveal">
-            <div>
-              <Eyebrow>AI Academy</Eyebrow>
-              <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.15]">
-                Learn AI.
-                <br />
-                Face to face.
-                <br />
-                In 2-3 days.
-              </h2>
-              <p className="text-[17px] text-anansi-gray max-w-[500px] mt-6 leading-[1.75]">
-                A practical intensive for working professionals who keep hearing about AI and still
-                do not have a clear framework for using it. No fluff. No passive slides. You leave
-                knowing what AI is, where it fits, and how to apply it immediately.
-              </p>
-              <a
-                href="mailto:academy@anansi.tech"
-                className="inline-flex items-center gap-3 mt-9 px-9 py-4
-                           font-display font-semibold text-[13px] tracking-[0.1em] uppercase
-                           text-white border border-white/12 rounded-sm
-                           hover:bg-white hover:text-anansi-black hover:border-white transition-all group"
-              >
-                Inquire <span className="transition-transform group-hover:translate-x-1">→</span>
-              </a>
-            </div>
-            <div className="grid grid-cols-2 gap-6">
-              {[
-                { label: "Format", value: "In-person" },
-                { label: "Duration", value: "2-3 days" },
-                { label: "Audience", value: "Working professionals" },
-                { label: "Location", value: "Miami / Caribbean" },
-              ].map((d, i) => (
-                <div key={i} className="pt-5 border-t border-anansi-line">
-                  <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray mb-1.5">
-                    {d.label}
-                  </p>
-                  <p className="font-display font-bold text-xl">{d.value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ===== CARIBCOIN ===== */}
-      <section className="relative overflow-hidden" id="caribcoin">
-        {/* Dramatic red glow */}
+      <section className="relative border-t border-anansi-line overflow-hidden" id="caribcoin">
         <div className="absolute inset-0 pointer-events-none">
           <div
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] rounded-full"
@@ -341,13 +342,13 @@ export default function Home() {
             <p className="text-[10px] tracking-[0.4em] uppercase text-anansi-red font-medium mb-8">
               Coming Soon
             </p>
-            <h2 className="font-display font-extrabold text-[clamp(48px,8vw,96px)] leading-[0.95] tracking-tight">
+            <h2 className="font-display text-[clamp(48px,8vw,96px)] leading-[0.95] tracking-tight">
               CARIB
               <span className="text-anansi-red">COIN</span>
             </h2>
-            <p className="text-[18px] text-white/40 mt-6 max-w-[480px] mx-auto leading-relaxed">
-              The protocol token for everything Anansi builds. Fixed supply. Deflationary burns. One
-              token across the ecosystem.
+            <p className="text-[18px] text-white/40 mt-6 max-w-[520px] mx-auto leading-relaxed">
+              The protocol token that powers every product Anansi builds. Fixed supply. Deflationary
+              burns. No promises — only participation.
             </p>
 
             <div className="flex items-center justify-center gap-12 mt-14">
@@ -408,13 +409,9 @@ export default function Home() {
             </div>
             <div>
               <p className="text-[16px] text-anansi-gray leading-[1.8]">
-                The figure in our mark is both spider and human, inspired by indigenous Carib
+                The figure in our mark is both spider and human — inspired by indigenous Carib
                 petroglyphs found across the islands. Technology rooted in culture. Intelligence
                 from the edges, not the center.
-              </p>
-              <p className="text-[16px] text-anansi-gray leading-[1.8] mt-6">
-                We named the company after a figure who turns insight into leverage. That felt
-                right.
               </p>
             </div>
           </div>
@@ -435,11 +432,7 @@ export default function Home() {
             <br />
             Designed for <span className="text-anansi-red">scale.</span>
           </h2>
-          <p className="text-[16px] text-anansi-gray mt-5 max-w-[680px] mx-auto leading-[1.75]">
-            From AI systems to real-world asset rails, Anansi is building technology for markets the
-            world has overlooked for too long.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-5 mt-12">
+          <div className="flex flex-wrap items-center justify-center gap-5 mt-14">
             <a
               href="mailto:hello@anansi.tech"
               className="inline-flex items-center gap-3 px-9 py-4
@@ -460,6 +453,7 @@ export default function Home() {
               Explore Spice
             </Link>
           </div>
+          <p className="text-[11px] tracking-[0.2em] uppercase text-white/25 mt-10">Miami, FL</p>
         </div>
       </section>
     </>
