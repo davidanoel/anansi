@@ -50,6 +50,24 @@ export async function adminExecute(tx) {
         transaction: tx,
         options: { showEffects: true, showObjectChanges: true, showEvents: true },
       });
+
+      const status =
+        result?.effects?.status?.status ||
+        result?.effects?.status?.$kind ||
+        result?.effects?.status;
+      const errorMessage =
+        result?.effects?.status?.error ||
+        result?.effects?.status?.Failure?.error ||
+        result?.effects?.status?.failure;
+
+      if (String(status).toLowerCase() !== "success") {
+        throw new Error(
+          errorMessage
+            ? `Transaction execution failed: ${errorMessage}`
+            : `Transaction execution failed with status: ${status || "unknown"}`,
+        );
+      }
+
       console.log("adminExecute success:", result.digest);
       return result;
     } catch (err) {

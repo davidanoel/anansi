@@ -43,32 +43,38 @@ export async function POST(req) {
 
     console.log(`Bypassing Cetus SDK to manually locate Position NFT for ${symbol} pool...`);
 
-    // 2. MANUALLY FETCH OWNED OBJECTS VIA RAW SUI RPC (Bypasses the SDK crash!)
-    const rpcRes = await fetch(rpcUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "suix_getOwnedObjects",
-        params: [
-          admin,
-          { options: { showContent: true, showType: true } },
-          null,
-          50, // Limit 50 objects
-        ],
-      }),
-    });
+    // 2. PAGE THROUGH OWNED OBJECTS AND MATCH THE POSITION BY SHAPE + POOL ID.
+    let cursor = null;
+    let positionObj = null;
 
-    const rpcData = await rpcRes.json();
-    if (rpcData.error) throw new Error(rpcData.error.message);
+    do {
+      const rpcRes = await fetch(rpcUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "suix_getOwnedObjects",
+          params: [
+            admin,
+            { options: { showContent: true, showType: true } },
+            cursor,
+            50,
+          ],
+        }),
+      });
 
-    // 3. FIND THE CETUS POSITION NFT
-    const positionObj = rpcData.result.data.find((obj) => {
-      const type = obj.data?.type || "";
-      const fields = obj.data?.content?.fields || {};
-      return type.includes("::position::Position") && fields.pool === poolId;
-    });
+      const rpcData = await rpcRes.json();
+      if (rpcData.error) throw new Error(rpcData.error.message);
+
+      positionObj = rpcData.result.data.find((obj) => {
+        const type = obj.data?.type || "";
+        const fields = obj.data?.content?.fields || {};
+        return type.endsWith("::position::Position") && fields.pool === poolId;
+      });
+
+      cursor = rpcData.result.hasNextPage ? rpcData.result.nextCursor : null;
+    } while (!positionObj && cursor);
 
     if (!positionObj) {
       return Response.json(

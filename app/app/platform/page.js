@@ -1069,7 +1069,17 @@ function OverviewPanel({ stats }) {
 // Shared Components
 // ============================================================
 
-function Field({ label, value, onChange, placeholder, type = "text", mono, help }) {
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  mono,
+  help,
+  readOnly = false,
+  disabled = false,
+}) {
   return (
     <div>
       <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">
@@ -1080,6 +1090,8 @@ function Field({ label, value, onChange, placeholder, type = "text", mono, help 
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        readOnly={readOnly}
+        disabled={disabled}
         className={`input-field ${mono ? "font-mono text-xs" : ""}`}
       />
       {help && <p className="text-xs text-anansi-muted mt-1">{help}</p>}
@@ -1147,9 +1159,13 @@ function DexPanel({ api }) {
   const [usdcAmount, setUsdcAmount] = useState("1");
   const [commodityAmount, setCommodityAmount] = useState("1");
   const [creating, setCreating] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [quoting, setQuoting] = useState(false);
   const [removing, setRemoving] = useState(null);
   const [result, setResult] = useState(null);
   const [prices, setPrices] = useState({});
+  const [addQuote, setAddQuote] = useState(null);
+  const [quoteError, setQuoteError] = useState("");
 
   // Read registered tokens from env
   const registeredTokens = (process.env.NEXT_PUBLIC_REGISTERED_TOKENS || "NUTMEG")
@@ -1174,6 +1190,58 @@ function DexPanel({ api }) {
       .catch(console.error);
   }, []);
 
+  const selectedPoolId = tokenConfig[tokenSymbol]?.pool;
+  const hasSelectedPool = selectedPoolId && selectedPoolId.trim() !== "";
+
+  useEffect(() => {
+    if (!hasSelectedPool) {
+      setAddQuote(null);
+      setQuoteError("");
+      setQuoting(false);
+      return;
+    }
+
+    const parsedUsdcAmount = parseFloat(usdcAmount);
+    if (!tokenSymbol || !parsedUsdcAmount || parsedUsdcAmount <= 0) {
+      setAddQuote(null);
+      setQuoteError("");
+      setQuoting(false);
+      return;
+    }
+
+    let cancelled = false;
+    setQuoting(true);
+    setQuoteError("");
+
+    fetch("/api/cetus/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        symbol: tokenSymbol,
+        usdcAmount: parsedUsdcAmount,
+        preview: true,
+      }),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to quote liquidity");
+        if (!cancelled) setAddQuote(data.quote || null);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setAddQuote(null);
+          setQuoteError(err.message);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setQuoting(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasSelectedPool, tokenSymbol, usdcAmount, selectedPoolId]);
+
   const handleCreatePool = async (e) => {
     e.preventDefault();
     setCreating(true);
@@ -1193,11 +1261,44 @@ function DexPanel({ api }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create pool");
 
-      setResult({ success: true, poolId: data.poolId, digest: data.digest });
+      setResult({ success: true, mode: "create", poolId: data.poolId, digest: data.digest });
     } catch (err) {
       setResult({ success: false, error: err.message });
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleAddLiquidity = async (e) => {
+    e.preventDefault();
+    setAdding(true);
+    setResult(null);
+
+    try {
+      const res = await fetch("/api/cetus/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symbol: tokenSymbol,
+          usdcAmount: parseFloat(usdcAmount),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add liquidity");
+
+      setResult({
+        success: true,
+        mode: "add",
+        poolId: data.poolId,
+        positionId: data.positionId,
+        digest: data.digest,
+        quote: data.quote,
+      });
+    } catch (err) {
+      setResult({ success: false, error: err.message });
+    } finally {
+      setAdding(false);
     }
   };
 
@@ -1233,6 +1334,11 @@ function DexPanel({ api }) {
   };
 
   const initialPrice = parseFloat(usdcAmount) / parseFloat(commodityAmount) || 0;
+  const referencePrice =
+    prices[tokenSymbol]?.priceUsdc ||
+    (addQuote
+      ? parseFloat(addQuote.estimatedUsdcAmount) / parseFloat(addQuote.estimatedTokenAmount || "0")
+      : 0);
 
   return (
     <div className="space-y-6">
@@ -1246,8 +1352,10 @@ function DexPanel({ api }) {
       <div className="grid md:grid-cols-2 gap-6">
         {/* Left Column: Create Pool Form */}
         <div className="card p-6 border-anansi-red/20">
-          <h3 className="font-semibold mb-4">Initialize New Pool</h3>
-          <form onSubmit={handleCreatePool} className="space-y-4">
+          <h3 className="font-semibold mb-4">
+            {hasSelectedPool ? "Add Liquidity to Existing Pool" : "Initialize New Pool"}
+          </h3>
+          <form onSubmit={hasSelectedPool ? handleAddLiquidity : handleCreatePool} className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">
                 Commodity Token
@@ -1273,29 +1381,84 @@ function DexPanel({ api }) {
                 onChange={setUsdcAmount}
                 type="number"
                 placeholder="10"
+                help={
+                  hasSelectedPool
+                    ? "Fixed side. The matching token amount is quoted automatically."
+                    : undefined
+                }
               />
               <Field
-                label={`${tokenSymbol || "Token"} Deposit`}
-                value={commodityAmount}
+                label={`${tokenSymbol || "Token"} ${hasSelectedPool ? "Required" : "Deposit"}`}
+                value={hasSelectedPool ? (addQuote?.estimatedTokenAmount ?? "") : commodityAmount}
                 onChange={setCommodityAmount}
                 type="number"
                 placeholder="10"
+                readOnly={hasSelectedPool}
+                disabled={hasSelectedPool}
+                help={
+                  hasSelectedPool
+                    ? quoting
+                      ? "Quoting required token amount..."
+                      : quoteError
+                        ? `Quote failed: ${quoteError}`
+                        : addQuote
+                          ? `Estimated from current pool price. Max spend with slippage buffer: ${addQuote.maxTokenAmount} ${tokenSymbol}.`
+                          : "Enter a USDC amount to calculate the matching token deposit."
+                    : undefined
+                }
               />
             </div>
 
             <div className="p-3 bg-anansi-light rounded-lg text-xs flex justify-between items-center">
-              <span className="text-anansi-muted">Initial Price:</span>
+              <span className="text-anansi-muted">
+                {hasSelectedPool ? "Reference Price:" : "Initial Price:"}
+              </span>
               <span className="font-semibold text-anansi-black">
-                ${initialPrice.toFixed(4)} USDC
+                ${(hasSelectedPool ? referencePrice : initialPrice).toFixed(4)} USDC
               </span>
             </div>
 
+            {hasSelectedPool && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs">
+                <span className="text-emerald-800 font-medium block mb-1">Active Pool Detected</span>
+                <span className="font-mono text-[10px] text-emerald-700 break-all">
+                  {selectedPoolId}
+                </span>
+                {addQuote && (
+                  <div className="mt-2 text-emerald-800 space-y-1">
+                    <div>
+                      You will deposit approximately {addQuote.estimatedUsdcAmount} USDC and{" "}
+                      {addQuote.estimatedTokenAmount} {tokenSymbol}.
+                    </div>
+                    <div className="text-[10px] text-emerald-700">
+                      Max spend with slippage buffer: {addQuote.maxUsdcAmount} USDC and{" "}
+                      {addQuote.maxTokenAmount} {tokenSymbol}.
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={creating || !tokenSymbol || !usdcAmount || !commodityAmount}
+              disabled={
+                creating ||
+                adding ||
+                quoting ||
+                !tokenSymbol ||
+                !usdcAmount ||
+                (!hasSelectedPool && !commodityAmount) ||
+                (hasSelectedPool && (!addQuote || !!quoteError))
+              }
               className="w-full px-6 py-2.5 bg-anansi-red text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-anansi-red-light transition-colors active:scale-[0.98]"
             >
-              {creating ? "Deploying to Cetus..." : "Create Liquidity Pool"}
+              {hasSelectedPool
+                ? adding
+                  ? "Adding Liquidity..."
+                  : "Add Liquidity"
+                : creating
+                  ? "Deploying to Cetus..."
+                  : "Create Liquidity Pool"}
             </button>
           </form>
 
@@ -1303,13 +1466,33 @@ function DexPanel({ api }) {
             <ResultBanner
               result={result}
               successMsg={
-                <>
-                  <span className="font-medium block mb-1">Pool Created Successfully!</span>
-                  <span className="font-mono text-[10px] block truncate">ID: {result.poolId}</span>
-                  <span className="text-xs text-anansi-muted mt-2 block">
-                    Add this ID to NEXT_PUBLIC_TOKEN_CONFIG in .env.local and restart the server.
-                  </span>
-                </>
+                result.mode === "add" ? (
+                  <>
+                    <span className="font-medium block mb-1">Liquidity Added Successfully!</span>
+                    <span className="font-mono text-[10px] block truncate">
+                      Pool: {result.poolId}
+                    </span>
+                    {result.quote && (
+                      <span className="text-xs text-anansi-muted mt-2 block">
+                        Deposited {result.quote.estimatedUsdcAmount} USDC and{" "}
+                        {result.quote.estimatedTokenAmount} {tokenSymbol}.
+                      </span>
+                    )}
+                    {result.positionId && (
+                      <span className="font-mono text-[10px] block truncate mt-1">
+                        Position: {result.positionId}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <span className="font-medium block mb-1">Pool Created Successfully!</span>
+                    <span className="font-mono text-[10px] block truncate">ID: {result.poolId}</span>
+                    <span className="text-xs text-anansi-muted mt-2 block">
+                      Add this ID to NEXT_PUBLIC_TOKEN_CONFIG in .env.local and restart the server.
+                    </span>
+                  </>
+                )
               }
             />
           )}
