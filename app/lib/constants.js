@@ -95,6 +95,24 @@ function buildTokenRegistry() {
     };
   }
 
+  // Special handling for CARIB: if env vars are set, register it as a core token
+  const caribType = process.env.NEXT_PUBLIC_CARIB_TYPE || "";
+  const caribPoolId = process.env.NEXT_PUBLIC_CARIB_POOL_ID || "";
+
+  if (caribType) {
+    registry.CARIB = {
+      symbol: "CARIB",
+      moduleName: MODULES.CARIB_COIN,
+      packageId: caribType.split("::")[0] || PACKAGE_ID,
+      type: caribType,
+      decimals: 6,
+      mintVaultId: "",
+      poolId: caribPoolId,
+      hasPool: !!caribPoolId,
+      isCoreToken: true,
+    };
+  }
+
   return registry;
 }
 
