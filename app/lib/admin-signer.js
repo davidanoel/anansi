@@ -7,6 +7,7 @@ import { CetusClmmSDK } from "@cetusprotocol/sui-clmm-sdk";
 import { Transaction } from "@mysten/sui/transactions";
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { USDC_TYPE, getToken } from "./constants";
+import Decimal from "decimal.js";
 
 let client = null;
 let keypair = null;

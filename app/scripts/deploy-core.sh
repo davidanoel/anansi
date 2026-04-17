@@ -82,9 +82,7 @@ try:
             obj_id = change.get('objectId', '')
 
             # Match exact struct names so Admin objects do not get mistaken for shared objects.
-            if obj_type.endswith('::asset_pool::RegistryAdmin'):
-                objects['REGISTRY_ADMIN_ID'] = obj_id
-            elif obj_type.endswith('::asset_pool::Registry'):
+            if obj_type.endswith('::asset_pool::Registry'):
                 objects['NEXT_PUBLIC_REGISTRY_ID'] = obj_id
             elif obj_type.endswith('::yield_engine::YieldEngine'):
                 objects['NEXT_PUBLIC_YIELD_ENGINE_ID'] = obj_id
