@@ -25,6 +25,7 @@ export const MODULES = {
   COMPLIANCE: "compliance",
   PLATFORM: "platform",
   COMMODITY_REGISTRY: "commodity_registry",
+  FEE_CONVERTER: "fee_converter",
 };
 
 // USDC on Sui

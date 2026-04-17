@@ -80,17 +80,26 @@ try:
         elif change.get('type') == 'created':
             obj_type = change.get('objectType', '')
             obj_id = change.get('objectId', '')
-            
-            if '::asset_pool::Registry' in obj_type: objects['NEXT_PUBLIC_REGISTRY_ID'] = obj_id
-            elif '::yield_engine::YieldEngine' in obj_type: objects['NEXT_PUBLIC_YIELD_ENGINE_ID'] = obj_id
-            elif '::compliance::ComplianceRegistry' in obj_type: objects['NEXT_PUBLIC_COMPLIANCE_ID'] = obj_id
-            elif '::platform::Platform' in obj_type: objects['NEXT_PUBLIC_PLATFORM_ID'] = obj_id
-            elif '::carib_coin::Treasury' in obj_type: objects['NEXT_PUBLIC_CARIB_TREASURY_ID'] = obj_id
-            elif '::fee_converter::FeeConverter' in obj_type: objects['NEXT_PUBLIC_FEE_CONVERTER_ID'] = obj_id
-            elif '::commodity_registry::CommodityRegistry' in obj_type and 'Admin' not in obj_type: 
-                objects['NEXT_PUBLIC_COMMODITY_REGISTRY_ID'] = obj_id
-            elif '::commodity_registry::CommodityRegistryAdmin' in obj_type: 
+
+            # Match exact struct names so Admin objects do not get mistaken for shared objects.
+            if obj_type.endswith('::asset_pool::RegistryAdmin'):
+                objects['REGISTRY_ADMIN_ID'] = obj_id
+            elif obj_type.endswith('::asset_pool::Registry'):
+                objects['NEXT_PUBLIC_REGISTRY_ID'] = obj_id
+            elif obj_type.endswith('::yield_engine::YieldEngine'):
+                objects['NEXT_PUBLIC_YIELD_ENGINE_ID'] = obj_id
+            elif obj_type.endswith('::compliance::ComplianceRegistry'):
+                objects['NEXT_PUBLIC_COMPLIANCE_ID'] = obj_id
+            elif obj_type.endswith('::platform::Platform'):
+                objects['NEXT_PUBLIC_PLATFORM_ID'] = obj_id
+            elif obj_type.endswith('::carib_coin::Treasury'):
+                objects['NEXT_PUBLIC_CARIB_TREASURY_ID'] = obj_id
+            elif obj_type.endswith('::fee_converter::FeeConverter'):
+                objects['NEXT_PUBLIC_FEE_CONVERTER_ID'] = obj_id
+            elif obj_type.endswith('::commodity_registry::CommodityRegistryAdmin'):
                 objects['COMMODITY_REGISTRY_ADMIN_ID'] = obj_id
+            elif obj_type.endswith('::commodity_registry::CommodityRegistry'):
+                objects['NEXT_PUBLIC_COMMODITY_REGISTRY_ID'] = obj_id
 
     if not pkg_id:
         print('❌ ERROR: Could not find packageId in the deployment JSON.', file=sys.stderr)
