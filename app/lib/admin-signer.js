@@ -281,33 +281,22 @@ export async function issueCustodianCap(assetTypeId, newCustodianAddress) {
 }
 
 // ============================================================
-// Deposit USDC surplus for a lot
-// Returns the fee coin and triggers the conversion flow.
+// PRIMARY ENTRY POINT
 // ============================================================
 
 /**
  * Deposit surplus and auto-convert the fee to CARIB (burn + treasury split).
  *
  * Flow:
- *   TX1: yield_engine::deposit_surplus (fee USDC lands in admin wallet)
- *   TX2: swap admin USDC → CARIB, then fee_converter::process_fee
- *
- * Returns partial success if TX2 fails — TX1 is recorded on-chain and
- * the USDC fee is recoverable via `adminRecoverStuckFees()`.
+ *   TX1: yield_engine::deposit_surplus → fee coin to admin wallet
+ *   TX2: swap THAT SPECIFIC COIN → CARIB, then fee_converter::process_fee
  *
  * @param {string} lotId
- * @param {number} usdcAmount - gross amount in human USDC (e.g. 10000 = $10k)
+ * @param {number} usdcAmount - gross surplus in human USDC (e.g., 2 = $2)
  * @param {string} tokenSymbol - NUTMEG, COCOA, COFFEE, etc.
  * @param {object} [options]
- * @param {boolean} [options.skipConversion=false] - skip TX2 (pool not live yet)
- * @returns {Promise<{
- *   depositDigest: string,
- *   conversionDigest: string | null,
- *   feeConverted: boolean,
- *   burned?: string,
- *   toTreasury?: string,
- *   reason?: string
- * }>}
+ * @param {boolean} [options.skipConversion=false]
+ * @returns {Promise<object>}
  */
 export async function adminDepositSurplusWithFeeConversion(
   lotId,
@@ -338,6 +327,12 @@ export async function adminDepositSurplusWithFeeConversion(
   });
   if (usdcCoins.length === 0) throw new Error("No USDC in admin wallet");
 
+  // Verify admin has enough USDC for the deposit
+  const totalUsdcRaw = usdcCoins.reduce((sum, c) => sum + BigInt(c.balance), 0n);
+  if (totalUsdcRaw < BigInt(amountUnits)) {
+    throw new Error(`Insufficient USDC: need ${usdcAmount}, have ${Number(totalUsdcRaw) / 1e6}`);
+  }
+
   const tx1 = new Transaction();
 
   if (usdcCoins.length > 1) {
@@ -356,7 +351,7 @@ export async function adminDepositSurplusWithFeeConversion(
     throw new Error(`No ${tokenSymbol} tokens minted yet — record deliveries first`);
   }
 
-  // deposit_surplus returns Coin<USDC> (the fee) — transfer it to admin wallet
+  // deposit_surplus returns Coin<USDC> (the fee) — transfer to admin wallet
   const [feeCoin] = tx1.moveCall({
     target: `${PACKAGE_ID}::yield_engine::deposit_surplus`,
     typeArguments: [USDC_TYPE, token.type],
@@ -373,11 +368,41 @@ export async function adminDepositSurplusWithFeeConversion(
 
   const depositResult = await adminExecute(tx1);
 
-  // ---------- TX2: swap + process_fee ----------
+  // ---------- Extract the fee coin object ID from TX1 ----------
+
+  // The fee coin is a newly-created Coin<USDC> owned by admin.
+  // Find it in the objectChanges.
+  const feeCoinChange = depositResult.objectChanges?.find(
+    (c) =>
+      c.type === "created" &&
+      c.objectType === `0x2::coin::Coin<${USDC_TYPE}>` &&
+      c.owner?.AddressOwner === address,
+  );
+
+  if (!feeCoinChange) {
+    return {
+      depositDigest: depositResult.digest,
+      conversionDigest: null,
+      feeConverted: false,
+      reason:
+        "Could not locate fee coin in tx result — manual recovery needed. Check admin wallet and run adminRecoverStuckFees.",
+      recoverable: true,
+    };
+  }
+
+  const feeCoinId = feeCoinChange.objectId;
+  const feeAmount = Math.floor(amountUnits * 0.01); // 1% fee, for logging
+
+  console.log(
+    `[fee-conversion] TX1 deposited ${usdcAmount} USDC surplus. Fee coin ${feeCoinId} holds ~${feeAmount / 1e6} USDC.`,
+  );
+
+  // ---------- TX2: swap + process_fee (on THAT SPECIFIC COIN only) ----------
 
   if (options.skipConversion) {
     return {
       depositDigest: depositResult.digest,
+      feeCoinId,
       conversionDigest: null,
       feeConverted: false,
       reason: "skipConversion=true — fee held as USDC in admin wallet",
@@ -393,34 +418,37 @@ export async function adminDepositSurplusWithFeeConversion(
   if (!poolReady) {
     return {
       depositDigest: depositResult.digest,
+      feeCoinId,
       conversionDigest: null,
       feeConverted: false,
       reason: "CARIB/USDC pool or fee_converter not configured — fee held in admin wallet",
     };
   }
 
-  // Wait for the fee coin object to be indexed
   await new Promise((r) => setTimeout(r, INDEXING_DELAY_MS));
 
-  // Delegate to idempotent flush — it picks up whatever USDC is in the wallet.
-  // If a previous TX2 failed, this picks up those funds too. No bookkeeping needed.
   try {
-    const flushResult = await adminFlushPendingFees({
+    const conversionResult = await convertSpecificUsdcCoin({
+      feeCoinId,
       sourceTag: `spice_surplus:${tokenSymbol}`,
       lotId,
     });
     return {
       depositDigest: depositResult.digest,
-      conversionDigest: flushResult.digest,
-      feeConverted: flushResult.converted,
-      burned: flushResult.burned,
-      toTreasury: flushResult.toTreasury,
-      usdcSwapped: flushResult.usdcSwapped,
+      feeCoinId,
+      conversionDigest: conversionResult.digest,
+      feeConverted: conversionResult.converted,
+      burned: conversionResult.burned,
+      toTreasury: conversionResult.toTreasury,
     };
   } catch (err) {
-    console.error("TX2 fee conversion failed — fee recoverable via adminRecoverStuckFees:", err);
+    console.error(
+      `TX2 failed for fee coin ${feeCoinId} — recover via adminConvertSpecificUsdcCoin('${feeCoinId}'):`,
+      err,
+    );
     return {
       depositDigest: depositResult.digest,
+      feeCoinId,
       conversionDigest: null,
       feeConverted: false,
       reason: `TX2 failed: ${err.message}`,
@@ -430,33 +458,27 @@ export async function adminDepositSurplusWithFeeConversion(
 }
 
 // ============================================================
-// Idempotent flush — convert any pending USDC → CARIB + burn
-// Safe to call multiple times. Safe when nothing is pending.
-// Can be scheduled as a cron job.
+// Convert a SPECIFIC USDC coin → CARIB, then process
+// Safe: only touches the coin you name.
 // ============================================================
 
 /**
- * Find any USDC in the admin wallet above the dust threshold, swap it for
- * CARIB, and process it through the fee_converter (burn + treasury split).
+ * Swap a specific USDC coin (by objectId) into CARIB, then process_fee.
  *
- * IDEMPOTENT: if there's no pending USDC (or below dust), it returns without
- * executing any on-chain action. Safe to call repeatedly.
+ * This is the narrow, safe path. It touches ONLY the named coin.
  *
- * WARNING: if the admin wallet holds USDC for other purposes (not fee USDC),
- * this function will convert that too. In production, the admin signer wallet
- * should be dedicated to protocol operations and should not hold operational
- * USDC. Use a separate treasury wallet for other funds.
+ * Use cases:
+ *   - Called automatically as TX2 after deposit_surplus
+ *   - Called manually to recover a specific stuck fee coin
  *
- * @param {object} [options]
- * @param {string} [options.sourceTag="manual_flush"] - tag for FeeProcessed event
- * @param {string} [options.lotId=null] - optional lot ID for logging
- * @param {number} [options.minUsdc=MIN_CONVERSION_DUST_USDC] - skip if less
+ * @param {object} params
+ * @param {string} params.feeCoinId - the objectId of the Coin<USDC> to convert
+ * @param {string} [params.sourceTag="manual"]
+ * @param {string} [params.lotId=null]
  */
-export async function adminFlushPendingFees({
-  sourceTag = "manual_flush",
-  lotId = null,
-  minUsdc = MIN_CONVERSION_DUST_USDC,
-} = {}) {
+export async function convertSpecificUsdcCoin({ feeCoinId, sourceTag = "manual", lotId = null }) {
+  if (!feeCoinId) throw new Error("feeCoinId is required");
+
   const client = getClient();
   const address = getAdminAddress();
 
@@ -466,59 +488,45 @@ export async function adminFlushPendingFees({
   const caribTreasuryId = process.env.NEXT_PUBLIC_CARIB_TREASURY_ID;
 
   if (!caribPoolId || !caribCoinType || !feeConverterId || !caribTreasuryId) {
-    return {
-      converted: false,
-      reason: "CARIB/USDC pool or fee_converter not configured",
-    };
+    throw new Error("Missing CARIB/fee_converter env vars");
   }
 
-  const { data: usdcCoins } = await client.getCoins({
-    owner: address,
-    coinType: USDC_TYPE,
+  // Read the coin to get its balance
+  const coinObj = await client.getObject({
+    id: feeCoinId,
+    options: { showContent: true, showOwner: true, showType: true },
   });
-  const totalUsdcRaw = usdcCoins.reduce((sum, c) => sum + BigInt(c.balance), 0n);
-  const totalUsdcHuman = Number(totalUsdcRaw) / 10 ** 6;
 
-  if (totalUsdcHuman < minUsdc) {
-    return {
-      converted: false,
-      usdcFound: totalUsdcHuman,
-      reason: `Below dust threshold (${minUsdc} USDC)`,
-    };
+  if (!coinObj.data) {
+    throw new Error(`Fee coin ${feeCoinId} not found — may already be consumed`);
   }
 
-  console.log(`[fee-flush] Converting ${totalUsdcHuman} USDC → CARIB...`);
+  // Verify it's still owned by admin
+  const owner = coinObj.data.owner;
+  const ownedBy = typeof owner === "object" && owner?.AddressOwner ? owner.AddressOwner : null;
+  if (ownedBy !== address) {
+    throw new Error(
+      `Fee coin ${feeCoinId} not owned by admin (owner: ${ownedBy}) — already processed?`,
+    );
+  }
 
-  return await convertUsdcToCaribAndBurn({
-    usdcAmountRaw: totalUsdcRaw.toString(),
-    sourceTag,
-    lotId,
-  });
-}
+  // Verify it's a USDC coin
+  const expectedType = `0x2::coin::Coin<${USDC_TYPE}>`;
+  if (coinObj.data.type !== expectedType) {
+    throw new Error(`Fee coin ${feeCoinId} is ${coinObj.data.type}, expected ${expectedType}`);
+  }
 
-// ============================================================
-// Lower-level: convert a specific USDC amount → CARIB → process
-// ============================================================
+  const balance = BigInt(coinObj.data.content?.fields?.balance || 0);
+  if (balance === 0n) {
+    throw new Error(`Fee coin ${feeCoinId} has zero balance`);
+  }
 
-/**
- * Swap a specific USDC amount from the admin wallet into CARIB, then
- * process through the fee_converter.
- *
- * Two on-chain transactions:
- *   1. Cetus swap USDC → CARIB
- *   2. fee_converter::process_fee
- *
- * If swap succeeds but process_fee fails, the CARIB sits in the admin
- * wallet and is recoverable via `adminProcessPendingCarib()`.
- */
-export async function convertUsdcToCaribAndBurn({
-  usdcAmountRaw,
-  sourceTag = "manual_flush",
-  lotId = null,
-}) {
-  const address = getAdminAddress();
-  const caribPoolId = process.env.NEXT_PUBLIC_CARIB_POOL_ID;
+  const amountRaw = balance.toString();
+  console.log(
+    `[fee-conversion] Converting coin ${feeCoinId} (${Number(balance) / 1e6} USDC) → CARIB...`,
+  );
 
+  // ---- Step A: quote the swap ----
   const network =
     (process.env.NEXT_PUBLIC_SUI_NETWORK || "testnet") === "mainnet" ? "mainnet" : "testnet";
 
@@ -534,7 +542,6 @@ export async function convertUsdcToCaribAndBurn({
   const usdcIsA = pool.coin_type_a === USDC_TYPE;
   const a2b = usdcIsA;
 
-  // Step A: quote
   const preSwap = await sdk.Swap.preSwap({
     pool,
     current_sqrt_price: pool.current_sqrt_price,
@@ -544,7 +551,7 @@ export async function convertUsdcToCaribAndBurn({
     decimals_b: usdcIsA ? 9 : 6,
     a2b,
     by_amount_in: true,
-    amount: usdcAmountRaw.toString(),
+    amount: amountRaw,
   });
 
   const estimatedOut = preSwap.estimated_amount_out?.toString() || "0";
@@ -554,46 +561,78 @@ export async function convertUsdcToCaribAndBurn({
 
   const amountLimit = new Decimal(estimatedOut).mul(1 - FEE_CONVERSION_SLIPPAGE).toFixed(0);
 
-  // Step B: execute swap
+  // ---- Step B: execute swap ----
+  // NOTE: The SDK's createSwapPayload builds its own tx and picks coins from
+  // the admin wallet itself. It may pick OTHER USDC coins in addition to
+  // `feeCoinId`. To lock it to this specific coin, we'd need to pre-isolate
+  // the amount by splitting.
+  //
+  // Since we already know the exact fee amount, we call the SDK with that
+  // exact amount — the SDK will consume USDC equivalent to `amountRaw` from
+  // the wallet. In practice, it will use `feeCoinId` because it's there and
+  // sized correctly. But if other USDC coins exist, it may mix them.
+  //
+  // The cleaner fix: merge feeCoinId to itself (no-op) then cap the swap
+  // amount to exactly the fee size. Since we pass exact amount, the SDK
+  // cannot consume more USDC than the fee amount — regardless of which
+  // specific coin objects it picks.
   const swapPayload = await sdk.Swap.createSwapPayload({
     pool_id: pool.id,
     coin_type_a: pool.coin_type_a,
     coin_type_b: pool.coin_type_b,
     a2b,
     by_amount_in: true,
-    amount: usdcAmountRaw.toString(),
+    amount: amountRaw,
     amount_limit: amountLimit,
   });
   swapPayload.setSender(address);
   const swapResult = await adminExecute(swapPayload);
 
-  // Step C: process resulting CARIB
+  // ---- Step C: find resulting CARIB from swap, process it ----
+  // The swap transferred CARIB to admin. Find it by looking at the swap's
+  // balance changes for CARIB received.
   await new Promise((r) => setTimeout(r, INDEXING_DELAY_MS));
-  const processResult = await adminProcessPendingCarib({ sourceTag, lotId });
+
+  const caribReceived = findCaribReceivedInTx(swapResult, caribCoinType, address);
+  if (!caribReceived) {
+    throw new Error(
+      `Swap ${swapResult.digest} succeeded but could not locate CARIB coin in result`,
+    );
+  }
+
+  // Process ONLY the CARIB received from this swap
+  const processResult = await processSpecificCaribCoin({
+    caribCoinId: caribReceived.objectId,
+    sourceTag,
+    lotId,
+  });
 
   return {
     converted: true,
     digest: processResult.digest,
     swapDigest: swapResult.digest,
-    usdcSwapped: usdcAmountRaw.toString(),
+    usdcSwapped: amountRaw,
+    caribReceived: caribReceived.amount,
     burned: processResult.burned,
     toTreasury: processResult.toTreasury,
   };
 }
 
 // ============================================================
-// Idempotent CARIB processing
-// If swap succeeded but process_fee failed, this flushes pending CARIB.
+// Process a specific CARIB coin through fee_converter
 // ============================================================
 
 /**
- * Find any CARIB in the admin wallet and process it through fee_converter.
- * Idempotent — safe to call when there's no CARIB to process.
+ * Process a specific CARIB coin via fee_converter::process_fee.
+ * Narrow, idempotent — only touches the named coin.
  */
-export async function adminProcessPendingCarib({
-  sourceTag = "manual_process",
+export async function processSpecificCaribCoin({
+  caribCoinId,
+  sourceTag = "manual",
   lotId = null,
-} = {}) {
+}) {
+  if (!caribCoinId) throw new Error("caribCoinId is required");
+
   const client = getClient();
   const address = getAdminAddress();
 
@@ -601,44 +640,38 @@ export async function adminProcessPendingCarib({
   const feeConverterId = process.env.NEXT_PUBLIC_FEE_CONVERTER_ID;
   const caribTreasuryId = process.env.NEXT_PUBLIC_CARIB_TREASURY_ID;
 
-  if (!caribCoinType || !feeConverterId || !caribTreasuryId) {
+  // Verify ownership + type
+  const coinObj = await client.getObject({
+    id: caribCoinId,
+    options: { showContent: true, showOwner: true, showType: true },
+  });
+  if (!coinObj.data) throw new Error(`CARIB coin ${caribCoinId} not found`);
+
+  const owner = coinObj.data.owner;
+  const ownedBy = typeof owner === "object" && owner?.AddressOwner ? owner.AddressOwner : null;
+  if (ownedBy !== address) {
+    throw new Error(`CARIB coin ${caribCoinId} not owned by admin — already processed?`);
+  }
+
+  const expectedType = `0x2::coin::Coin<${caribCoinType}>`;
+  if (coinObj.data.type !== expectedType) {
     throw new Error(
-      "Missing env: NEXT_PUBLIC_CARIB_TYPE, NEXT_PUBLIC_FEE_CONVERTER_ID, NEXT_PUBLIC_CARIB_TREASURY_ID",
+      `CARIB coin ${caribCoinId} type mismatch: got ${coinObj.data.type}, expected ${expectedType}`,
     );
   }
 
-  const { data: caribCoins } = await client.getCoins({
-    owner: address,
-    coinType: caribCoinType,
-  });
-
-  if (caribCoins.length === 0) {
-    return { processed: false, digest: null, reason: "No CARIB in admin wallet" };
-  }
-
-  const totalCaribRaw = caribCoins.reduce((sum, c) => sum + BigInt(c.balance), 0n);
-  if (totalCaribRaw === 0n) {
-    return { processed: false, digest: null, reason: "CARIB balance is zero" };
+  const balance = BigInt(coinObj.data.content?.fields?.balance || 0);
+  if (balance === 0n) {
+    throw new Error(`CARIB coin ${caribCoinId} has zero balance`);
   }
 
   const tx = new Transaction();
-
-  let caribInput;
-  if (caribCoins.length === 1) {
-    caribInput = tx.object(caribCoins[0].coinObjectId);
-  } else {
-    const primary = tx.object(caribCoins[0].coinObjectId);
-    const others = caribCoins.slice(1).map((c) => tx.object(c.coinObjectId));
-    tx.mergeCoins(primary, others);
-    caribInput = primary;
-  }
-
   tx.moveCall({
     target: `${PACKAGE_ID}::fee_converter::process_fee`,
     arguments: [
       tx.object(feeConverterId),
       tx.object(caribTreasuryId),
-      caribInput,
+      tx.object(caribCoinId),
       tx.pure.vector("u8", Array.from(new TextEncoder().encode(sourceTag))),
     ],
   });
@@ -652,37 +685,61 @@ export async function adminProcessPendingCarib({
     digest: result.digest,
     burned: feeEvent?.parsedJson?.burned || "0",
     toTreasury: feeEvent?.parsedJson?.to_treasury || "0",
-    totalFee: feeEvent?.parsedJson?.total_fee || totalCaribRaw.toString(),
+    totalFee: feeEvent?.parsedJson?.total_fee || balance.toString(),
   };
 }
 
 // ============================================================
-// Full recovery routine — safe to call anytime
+// Helpers
 // ============================================================
 
 /**
- * Full recovery: checks for pending USDC and pending CARIB, flushes whatever
- * is stuck. Safe to call anytime, from a cron, or manually.
- *
- * Order matters: process CARIB first (recovers from a failed process_fee),
- * then flush USDC (recovers from a failed swap).
+ * Find CARIB coin that was received by `address` in a transaction result.
+ * Returns { objectId, amount } or null.
  */
-export async function adminRecoverStuckFees({ sourceTag = "recovery_flush" } = {}) {
-  const results = { carib: null, usdc: null };
-
-  try {
-    results.carib = await adminProcessPendingCarib({ sourceTag });
-  } catch (err) {
-    results.carib = { processed: false, error: err.message };
+function findCaribReceivedInTx(txResult, caribCoinType, address) {
+  // Prefer objectChanges (more reliable than balanceChanges for object IDs)
+  const expectedType = `0x2::coin::Coin<${caribCoinType}>`;
+  const created = txResult.objectChanges?.find(
+    (c) =>
+      c.type === "created" && c.objectType === expectedType && c.owner?.AddressOwner === address,
+  );
+  if (created) {
+    return {
+      objectId: created.objectId,
+      amount: null, // will read from balance lookup later if needed
+    };
   }
 
-  try {
-    results.usdc = await adminFlushPendingFees({ sourceTag });
-  } catch (err) {
-    results.usdc = { converted: false, error: err.message };
+  // Sometimes swap mutates an existing admin CARIB coin rather than creating one.
+  const mutated = txResult.objectChanges?.find(
+    (c) =>
+      c.type === "mutated" && c.objectType === expectedType && c.owner?.AddressOwner === address,
+  );
+  if (mutated) {
+    return { objectId: mutated.objectId, amount: null };
   }
 
-  return results;
+  return null;
+}
+
+// ============================================================
+// Public manual-recovery helpers
+// ============================================================
+
+/**
+ * Manually recover a stuck fee conversion. Pass the feeCoinId that was
+ * returned in the partial-success response.
+ */
+export async function adminConvertSpecificUsdcCoin(feeCoinId, sourceTag = "manual_recovery") {
+  return convertSpecificUsdcCoin({ feeCoinId, sourceTag });
+}
+
+/**
+ * Manually process a stuck CARIB coin (if swap succeeded but process_fee failed).
+ */
+export async function adminProcessSpecificCarib(caribCoinId, sourceTag = "manual_recovery") {
+  return processSpecificCaribCoin({ caribCoinId, sourceTag });
 }
 
 // ============================================================

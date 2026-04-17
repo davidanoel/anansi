@@ -130,7 +130,12 @@ public fun process_fee(
     assert!(total_fee > 0, EZeroFee);
 
     // Calculate split
-    let burn_amount = (total_fee * converter.burn_bps) / BPS_DENOMINATOR;
+
+    // Use u128 for intermediate multiplication to avoid u64 overflow.
+    // total_fee * burn_bps can exceed u64 for large fee amounts
+    // (e.g., >1.8M CARIB with burn_bps=10000).
+    let burn_amount =
+        (((total_fee as u128) * (converter.burn_bps as u128)) / (BPS_DENOMINATOR as u128)) as u64;
     let treasury_amount = total_fee - burn_amount;
 
     // Burn the burn portion (if any)
