@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import PlatformAnalyticsPanel from "../../components/PlatformAnalyticsPanel";
+import { TOKEN_REGISTRY } from "../../lib/constants";
 
 export default function PlatformPage() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -1167,13 +1168,8 @@ function DexPanel({ api }) {
   const [addQuote, setAddQuote] = useState(null);
   const [quoteError, setQuoteError] = useState("");
 
-  // Read registered tokens from env
-  const registeredTokens = (process.env.NEXT_PUBLIC_REGISTERED_TOKENS || "NUTMEG")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  const tokenConfig = JSON.parse(process.env.NEXT_PUBLIC_TOKEN_CONFIG || "{}");
+  // Read DEX tokens from the shared registry so CARIB can be included cleanly.
+  const registeredTokens = Object.keys(TOKEN_REGISTRY);
 
   // EFFECT 1: Set initial token selection (Dependencies: stringified array to prevent loops)
   useEffect(() => {
@@ -1190,7 +1186,7 @@ function DexPanel({ api }) {
       .catch(console.error);
   }, []);
 
-  const selectedPoolId = tokenConfig[tokenSymbol]?.pool;
+  const selectedPoolId = TOKEN_REGISTRY[tokenSymbol]?.poolId || "";
   const hasSelectedPool = selectedPoolId && selectedPoolId.trim() !== "";
 
   useEffect(() => {
@@ -1355,7 +1351,10 @@ function DexPanel({ api }) {
           <h3 className="font-semibold mb-4">
             {hasSelectedPool ? "Add Liquidity to Existing Pool" : "Initialize New Pool"}
           </h3>
-          <form onSubmit={hasSelectedPool ? handleAddLiquidity : handleCreatePool} className="space-y-4">
+          <form
+            onSubmit={hasSelectedPool ? handleAddLiquidity : handleCreatePool}
+            className="space-y-4"
+          >
             <div>
               <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">
                 Commodity Token
@@ -1414,13 +1413,15 @@ function DexPanel({ api }) {
                 {hasSelectedPool ? "Reference Price:" : "Initial Price:"}
               </span>
               <span className="font-semibold text-anansi-black">
-                ${(hasSelectedPool ? referencePrice : initialPrice).toFixed(4)} USDC
+                ${(hasSelectedPool ? referencePrice : initialPrice).toFixed(6)} USDC
               </span>
             </div>
 
             {hasSelectedPool && (
               <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs">
-                <span className="text-emerald-800 font-medium block mb-1">Active Pool Detected</span>
+                <span className="text-emerald-800 font-medium block mb-1">
+                  Active Pool Detected
+                </span>
                 <span className="font-mono text-[10px] text-emerald-700 break-all">
                   {selectedPoolId}
                 </span>
@@ -1487,7 +1488,9 @@ function DexPanel({ api }) {
                 ) : (
                   <>
                     <span className="font-medium block mb-1">Pool Created Successfully!</span>
-                    <span className="font-mono text-[10px] block truncate">ID: {result.poolId}</span>
+                    <span className="font-mono text-[10px] block truncate">
+                      ID: {result.poolId}
+                    </span>
                     <span className="text-xs text-anansi-muted mt-2 block">
                       Add this ID to NEXT_PUBLIC_TOKEN_CONFIG in .env.local and restart the server.
                     </span>
@@ -1502,7 +1505,8 @@ function DexPanel({ api }) {
         <div className="space-y-3">
           <h3 className="font-semibold mb-2">Live Pools</h3>
           {registeredTokens.map((symbol) => {
-            const hasPool = tokenConfig[symbol]?.pool && tokenConfig[symbol].pool.trim() !== "";
+            const poolId = TOKEN_REGISTRY[symbol]?.poolId || "";
+            const hasPool = poolId.trim() !== "";
             const livePrice = prices[symbol]?.priceUsdc;
 
             return (
@@ -1524,7 +1528,7 @@ function DexPanel({ api }) {
                 {hasPool ? (
                   <div className="mt-3 pt-3 border-t border-anansi-border flex justify-between items-center">
                     <p className="text-[10px] font-mono text-anansi-muted truncate mr-4">
-                      {tokenConfig[symbol].pool}
+                      {poolId}
                     </p>
                     <button
                       onClick={() => handleRemoveLiquidity(symbol)}

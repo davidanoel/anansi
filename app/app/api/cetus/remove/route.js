@@ -19,8 +19,7 @@ export async function POST(req) {
     }
     const COMMODITY_TYPE = token.type;
 
-    const tokenConfig = JSON.parse(process.env.NEXT_PUBLIC_TOKEN_CONFIG || "{}");
-    const poolId = tokenConfig[symbol]?.pool;
+    const poolId = token.poolId;
 
     if (!poolId || poolId.trim() === "") {
       return Response.json({ error: `No active pool configured for ${symbol}` }, { status: 400 });

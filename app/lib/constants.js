@@ -95,6 +95,23 @@ function buildTokenRegistry() {
     };
   }
 
+  const caribType = process.env.NEXT_PUBLIC_CARIB_TYPE || "";
+  if (caribType) {
+    const [packageId = "0x0", moduleName = "carib_coin", typeName = "CARIB_COIN"] =
+      caribType.split("::");
+
+    registry.CARIB = {
+      symbol: "CARIB",
+      moduleName,
+      packageId,
+      type: `${packageId}::${moduleName}::${typeName}`,
+      decimals: 6,
+      mintVaultId: "0x0",
+      poolId: process.env.NEXT_PUBLIC_CARIB_POOL_ID || "",
+      hasPool: !!process.env.NEXT_PUBLIC_CARIB_POOL_ID,
+    };
+  }
+
   return registry;
 }
 
