@@ -86,6 +86,7 @@ try:
             elif '::compliance::ComplianceRegistry' in obj_type: objects['NEXT_PUBLIC_COMPLIANCE_ID'] = obj_id
             elif '::platform::Platform' in obj_type: objects['NEXT_PUBLIC_PLATFORM_ID'] = obj_id
             elif '::carib_coin::Treasury' in obj_type: objects['NEXT_PUBLIC_CARIB_TREASURY_ID'] = obj_id
+            elif '::fee_converter::FeeConverter' in obj_type: objects['NEXT_PUBLIC_FEE_CONVERTER_ID'] = obj_id
             elif '::commodity_registry::CommodityRegistry' in obj_type and 'Admin' not in obj_type: 
                 objects['NEXT_PUBLIC_COMMODITY_REGISTRY_ID'] = obj_id
             elif '::commodity_registry::CommodityRegistryAdmin' in obj_type: 
@@ -97,6 +98,7 @@ try:
 
     objects['NEXT_PUBLIC_PACKAGE_ID'] = pkg_id
     objects['NEXT_PUBLIC_ORIGINAL_PACKAGE_ID'] = pkg_id
+    objects['NEXT_PUBLIC_CARIB_TYPE'] = pkg_id + '::carib_coin::CARIB_COIN'
     
     print(f'\n✅ Extracted Package ID: {pkg_id}', file=sys.stderr)
     for k, v in objects.items():

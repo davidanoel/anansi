@@ -1,30 +1,34 @@
-import { NextResponse } from 'next/server'
-import { verifyPlatformAuth } from '../../../../lib/platform-auth'
-import { adminDepositSurplus } from '../../../../lib/admin-signer'
+import { NextResponse } from "next/server";
+import { verifyPlatformAuth } from "../../../../lib/platform-auth";
+import { adminDepositSurplusWithFeeConversion } from "../../../../lib/admin-signer";
 
 export async function POST(request) {
-  const authError = verifyPlatformAuth(request)
-  if (authError) return NextResponse.json({ error: authError.error }, { status: authError.status })
+  const authError = verifyPlatformAuth(request);
+  if (authError) return NextResponse.json({ error: authError.error }, { status: authError.status });
 
   try {
-    const { lotId, amount, tokenSymbol } = await request.json()
+    const { lotId, amount, tokenSymbol } = await request.json();
 
     if (!lotId || !amount) {
-      return NextResponse.json({ error: 'Missing lotId or amount' }, { status: 400 })
+      return NextResponse.json({ error: "Missing lotId or amount" }, { status: 400 });
     }
 
     if (!tokenSymbol) {
-      return NextResponse.json({ error: 'Missing tokenSymbol' }, { status: 400 })
+      return NextResponse.json({ error: "Missing tokenSymbol" }, { status: 400 });
     }
 
-    const result = await adminDepositSurplus(lotId, parseFloat(amount), tokenSymbol)
+    const result = await adminDepositSurplusWithFeeConversion(
+      lotId,
+      parseFloat(amount),
+      tokenSymbol,
+    );
 
     return NextResponse.json({
       success: true,
       digest: result.digest,
-    })
+    });
   } catch (err) {
-    console.error('Deposit failed:', err)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    console.error("Deposit failed:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

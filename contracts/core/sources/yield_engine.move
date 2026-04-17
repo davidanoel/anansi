@@ -2,13 +2,20 @@
 /// When a commodity lot sells, surplus USDC is deposited here.
 /// Token holders (Coin<NUTMEG>, Coin<COCOA>, etc.) claim pro-rata.
 ///
+/// Fee handling:
+/// - A percentage of the deposited surplus is extracted as fee
+/// - The fee is RETURNED to the caller as Coin<PaymentT>
+/// - The caller's PTB is responsible for:
+///   1. Swapping the fee (USDC) → CARIB via Cetus
+///   2. Calling fee_converter::process_fee to split burn/treasury
+/// - This keeps yield_engine DEX-agnostic and upgrade-friendly
+///
 /// Two type parameters:
 ///   PaymentT — the payment coin (USDC)
 ///   CommodityT — the commodity coin (NUTMEG, COCOA) used to prove holdings
 module anansi::yield_engine;
 
 use anansi::asset_pool::{Self, Lot};
-use anansi::carib_coin::{Self, CARIB_COIN, Treasury};
 use anansi::compliance::{Self, ComplianceRegistry};
 use sui::balance::{Self, Balance};
 use sui::clock::Clock;
@@ -20,12 +27,12 @@ use sui::table::{Self, Table};
 
 public struct YieldEngine has key {
     id: UID,
+    /// Fee rate in basis points (e.g., 100 = 1%)
     fee_rate_bps: u64,
-    burn_rate_bps: u64,
+    /// Cumulative distributed (net, after fee)
     total_distributed: u64,
+    /// Cumulative fees extracted (in PaymentT units, pre-swap)
     total_fees_collected: u64,
-    total_fees_burned: u64,
-    treasury_address: address,
 }
 
 /// Surplus deposit holding payment coins (USDC) for token holders to claim.
@@ -44,9 +51,9 @@ public struct YieldAdmin has key, store { id: UID }
 
 // ============ Constants ============
 
-const DEFAULT_FEE_BPS: u64 = 100;
-const DEFAULT_BURN_BPS: u64 = 5000;
+const DEFAULT_FEE_BPS: u64 = 100; // 1%
 const BPS_DENOMINATOR: u64 = 10000;
+const MAX_FEE_BPS: u64 = 1000; // 10% max fee (safety bound)
 
 // ============ Errors ============
 
@@ -75,16 +82,8 @@ public struct SurplusClaimed has copy, drop {
     amount_received: u64,
 }
 
-public struct FeesCollected has copy, drop {
-    lot_id: ID,
-    total_fee: u64,
-    burned: u64,
-    to_treasury: u64,
-}
-
 public struct FeeConfigUpdated has copy, drop {
     new_fee_rate_bps: u64,
-    new_burn_rate_bps: u64,
 }
 
 // ============ Init ============
@@ -93,20 +92,32 @@ fun init(ctx: &mut TxContext) {
     transfer::share_object(YieldEngine {
         id: object::new(ctx),
         fee_rate_bps: DEFAULT_FEE_BPS,
-        burn_rate_bps: DEFAULT_BURN_BPS,
         total_distributed: 0,
         total_fees_collected: 0,
-        total_fees_burned: 0,
-        treasury_address: ctx.sender(),
     });
     transfer::transfer(YieldAdmin { id: object::new(ctx) }, ctx.sender());
 }
 
 // ============ Core Functions ============
 
-/// Deposit surplus for a lot. Takes &mut Coin (the contract splits internally).
-/// total_commodity_supply: total Coin<COMMODITY> supply at this moment (read from MintVault).
-/// This is used for pro-rata snapshot so all holders claim fairly with fungible coins.
+/// Deposit surplus for a lot.
+///
+/// Returns the fee as Coin<PaymentT> for the caller's PTB to swap to CARIB
+/// and route through fee_converter. This keeps the module DEX-agnostic.
+///
+/// PTB pattern:
+///   let fee_usdc = yield_engine::deposit_surplus(...);
+///   let fee_carib = <cetus swap fee_usdc → CARIB>;
+///   fee_converter::process_fee(converter, carib_treasury, fee_carib, b"spice_surplus", ctx);
+///
+/// Parameters:
+/// - engine: shared YieldEngine
+/// - lot: the Lot being distributed
+/// - payment: user's USDC coin (will be split, original returned with remainder)
+/// - gross_amount: total surplus to deposit (including fee)
+/// - total_commodity_supply: current total supply of the commodity coin (for pro-rata snapshot)
+///
+/// Returns: Coin<PaymentT> — the extracted fee, for downstream swap + burn
 public fun deposit_surplus<PaymentT, CommodityT>(
     engine: &mut YieldEngine,
     lot: &mut Lot,
@@ -115,7 +126,7 @@ public fun deposit_surplus<PaymentT, CommodityT>(
     total_commodity_supply: u64,
     clock: &Clock,
     ctx: &mut TxContext,
-) {
+): Coin<PaymentT> {
     assert!(gross_amount > 0, EInsufficientDeposit);
     assert!(coin::value(payment) >= gross_amount, EInsufficientDeposit);
     assert!(total_commodity_supply > 0, ENoTokensToRedeem);
@@ -127,8 +138,8 @@ public fun deposit_surplus<PaymentT, CommodityT>(
     let fee_amount = (gross_amount * engine.fee_rate_bps) / BPS_DENOMINATOR;
     let net_amount = gross_amount - fee_amount;
 
+    // Extract fee coin — returned to caller for PTB to swap + burn
     let fee_coin = coin::split(&mut deposit_coin, fee_amount, ctx);
-    transfer::public_transfer(fee_coin, engine.treasury_address);
 
     // Record in lot
     asset_pool::record_surplus_deposit(lot, gross_amount);
@@ -160,6 +171,9 @@ public fun deposit_surplus<PaymentT, CommodityT>(
         tokens_snapshot,
     });
     transfer::share_object(deposit);
+
+    // Return the fee coin for the caller's PTB to swap → burn
+    fee_coin
 }
 
 /// Claim surplus. Farmer presents their commodity coin as proof of holdings.
@@ -206,54 +220,22 @@ public fun claim_surplus<PaymentT, CommodityT>(
     transfer::public_transfer(payout, claimant);
 }
 
-// ============ Fee Management ============
-
-public fun process_carib_fee(
-    engine: &mut YieldEngine,
-    carib_treasury: &mut Treasury,
-    mut fee_coins: Coin<CARIB_COIN>,
-    lot_id: ID,
-    ctx: &mut TxContext,
-) {
-    let total_fee = coin::value(&fee_coins);
-    let burn_amount = (total_fee * engine.burn_rate_bps) / BPS_DENOMINATOR;
-    let treasury_amount = total_fee - burn_amount;
-
-    let burn_coins = coin::split(&mut fee_coins, burn_amount, ctx);
-    carib_coin::burn(carib_treasury, burn_coins, ctx);
-    engine.total_fees_burned = engine.total_fees_burned + burn_amount;
-
-    event::emit(FeesCollected {
-        lot_id,
-        total_fee,
-        burned: burn_amount,
-        to_treasury: treasury_amount,
-    });
-
-    transfer::public_transfer(fee_coins, engine.treasury_address);
-}
-
 // ============ Admin Functions ============
 
-public fun update_fees(
+/// Update the surplus fee rate. Bounded to 0-1000 bps (0-10%) as a safety rail.
+public fun update_fee_rate(
     _admin: &YieldAdmin,
     engine: &mut YieldEngine,
     new_fee_rate_bps: u64,
-    new_burn_rate_bps: u64,
 ) {
-    assert!(new_fee_rate_bps <= 1000, EInvalidFeeRate);
-    assert!(new_burn_rate_bps <= BPS_DENOMINATOR, EInvalidFeeRate);
+    assert!(new_fee_rate_bps <= MAX_FEE_BPS, EInvalidFeeRate);
     engine.fee_rate_bps = new_fee_rate_bps;
-    engine.burn_rate_bps = new_burn_rate_bps;
-    event::emit(FeeConfigUpdated { new_fee_rate_bps, new_burn_rate_bps });
+    event::emit(FeeConfigUpdated { new_fee_rate_bps });
 }
 
-public fun update_treasury_address(
-    _admin: &YieldAdmin,
-    engine: &mut YieldEngine,
-    new_address: address,
-) {
-    engine.treasury_address = new_address;
+/// Transfer admin cap to a new holder.
+public fun transfer_admin(cap: YieldAdmin, recipient: address) {
+    transfer::transfer(cap, recipient);
 }
 
 // ============ View Functions ============
@@ -262,7 +244,7 @@ public fun fee_rate(engine: &YieldEngine): u64 { engine.fee_rate_bps }
 
 public fun total_distributed(engine: &YieldEngine): u64 { engine.total_distributed }
 
-public fun total_fees_burned(engine: &YieldEngine): u64 { engine.total_fees_burned }
+public fun total_fees_collected(engine: &YieldEngine): u64 { engine.total_fees_collected }
 
 public fun deposit_remaining<PaymentT, CommodityT>(
     deposit: &SurplusDeposit<PaymentT, CommodityT>,
