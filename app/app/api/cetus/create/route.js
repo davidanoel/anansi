@@ -27,7 +27,7 @@ export async function POST(req) {
     }
     const COMMODITY_TYPE = token.type;
 
-// Accept custom amounts from the frontend, fallback to 10 if missing
+    // Accept custom amounts from the frontend, fallback to 10 if missing
     const usdcAmount = Number(body.usdcAmount) || 10;
     const commodityAmount = Number(body.commodityAmount) || 10;
 

@@ -1156,18 +1156,15 @@ function DexPanel({ api }) {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-  const dexTokens = process.env.NEXT_PUBLIC_CARIB_TYPE
-    ? [...registeredTokens, "CARIB"]
-    : registeredTokens;
 
   const tokenConfig = JSON.parse(process.env.NEXT_PUBLIC_TOKEN_CONFIG || "{}");
 
   // EFFECT 1: Set initial token selection (Dependencies: stringified array to prevent loops)
   useEffect(() => {
-    if (!tokenSymbol && dexTokens.length > 0) {
-      setTokenSymbol(dexTokens[0]);
+    if (!tokenSymbol && registeredTokens.length > 0) {
+      setTokenSymbol(registeredTokens[0]);
     }
-  }, [tokenSymbol, dexTokens.join(",")]);
+  }, [tokenSymbol, registeredTokens.join(",")]);
 
   // EFFECT 2: Fetch live prices ONLY ONCE when the panel mounts
   useEffect(() => {
@@ -1253,7 +1250,7 @@ function DexPanel({ api }) {
           <form onSubmit={handleCreatePool} className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1.5">
-                Token
+                Commodity Token
               </label>
               <select
                 value={tokenSymbol}
@@ -1261,7 +1258,7 @@ function DexPanel({ api }) {
                 className="input-field"
                 required
               >
-                {dexTokens.map((t) => (
+                {registeredTokens.map((t) => (
                   <option key={t} value={t}>
                     {t}
                   </option>
@@ -1310,9 +1307,7 @@ function DexPanel({ api }) {
                   <span className="font-medium block mb-1">Pool Created Successfully!</span>
                   <span className="font-mono text-[10px] block truncate">ID: {result.poolId}</span>
                   <span className="text-xs text-anansi-muted mt-2 block">
-                    {tokenSymbol === "CARIB"
-                      ? "Add this ID to NEXT_PUBLIC_CARIB_POOL_ID in .env.local and restart the server."
-                      : "Add this ID to NEXT_PUBLIC_TOKEN_CONFIG in .env.local and restart the server."}
+                    Add this ID to NEXT_PUBLIC_TOKEN_CONFIG in .env.local and restart the server.
                   </span>
                 </>
               }
@@ -1323,10 +1318,8 @@ function DexPanel({ api }) {
         {/* Right Column: Live Pool Stats */}
         <div className="space-y-3">
           <h3 className="font-semibold mb-2">Live Pools</h3>
-          {dexTokens.map((symbol) => {
-            const poolId =
-              symbol === "CARIB" ? process.env.NEXT_PUBLIC_CARIB_POOL_ID : tokenConfig[symbol]?.pool;
-            const hasPool = poolId && poolId.trim() !== "";
+          {registeredTokens.map((symbol) => {
+            const hasPool = tokenConfig[symbol]?.pool && tokenConfig[symbol].pool.trim() !== "";
             const livePrice = prices[symbol]?.priceUsdc;
 
             return (
@@ -1348,7 +1341,7 @@ function DexPanel({ api }) {
                 {hasPool ? (
                   <div className="mt-3 pt-3 border-t border-anansi-border flex justify-between items-center">
                     <p className="text-[10px] font-mono text-anansi-muted truncate mr-4">
-                      {poolId}
+                      {tokenConfig[symbol].pool}
                     </p>
                     <button
                       onClick={() => handleRemoveLiquidity(symbol)}
