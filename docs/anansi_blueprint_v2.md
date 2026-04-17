@@ -81,12 +81,12 @@ The founder's PhD, Corporate data science experience, and ML specialization are 
 
 **Products:**
 
-| Product | What It Does | Market | Status |
-|---------|-------------|--------|--------|
-| **CogniCare** | AI-powered practice management platform for licensed therapists. Six AI agents handle session notes, treatment planning, client progress tracking, and administrative workflows. B2B SaaS. | Licensed mental health professionals | Planned — Phase 2 |
-| **Thryve** | Personal mental health companion app. Consumer-facing complement to CogniCare. AI-guided journaling, mood tracking, and psychoeducation. B2C. | General consumer | Planned — Phase 2 (after CogniCare) |
-| **IslandPulse** | AI pricing intelligence for businesses. Tells operators to raise, hold, or cut prices based on local weather patterns, events, holidays, and business-specific demand signals. SaaS. | SMBs in event- and weather-sensitive industries (hospitality, tourism, food & beverage) | Planned — Phase 3 |
-| **Root** | Agricultural AI using public satellite imagery and lat/long coordinates to advise smallholder farmers on what to plant, when to water, when to harvest, and when to weed. | Smallholder farmers globally; Caribbean agriculture focus initially | Planned — Phase 3 |
+| Product         | What It Does                                                                                                                                                                               | Market                                                                                  | Status                              |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- | ----------------------------------- |
+| **CogniCare**   | AI-powered practice management platform for licensed therapists. Six AI agents handle session notes, treatment planning, client progress tracking, and administrative workflows. B2B SaaS. | Licensed mental health professionals                                                    | Planned — Phase 2                   |
+| **Thryve**      | Personal mental health companion app. Consumer-facing complement to CogniCare. AI-guided journaling, mood tracking, and psychoeducation. B2C.                                              | General consumer                                                                        | Planned — Phase 2 (after CogniCare) |
+| **IslandPulse** | AI pricing intelligence for businesses. Tells operators to raise, hold, or cut prices based on local weather patterns, events, holidays, and business-specific demand signals. SaaS.       | SMBs in event- and weather-sensitive industries (hospitality, tourism, food & beverage) | Planned — Phase 3                   |
+| **Root**        | Agricultural AI using public satellite imagery and lat/long coordinates to advise smallholder farmers on what to plant, when to water, when to harvest, and when to weed.                  | Smallholder farmers globally; Caribbean agriculture focus initially                     | Planned — Phase 3                   |
 
 **A note on CogniCare + Thryve:** These are global products — not Caribbean-specific. That is a feature, not a contradiction. Anansi's AI products address underserved markets globally. Its Web3 products are anchored in the Caribbean. Both are expressions of the same mission: building where others overlook.
 
@@ -98,11 +98,11 @@ Software built on decentralized infrastructure where decentralization adds real,
 
 **Products:**
 
-| Product | What It Does | Chain | Status |
-|---------|-------------|-------|--------|
-| **Spice** | Real-world asset tokenization platform for Caribbean commodities, real estate, and revenue streams. Farmers tokenize crop yields; global buyers access Caribbean asset exposure with on-chain yield distribution. | Sui | **PRIMARY — build first** |
-| **Dollar Bank** | Crypto savings account with a $1 minimum deposit. Built on Ethereum with AAVE as the yield backend. Users save USDC or ETH and earn interest. Built for people priced out of DeFi's typical minimums. | Ethereum + AAVE | Planned — Phase 2 |
-| **ZK Identity** | Zero-knowledge identity verification. Uses KYC completed by trusted institutions (e.g., a financial services firm) to let users prove specific facts about themselves — age, residency, accreditation — at third-party checkpoints without revealing underlying documents. Age verification at a point of sale without showing an ID. Investor accreditation without submitting financial documents repeatedly. | Chain-agnostic (ZK proof layer) | Planned — Phase 3 |
+| Product         | What It Does                                                                                                                                                                                                                                                                                                                                                                                                    | Chain                           | Status                    |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ------------------------- |
+| **Spice**       | Real-world asset tokenization platform for Caribbean commodities, real estate, and revenue streams. Farmers tokenize crop yields; global buyers access Caribbean asset exposure with on-chain yield distribution.                                                                                                                                                                                               | Sui                             | **PRIMARY — build first** |
+| **Dollar Bank** | Crypto savings account with a $1 minimum deposit. Built on Ethereum with AAVE as the yield backend. Users save USDC or ETH and earn interest. Built for people priced out of DeFi's typical minimums.                                                                                                                                                                                                           | Ethereum + AAVE                 | Planned — Phase 2         |
+| **ZK Identity** | Zero-knowledge identity verification. Uses KYC completed by trusted institutions (e.g., a financial services firm) to let users prove specific facts about themselves — age, residency, accreditation — at third-party checkpoints without revealing underlying documents. Age verification at a point of sale without showing an ID. Investor accreditation without submitting financial documents repeatedly. | Chain-agnostic (ZK proof layer) | Planned — Phase 3         |
 
 **A note on ZK Identity:** This product is technically sophisticated and commercially valuable. The use case — using a trusted institution's KYC to prove your age at a liquor store without showing your ID — is intuitive and solves a real friction. The long pole is not the technology but the partnerships: convincing a trusted institution to issue the initial ZK attestation. That business development cycle is long. This product stays on paper until there is a clear institutional partner path.
 
@@ -119,6 +119,7 @@ Intensive 2–3 day, in-person workshops teaching working professionals how to u
 **Pricing:** $500–$2,500 per person depending on format, cohort size, and whether the client is an individual or a company buying seats.
 
 **Why this works:**
+
 - No code required to start. The founder can run the first workshop with existing knowledge and a slide deck.
 - The credential stack is exceptional: PhD in CS (AI/ML), dissertation committee at a major research university, prior high school and university teaching, Senior Data Scientist at American Express. This is not someone who "learned about AI." This is someone who built it professionally and can teach it with authority.
 - The corporate "boomer" market — executives and mid-career professionals who hear about AI constantly but don't understand it — is large, willing to pay, and deeply underserved by technical content aimed at developers.
@@ -171,6 +172,7 @@ Four core smart contract modules:
 4. **platform.move** — Admin capabilities, access control, event emission for off-chain indexing. Whitelisting for MVP participants.
 
 **Key design decisions:**
+
 - Modular from day one — new asset types deploy as new Pool instances, not new contracts
 - Minimal shared objects (Sui best practice for performance)
 - Heavy use of events for off-chain indexing and transparency
@@ -190,6 +192,7 @@ Tech stack: React + @mysten/dapp-kit + Tailwind. Sui wallet connect. IPFS for do
 ### 3.5 What Spice Is NOT (MVP Scope Boundaries)
 
 The MVP does NOT include:
+
 - Multiple asset types (nutmeg only)
 - Multiple islands (Grenada only)
 - Complex governance or voting
@@ -203,6 +206,7 @@ The MVP does NOT include:
 The GCNA relationship is the unlock. Without institutional buy-in from the Grenada Cooperative Nutmeg Association, Spice is theoretical.
 
 **What GCNA needs to believe:**
+
 - Their existing operations don't change (advance payments continue as-is)
 - Spice adds liquidity and transparency, it doesn't replace their role
 - They retain physical custody and control of the commodity
@@ -210,6 +214,7 @@ The GCNA relationship is the unlock. Without institutional buy-in from the Grena
 - There's no regulatory risk they're uncomfortable with
 
 **What you need to do before writing code:**
+
 - Travel to Grenada and meet GCNA leadership in person
 - Understand their actual operational pain points (not your assumptions)
 - Co-design the flow with their staff
@@ -223,6 +228,7 @@ The GCNA relationship is the unlock. Without institutional buy-in from the Grena
 NUTMG tokens that represent "future surplus" from commodity sales, with automatic USDC distribution to holders, will likely be classified as securities under the Howey test.
 
 **Paths to explore with a crypto-literate attorney:**
+
 - Regulation D (506(c)) exemption for accredited investors
 - Regulation S exemption for non-U.S. persons (Caribbean participants)
 - Caribbean regulatory sandbox (Barbados, Bermuda, or Cayman have frameworks)
@@ -237,22 +243,23 @@ NUTMG tokens that represent "future surplus" from commodity sales, with automati
 
 Once the nutmeg MVP proves the loop, the same modular contracts support:
 
-| Asset | Island | Partner | Timeline |
-|-------|--------|---------|----------|
-| Cocoa (COCO) | Grenada | Grenada Cocoa Association | Month 4–6 |
-| Mace (MACE) | Grenada | GCNA (already processes mace) | Month 4–6 |
-| Tourism revenue streams | Multiple | Hotel groups, tourism boards | Month 9–12 |
-| Real estate fractions | Antigua, Barbados | Property developers | Month 12–18 |
-| Carbon credits | Multiple | Environmental orgs | Year 2+ |
-| Rum distillery cash flows | Jamaica, Barbados | Distilleries | Year 2+ |
+| Asset                     | Island            | Partner                       | Timeline    |
+| ------------------------- | ----------------- | ----------------------------- | ----------- |
+| Cocoa (COCO)              | Grenada           | Grenada Cocoa Association     | Month 4–6   |
+| Mace (MACE)               | Grenada           | GCNA (already processes mace) | Month 4–6   |
+| Tourism revenue streams   | Multiple          | Hotel groups, tourism boards  | Month 9–12  |
+| Real estate fractions     | Antigua, Barbados | Property developers           | Month 12–18 |
+| Carbon credits            | Multiple          | Environmental orgs            | Year 2+     |
+| Rum distillery cash flows | Jamaica, Barbados | Distilleries                  | Year 2+     |
 
 ---
 
-## 4. CaribCoin — The Connective Tissue
+## 4. CaribCoin — The Blood
 
 ### 4.1 Charter Summary
 
-CaribCoin is governed by its charter (v0.1). The charter defines:
+CaribCoin is governed by its charter (v1). The charter defines:
+
 - Fixed supply of 10,000,000,000 CARIB
 - No inflation, no rebasing
 - Participation-first design (no promises of returns)
@@ -290,13 +297,13 @@ Only after Spice has at least one live GCNA pool and one real surplus distributi
 **Phase 4: Equity Round (Optional, Year 2+)**
 Traditional equity round funding the company, not the protocol. Appropriate if aggressive multi-island scaling warrants institutional capital.
 
-| Source | Amount | Timing | What it funds |
-|--------|--------|--------|---------------|
-| Amex salary (self-funding) | ~$100K+ equivalent runway | Now through Phase 1 | Everything until external capital arrives |
-| SAFT pre-sale | $500K–$2M | Phase 0–1 | Legal, partnerships, infrastructure, audits, runway |
-| Sui Foundation grant | $50–$100K | Phase 0–1 | Development costs, ecosystem integration |
-| Public token sale | Market-dependent | Phase 2 | DEX liquidity, ecosystem growth, Foundation capitalization |
-| Equity round (optional) | $2–$10M | Year 2+ | Team scaling, AI product development |
+| Source                     | Amount                    | Timing              | What it funds                                              |
+| -------------------------- | ------------------------- | ------------------- | ---------------------------------------------------------- |
+| Amex salary (self-funding) | ~$100K+ equivalent runway | Now through Phase 1 | Everything until external capital arrives                  |
+| SAFT pre-sale              | $500K–$2M                 | Phase 0–1           | Legal, partnerships, infrastructure, audits, runway        |
+| Sui Foundation grant       | $50–$100K                 | Phase 0–1           | Development costs, ecosystem integration                   |
+| Public token sale          | Market-dependent          | Phase 2             | DEX liquidity, ecosystem growth, Foundation capitalization |
+| Equity round (optional)    | $2–$10M                   | Year 2+             | Team scaling, AI product development                       |
 
 ---
 
@@ -407,20 +414,20 @@ Traditional equity round funding the company, not the protocol. Appropriate if a
 
 ## 7. Risk Register
 
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| GCNA declines to partner | Critical | Have backup partners identified (cocoa association, smaller cooperatives). But GCNA is the ideal first partner — don't give up easily. |
-| NUTMG classified as security | High | Design legal structure proactively. Separate NUTMG (security-like) from CaribCoin (utility). Work with attorney before code. |
-| SAFT round fails to raise target | High | Self-fund via Amex salary (slower but viable). Reduce scope to bare MVP. Pursue Sui Foundation grant aggressively. Academy revenue provides a third income stream. |
-| Public token sale underperforms | Medium | Don't depend on public sale for operational funding. By Phase 2, SAFT + salary + Academy + grant should have already funded the MVP. |
-| Crypto winter / market collapse | High | Anansi is a software company first. Academy revenue, AI SaaS, and consulting sustain operations. Don't over-index on token value. |
-| Solo founder burnout | High | Keep Amex job until Spice has real traction. Don't build six products simultaneously. The phased roadmap exists for this reason. Academy should never consume Spice development time — it runs on weekends and scheduled windows. |
-| CogniCare regulatory complexity | Medium | Mental health AI is regulated. HIPAA compliance, state licensing considerations, and liability for AI-assisted clinical decisions must be scoped before development begins. Engage a health tech attorney in Phase 2. |
-| ZK Identity partner dependency | High | This product cannot launch without an institutional KYC partner willing to issue attestations. Begin conversations early, but do not build until a partner is committed. |
-| Root data access | Medium | Public satellite datasets (Sentinel, Landsat) are available, but quality varies by geography. Validate data quality for target regions before building. |
-| Sui blockchain risk | Medium | Design contracts to be chain-agnostic in logic. Migrate to alternative L1/L2 if needed. |
-| Caribbean regulatory uncertainty | Medium | Engage regulators early. Work within existing sandboxes. |
-| Competitors copy the model | Low (short-term) | Relationships and cultural authenticity can't be forked. Move fast on partnerships. |
+| Risk                             | Severity         | Mitigation                                                                                                                                                                                                                        |
+| -------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GCNA declines to partner         | Critical         | Have backup partners identified (cocoa association, smaller cooperatives). But GCNA is the ideal first partner — don't give up easily.                                                                                            |
+| NUTMG classified as security     | High             | Design legal structure proactively. Separate NUTMG (security-like) from CaribCoin (utility). Work with attorney before code.                                                                                                      |
+| SAFT round fails to raise target | High             | Self-fund via Amex salary (slower but viable). Reduce scope to bare MVP. Pursue Sui Foundation grant aggressively. Academy revenue provides a third income stream.                                                                |
+| Public token sale underperforms  | Medium           | Don't depend on public sale for operational funding. By Phase 2, SAFT + salary + Academy + grant should have already funded the MVP.                                                                                              |
+| Crypto winter / market collapse  | High             | Anansi is a software company first. Academy revenue, AI SaaS, and consulting sustain operations. Don't over-index on token value.                                                                                                 |
+| Solo founder burnout             | High             | Keep Amex job until Spice has real traction. Don't build six products simultaneously. The phased roadmap exists for this reason. Academy should never consume Spice development time — it runs on weekends and scheduled windows. |
+| CogniCare regulatory complexity  | Medium           | Mental health AI is regulated. HIPAA compliance, state licensing considerations, and liability for AI-assisted clinical decisions must be scoped before development begins. Engage a health tech attorney in Phase 2.             |
+| ZK Identity partner dependency   | High             | This product cannot launch without an institutional KYC partner willing to issue attestations. Begin conversations early, but do not build until a partner is committed.                                                          |
+| Root data access                 | Medium           | Public satellite datasets (Sentinel, Landsat) are available, but quality varies by geography. Validate data quality for target regions before building.                                                                           |
+| Sui blockchain risk              | Medium           | Design contracts to be chain-agnostic in logic. Migrate to alternative L1/L2 if needed.                                                                                                                                           |
+| Caribbean regulatory uncertainty | Medium           | Engage regulators early. Work within existing sandboxes.                                                                                                                                                                          |
+| Competitors copy the model       | Low (short-term) | Relationships and cultural authenticity can't be forked. Move fast on partnerships.                                                                                                                                               |
 
 ---
 
@@ -493,6 +500,6 @@ When a farmer in Grenada can deliver nutmeg on Monday and have liquidity in thei
 
 ---
 
-*This is a living document. Update it as decisions are made and reality intervenes.*
+_This is a living document. Update it as decisions are made and reality intervenes._
 
-*Anansi Technology Corporation — Building where others don't look.*
+_Anansi Technology Corporation — Building where others don't look._

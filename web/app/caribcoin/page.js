@@ -7,12 +7,48 @@ export const metadata = {
 };
 
 const ALLOCATIONS = [
-  { label: "Community & Ecosystem", pct: 40, tokens: "4B", vest: "Gradual emission, 5–10 years", color: "bg-white" },
-  { label: "Foundation Treasury", pct: 20, tokens: "2B", vest: "Locked. Released by governance.", color: "bg-anansi-red" },
-  { label: "Contributors / Core Team", pct: 15, tokens: "1.5B", vest: "1-year cliff, 4-year linear", color: "bg-anansi-gray" },
-  { label: "Early Backers (SAFT)", pct: 10, tokens: "1B", vest: "6–12 month cliff, 2–3 year linear", color: "bg-anansi-gray/60" },
-  { label: "Public Launch Liquidity", pct: 10, tokens: "1B", vest: "No cliff. At public launch.", color: "bg-white/20" },
-  { label: "Strategic Partners", pct: 5, tokens: "500M", vest: "Case-by-case, 1–2 year", color: "bg-white/10 border border-white/20" },
+  {
+    label: "Community & Ecosystem",
+    pct: 40,
+    tokens: "4B",
+    vest: "Gradual emission, 5–10 years",
+    color: "bg-white",
+  },
+  {
+    label: "Foundation Treasury",
+    pct: 20,
+    tokens: "2B",
+    vest: "Locked. Released by governance.",
+    color: "bg-anansi-red",
+  },
+  {
+    label: "Contributors / Core Team",
+    pct: 15,
+    tokens: "1.5B",
+    vest: "1-year cliff, 4-year linear",
+    color: "bg-anansi-gray",
+  },
+  {
+    label: "Early Backers (SAFT)",
+    pct: 10,
+    tokens: "1B",
+    vest: "6–12 month cliff, 2–3 year linear",
+    color: "bg-anansi-gray/60",
+  },
+  {
+    label: "Public Launch Liquidity",
+    pct: 10,
+    tokens: "1B",
+    vest: "No cliff. At public launch.",
+    color: "bg-white/20",
+  },
+  {
+    label: "Strategic Partners",
+    pct: 5,
+    tokens: "500M",
+    vest: "Case-by-case, 1–2 year",
+    color: "bg-white/10 border border-white/20",
+  },
 ];
 
 export default function CaribCoinPage() {
@@ -29,10 +65,10 @@ export default function CaribCoinPage() {
             <br />
             <span className="text-anansi-red">not permission.</span>
           </h1>
-          <p className="text-[18px] text-anansi-gray mt-8 max-w-[600px] leading-[1.75]">
-            CaribCoin is the protocol token that powers every product Anansi builds.
-            It captures value from real economic activity — not promises. Fixed supply.
-            Deflationary burns. Open to anyone.
+          <p className="text-[18px] text-anansi-gray mt-8 max-w-[620px] leading-[1.75]">
+            CaribCoin is the protocol token that powers every product Anansi builds. It captures
+            value from real economic activity — not promises. Fixed supply. Deflationary burns. Open
+            ecosystem. Open to anyone.
           </p>
         </div>
       </section>
@@ -58,6 +94,7 @@ export default function CaribCoinPage() {
                   "Open to anyone — retail and institutional",
                   "Market-discovered in value — no price management",
                   "Deflationary by design — fees are partially burned",
+                  "Tradeable on public DEXs from day one",
                   "Chain-agnostic — Sui at launch, expandable",
                 ].map((item, i) => (
                   <li key={i} className="flex gap-3 text-[15px] text-[#555]">
@@ -74,7 +111,7 @@ export default function CaribCoinPage() {
                   "A guaranteed investment",
                   "A dividend or revenue-sharing instrument",
                   "A replacement for local currencies",
-                  "A promise of returns, yield, or price appreciation",
+                  "A protocol that pays yield to stakers",
                   "A centrally managed financial product",
                   "Required to use Anansi products — USDC is always accepted",
                 ].map((item, i) => (
@@ -178,9 +215,15 @@ export default function CaribCoinPage() {
               <table className="w-full text-[13px]">
                 <thead>
                   <tr className="border-b border-anansi-line text-left">
-                    <th className="pb-3 pr-6 text-anansi-gray font-medium tracking-wider uppercase text-[10px]">Category</th>
-                    <th className="pb-3 pr-6 text-anansi-gray font-medium tracking-wider uppercase text-[10px]">Tokens</th>
-                    <th className="pb-3 pr-6 text-anansi-gray font-medium tracking-wider uppercase text-[10px]">Vesting</th>
+                    <th className="pb-3 pr-6 text-anansi-gray font-medium tracking-wider uppercase text-[10px]">
+                      Category
+                    </th>
+                    <th className="pb-3 pr-6 text-anansi-gray font-medium tracking-wider uppercase text-[10px]">
+                      Tokens
+                    </th>
+                    <th className="pb-3 pr-6 text-anansi-gray font-medium tracking-wider uppercase text-[10px]">
+                      Vesting
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -195,8 +238,8 @@ export default function CaribCoinPage() {
               </table>
             </div>
             <p className="text-[13px] text-anansi-gray/60 mt-4">
-              Initial circulating supply at launch: ~600–700M CARIB (6–7% of total).
-              Conservative float by design — less sell pressure, disciplined price discovery.
+              Initial circulating supply at launch: ~600–700M CARIB (6–7% of total). Conservative
+              float by design — less sell pressure, disciplined price discovery.
             </p>
           </div>
         </div>
@@ -209,9 +252,9 @@ export default function CaribCoinPage() {
             <Eyebrow>Economics</Eyebrow>
             <h2 className="font-display font-bold text-3xl mb-6">How CaribCoin captures value.</h2>
             <p className="text-anansi-gray max-w-[560px] mb-12 leading-relaxed">
-              Every Anansi product generates fees. All fees are auto-converted to CaribCoin
-              via DEX — users never need to buy or hold CARIB. The protocol does it behind
-              the scenes in a single atomic transaction.
+              Every Anansi product generates fees. All fees are auto-converted to CaribCoin via DEX
+              — users never need to buy or hold CARIB. The protocol does it behind the scenes in a
+              single atomic transaction.
             </p>
           </div>
 
@@ -245,8 +288,8 @@ export default function CaribCoinPage() {
               <div className="text-center">
                 <p className="text-7xl font-display font-bold text-anansi-red">∞</p>
                 <p className="text-anansi-gray mt-6 max-w-xs text-[15px] leading-relaxed">
-                  More products → more fees → more burns → less supply.
-                  Every product Anansi ships strengthens the cycle.
+                  More products → more fees → more burns → less supply. Every product Anansi ships
+                  strengthens the cycle.
                 </p>
                 <div className="grid grid-cols-3 gap-6 mt-10 pt-8 border-t border-anansi-line">
                   {[
@@ -255,7 +298,9 @@ export default function CaribCoinPage() {
                     { label: "DollarBank", fee: "0.5%" },
                   ].map((f, i) => (
                     <div key={i}>
-                      <p className="text-[10px] text-anansi-gray uppercase tracking-widest">{f.label}</p>
+                      <p className="text-[10px] text-anansi-gray uppercase tracking-widest">
+                        {f.label}
+                      </p>
                       <p className="font-display font-bold text-sm mt-1">{f.fee}</p>
                     </div>
                   ))}
@@ -270,48 +315,138 @@ export default function CaribCoinPage() {
       <section className="max-w-[1200px] mx-auto px-6 md:px-12 py-24">
         <div className="reveal">
           <Eyebrow>Staking</Eyebrow>
-          <h2 className="font-display font-bold text-3xl mb-3">Participation has advantages.</h2>
-          <p className="text-anansi-gray max-w-[560px] mb-12">
-            Staking CARIB is voluntary. It locks tokens for a chosen duration in exchange for
-            protocol-level benefits. It does not promise yield or returns.
+          <h2 className="font-display font-bold text-3xl mb-3">Stake freely.</h2>
+          <p className="text-anansi-gray max-w-[620px] mb-12 leading-relaxed">
+            Staking CARIB is voluntary and flexible. No fixed lock periods. No slashing. Unstake any
+            time with a 24-hour cooldown. The protocol does not pay yield — it unlocks access.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-px bg-anansi-line reveal-stagger">
           {[
-            { title: "Reduced fees", desc: "Stake ≥ 10,000 CARIB for up to 50% reduction on all platform fees across Spice, CaribStone, and future products.", tier: "10K CARIB" },
-            { title: "Priority access", desc: "Stake ≥ 50,000 CARIB for 24-hour early access to new asset pools before public availability.", tier: "50K CARIB" },
-            { title: "Governance voting", desc: "Stake ≥ 1,000 CARIB to vote on protocol parameters: fee rates, burn ratio, new asset approvals, treasury spending.", tier: "1K CARIB" },
-            { title: "Ecosystem rewards", desc: "Stake any amount for eligibility for periodic airdrops from the Community & Ecosystem allocation. Proportional to stake.", tier: "Any amount" },
+            {
+              title: "Reduced fees",
+              desc: "Stake ≥ 10,000 CARIB for up to 50% reduction on all platform fees across Spice, CaribStone, and future products.",
+              tier: "10K CARIB",
+            },
+            {
+              title: "Priority access",
+              desc: "Stake ≥ 50,000 CARIB for 24-hour early access to new asset pools before public availability.",
+              tier: "50K CARIB",
+            },
+            {
+              title: "Governance voting",
+              desc: "Stake ≥ 1,000 CARIB to vote on protocol parameters: fee rates, burn ratio, new asset approvals, treasury spending.",
+              tier: "1K CARIB",
+            },
+            {
+              title: "Ecosystem rewards",
+              desc: "Stake any amount for eligibility for periodic airdrops from the Community & Ecosystem allocation. Proportional to stake.",
+              tier: "Any amount",
+            },
           ].map((b, i) => (
             <div key={i} className="bg-anansi-deep p-8">
               <div className="flex items-baseline justify-between mb-2">
                 <h3 className="font-display font-semibold">{b.title}</h3>
-                <span className="text-[9px] tracking-[0.15em] uppercase text-anansi-red font-medium">{b.tier}</span>
+                <span className="text-[9px] tracking-[0.15em] uppercase text-anansi-red font-medium">
+                  {b.tier}
+                </span>
               </div>
               <p className="text-[14px] text-anansi-gray leading-relaxed">{b.desc}</p>
             </div>
           ))}
         </div>
 
-        <div className="mt-8 grid md:grid-cols-4 gap-px bg-anansi-line reveal-stagger">
-          {[
-            { label: "30 days", multiplier: "1×" },
-            { label: "90 days", multiplier: "1.5×" },
-            { label: "180 days", multiplier: "2×" },
-            { label: "365 days", multiplier: "3×" },
-          ].map((l, i) => (
-            <div key={i} className="bg-anansi-deep p-6 text-center">
-              <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray mb-1">Lock Period</p>
-              <p className="font-display font-bold text-lg">{l.label}</p>
-              <p className="text-[11px] text-anansi-red mt-1 font-medium">{l.multiplier} benefit weight</p>
-            </div>
-          ))}
+        <div className="mt-12 reveal">
+          <h3 className="font-display font-semibold text-lg mb-6">How unstaking works</h3>
+          <div className="grid md:grid-cols-3 gap-px bg-anansi-line">
+            {[
+              {
+                num: "01",
+                title: "Request unstake",
+                desc: "Click unstake. Your tokens enter a 24-hour cooldown. Benefits deactivate immediately — no voting, no fee discounts, no priority.",
+              },
+              {
+                num: "02",
+                title: "Wait 24 hours",
+                desc: "Tokens are locked during cooldown. You can cancel and restake at any point during this window with no penalty.",
+              },
+              {
+                num: "03",
+                title: "Withdraw",
+                desc: "After 24 hours, claim your tokens back to your wallet. No slashing. No fees. No friction.",
+              },
+            ].map((step, i) => (
+              <div key={i} className="bg-anansi-deep p-8">
+                <p className="font-display font-bold text-[11px] text-anansi-red tracking-[0.15em] mb-4">
+                  {step.num}
+                </p>
+                <h4 className="font-display font-semibold text-[16px] mb-2">{step.title}</h4>
+                <p className="text-[14px] text-anansi-gray leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-[13px] text-anansi-gray/60 mt-4 leading-relaxed max-w-[720px]">
+            The 24-hour cooldown exists to prevent flash-loan attacks on governance and priority
+            access — not to punish users. It is the minimum friction required for the benefits to be
+            meaningful.
+          </p>
         </div>
+      </section>
 
-        <p className="text-[13px] text-anansi-gray/60 mt-4 reveal">
-          Early unstaking incurs a 10% slash. Slashed tokens are burned — further reducing supply.
-        </p>
+      {/* ===== YIELD SOURCES ===== */}
+      <section className="border-t border-anansi-line">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-24">
+          <div className="reveal">
+            <Eyebrow>Ecosystem Yield</Eyebrow>
+            <h2 className="font-display font-bold text-3xl mb-6">Where yield comes from.</h2>
+            <p className="text-anansi-gray max-w-[640px] mb-12 leading-relaxed">
+              CaribCoin the protocol does not pay yield. But the ecosystem around CaribCoin
+              generates real economic activity — and participants can earn from that activity
+              through three market-based mechanisms. None of these are promises from the protocol.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-px bg-anansi-line reveal-stagger">
+            <div className="bg-anansi-deep p-8">
+              <p className="font-display font-bold text-[11px] text-anansi-red tracking-[0.15em] mb-4">
+                01
+              </p>
+              <h3 className="font-display font-semibold text-[18px] mb-3">DEX Liquidity Fees</h3>
+              <p className="text-[14px] text-anansi-gray leading-relaxed">
+                Provide liquidity to the CARIB/USDC pool on Cetus and earn a share of every swap
+                fee. This is standard DEX economics — CaribCoin does not pay these fees; traders do.
+              </p>
+            </div>
+            <div className="bg-anansi-deep p-8">
+              <p className="font-display font-bold text-[11px] text-anansi-red tracking-[0.15em] mb-4">
+                02
+              </p>
+              <h3 className="font-display font-semibold text-[18px] mb-3">Liquidity Incentives</h3>
+              <p className="text-[14px] text-anansi-gray leading-relaxed">
+                The Foundation may run programs distributing CARIB from the Community allocation to
+                LPs. These are treasury-discretion incentives — not embedded protocol rewards. Can
+                be paused or adjusted.
+              </p>
+            </div>
+            <div className="bg-anansi-deep p-8">
+              <p className="font-display font-bold text-[11px] text-anansi-red tracking-[0.15em] mb-4">
+                03
+              </p>
+              <h3 className="font-display font-semibold text-[18px] mb-3">Third-Party Services</h3>
+              <p className="text-[14px] text-anansi-gray leading-relaxed">
+                Validators, DeFi protocols, and staking services may build products on top of CARIB
+                that offer yield. These are separate agreements between users and third parties —
+                not CaribCoin itself.
+              </p>
+            </div>
+          </div>
+
+          <p className="text-[13px] text-anansi-gray/60 mt-6 leading-relaxed max-w-[720px] reveal">
+            This separation matters. The protocol stays honest: it does not promise returns. Yield
+            exists in the ecosystem because real activity creates real revenue — earned, not issued.
+          </p>
+        </div>
       </section>
 
       {/* ===== GOVERNANCE ===== */}
@@ -360,9 +495,18 @@ export default function CaribCoinPage() {
 
           <div className="grid md:grid-cols-3 gap-px bg-anansi-line mt-12 reveal-stagger">
             {[
-              { phase: "Phase 1 — MVP", desc: "No on-chain governance. Decisions made transparently by the founder with community input. Avoids governance theater before there's a real community." },
-              { phase: "Phase 2 — Post-Launch", desc: "Soft governance — snapshot voting by CARIB stakers on key parameters. Results are advisory. Foundation implements if reasonable." },
-              { phase: "Phase 3 — Maturity", desc: "Binding on-chain governance for defined parameters. Foundation retains veto only for existential threats: security, legal compliance." },
+              {
+                phase: "Phase 1 — MVP",
+                desc: "No on-chain governance. Decisions made transparently by the founder with community input. Avoids governance theater before there's a real community.",
+              },
+              {
+                phase: "Phase 2 — Post-Launch",
+                desc: "Soft governance — snapshot voting by CARIB stakers on key parameters. Results are advisory. Foundation implements if reasonable.",
+              },
+              {
+                phase: "Phase 3 — Maturity",
+                desc: "Binding on-chain governance for defined parameters. Foundation retains veto only for existential threats: security, legal compliance.",
+              },
             ].map((g, i) => (
               <div key={i} className="bg-anansi-deep p-8">
                 <p className="font-display font-semibold text-sm text-anansi-red mb-2">{g.phase}</p>
@@ -378,16 +522,15 @@ export default function CaribCoinPage() {
         <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-24">
           <div className="reveal">
             <Eyebrow>Invariants</Eyebrow>
-            <h2 className="font-display font-bold text-3xl mb-12">
-              Rules that never change.
-            </h2>
+            <h2 className="font-display font-bold text-3xl mb-12">Rules that never change.</h2>
           </div>
 
           <div className="space-y-0 reveal">
             {[
               "Total supply is fixed at 10B CARIB. No function exists to mint more. Ever.",
               "Burns are permanent. Burned tokens cannot be recovered.",
-              "Staking never promises yield. Benefits are fee reductions and access, not returns.",
+              "The protocol never pays yield. Staking benefits are fee reductions and access — earned by activity, not by holding.",
+              "Unstaking is always permitted. The only friction is a 24-hour cooldown to prevent governance attacks.",
               "Fees are always a percentage, never a flat tax that scales badly.",
               "USDC is always accepted. CaribCoin is never the only payment method.",
               "Auto-conversion is transparent. Every fee conversion is visible as a Sui event.",
@@ -412,25 +555,22 @@ export default function CaribCoinPage() {
         <div className="grid md:grid-cols-2 gap-16 reveal">
           <div>
             <Eyebrow>Stewardship</Eyebrow>
-            <h2 className="font-display font-bold text-3xl mb-6">
-              The Foundation
-            </h2>
+            <h2 className="font-display font-bold text-3xl mb-6">The Foundation</h2>
             <p className="text-[16px] text-anansi-gray leading-[1.8]">
-              CaribCoin is stewarded by a foundation that exists to support ecosystem
-              development, fund public goods and grants, maintain protocol infrastructure,
-              and represent the network externally when necessary.
+              CaribCoin is stewarded by a foundation that exists to support ecosystem development,
+              fund public goods and grants, maintain protocol infrastructure, and represent the
+              network externally when necessary.
             </p>
           </div>
           <div>
             <p className="text-[16px] text-anansi-gray leading-[1.8]">
-              The Foundation does not manage token price, promise returns, control markets,
-              or override voluntary activity. Stewardship is not ownership. The network's
-              direction is shaped by participants — not by any single entity.
+              The Foundation does not manage token price, promise returns, control markets, or
+              override voluntary activity. Stewardship is not ownership. The network's direction is
+              shaped by participants — not by any single entity.
             </p>
             <p className="text-[16px] text-anansi-gray leading-[1.8] mt-6">
-              In its early stages, governance is informal and transparent. It is expected
-              to evolve gradually as the network grows. No governance model is assumed
-              to be final.
+              In its early stages, governance is informal and transparent. It is expected to evolve
+              gradually as the network grows. No governance model is assumed to be final.
             </p>
           </div>
         </div>
@@ -442,22 +582,28 @@ export default function CaribCoinPage() {
           <p className="font-display font-semibold text-white mb-4">Risk Disclosure</p>
           <div className="space-y-3 text-[14px] text-anansi-gray leading-relaxed">
             <p>
-              CaribCoin does not promise returns, yield, dividends, or price appreciation.
-              Its value, if any, is determined by how people choose to use it.
+              CaribCoin does not promise returns, yield, dividends, or price appreciation. Its
+              value, if any, is determined by how people choose to use it.
             </p>
             <p>
-              Participation involves risk including market volatility, technical risk,
-              regulatory uncertainty, and social dynamics. Participation is voluntary
-              and at your own risk.
+              Any yield opportunities in the CaribCoin ecosystem — such as DEX liquidity fees,
+              Foundation-funded incentive programs, or third-party staking services — are generated
+              by external market activity, not by the CaribCoin protocol itself. The protocol does
+              not issue rewards from token supply.
             </p>
             <p>
-              We do not predict market outcomes. The economic design creates conditions
-              where usage drives demand and burns reduce supply. What the market does
-              with that information is the market's business.
+              Participation involves risk including market volatility, technical risk, regulatory
+              uncertainty, and social dynamics. Participation is voluntary and at your own risk.
+            </p>
+            <p>
+              We do not predict market outcomes. The economic design creates conditions where usage
+              drives demand and burns reduce supply. What the market does with that information is
+              the market's business.
             </p>
           </div>
           <p className="text-[12px] text-anansi-gray/40 mt-6 italic">
-            Participation, not permission. Usage, not promises. The market decides what CaribCoin becomes.
+            Participation, not permission. Usage, not promises. The market decides what CaribCoin
+            becomes.
           </p>
         </div>
       </section>
@@ -469,7 +615,9 @@ export default function CaribCoinPage() {
 
 function Eyebrow({ children, dark }) {
   return (
-    <p className={`text-[10px] tracking-[0.25em] uppercase font-medium mb-7 ${dark ? "text-anansi-red" : "text-anansi-red"}`}>
+    <p
+      className={`text-[10px] tracking-[0.25em] uppercase font-medium mb-7 ${dark ? "text-anansi-red" : "text-anansi-red"}`}
+    >
       {children}
     </p>
   );
