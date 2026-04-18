@@ -72,6 +72,7 @@ async function migrate() {
     await db.query(`
       CREATE TABLE IF NOT EXISTS carib_burns (
         id SERIAL PRIMARY KEY,
+        event_key TEXT UNIQUE,
         amount BIGINT,
         burner TEXT,
         total_burned BIGINT,
@@ -83,10 +84,60 @@ async function migrate() {
     await db.query(`
       CREATE TABLE IF NOT EXISTS fee_collections (
         id SERIAL PRIMARY KEY,
+        event_key TEXT UNIQUE,
         lot_id TEXT,
+        source TEXT,
         total_fee BIGINT,
         burned BIGINT,
         to_treasury BIGINT,
+        cumulative_burned BIGINT,
+        processor TEXT,
+        tx_digest TEXT,
+        timestamp BIGINT
+      )
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS fee_converter_updates (
+        id SERIAL PRIMARY KEY,
+        event_key TEXT UNIQUE,
+        update_type TEXT,
+        old_bps BIGINT,
+        new_bps BIGINT,
+        old_address TEXT,
+        new_address TEXT,
+        tx_digest TEXT,
+        timestamp BIGINT
+      )
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS staking_events (
+        id SERIAL PRIMARY KEY,
+        event_key TEXT UNIQUE,
+        event_type TEXT,
+        staker TEXT,
+        position_id TEXT,
+        amount BIGINT,
+        new_total BIGINT,
+        restored_amount BIGINT,
+        cooldown_ends_at BIGINT,
+        tx_digest TEXT,
+        timestamp BIGINT
+      )
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS staking_config_updates (
+        id SERIAL PRIMARY KEY,
+        event_key TEXT UNIQUE,
+        update_type TEXT,
+        old_value BIGINT,
+        new_value BIGINT,
+        governance BIGINT,
+        premium BIGINT,
+        fee_reduction BIGINT,
+        priority_access BIGINT,
         tx_digest TEXT,
         timestamp BIGINT
       )
@@ -123,12 +174,40 @@ async function migrate() {
       )
     `);
 
+    await db.query(`
+      ALTER TABLE fee_collections
+      ADD COLUMN IF NOT EXISTS event_key TEXT,
+      ADD COLUMN IF NOT EXISTS source TEXT,
+      ADD COLUMN IF NOT EXISTS cumulative_burned BIGINT,
+      ADD COLUMN IF NOT EXISTS processor TEXT
+    `);
+
+    await db.query(`
+      ALTER TABLE carib_burns
+      ADD COLUMN IF NOT EXISTS event_key TEXT
+    `);
+
+    await db.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_fee_collections_event_key
+      ON fee_collections(event_key)
+      WHERE event_key IS NOT NULL
+    `);
+    await db.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_carib_burns_event_key
+      ON carib_burns(event_key)
+      WHERE event_key IS NOT NULL
+    `);
+
     await db.query(`CREATE INDEX IF NOT EXISTS idx_deliveries_farmer ON deliveries(farmer)`);
     await db.query(`CREATE INDEX IF NOT EXISTS idx_deliveries_lot ON deliveries(lot_id)`);
     await db.query(`CREATE INDEX IF NOT EXISTS idx_lots_status ON lots(status)`);
     await db.query(`CREATE INDEX IF NOT EXISTS idx_lots_symbol ON lots(asset_type_symbol)`);
     await db.query(`CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON user_profiles(email)`);
     await db.query(`CREATE INDEX IF NOT EXISTS idx_user_profiles_updated_at ON user_profiles(updated_at)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_fee_collections_timestamp ON fee_collections(timestamp DESC)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_staking_events_timestamp ON staking_events(timestamp DESC)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_staking_config_updates_timestamp ON staking_config_updates(timestamp DESC)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_fee_converter_updates_timestamp ON fee_converter_updates(timestamp DESC)`);
 
     console.log("Database migrated successfully");
   } catch (error) {

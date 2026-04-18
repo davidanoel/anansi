@@ -79,8 +79,23 @@ async function processEvent(event, txDigest, timestamp) {
       console.log(
         `[CLAIM] ${data.claimant.slice(0, 8)}... claimed $${Number(data.amount_received) / 1e6}`,
       );
+    } else if (type === allEventTypes.FEE_PROCESSED) {
+      await db.insertFeeCollection({
+        event_key: `${type}:${txDigest}:${timestamp}`,
+        lot_id: null,
+        source: data.source,
+        total_fee: Number(data.total_fee),
+        burned: Number(data.burned),
+        to_treasury: Number(data.to_treasury),
+        cumulative_burned: Number(data.cumulative_burned),
+        processor: data.processor,
+        tx_digest: txDigest,
+        timestamp,
+      });
+      console.log(`[FEE] ${data.source} → ${Number(data.total_fee) / 1e9} CARIB processed`);
     } else if (type === allEventTypes.TOKENS_BURNED) {
       await db.insertBurn({
+        event_key: `${type}:${txDigest}:${timestamp}`,
         amount: Number(data.amount),
         burner: data.burner,
         total_burned: Number(data.total_burned),
@@ -90,10 +105,94 @@ async function processEvent(event, txDigest, timestamp) {
       console.log(`[BURN] ${Number(data.amount) / 1e9} CARIB burned`);
     } else if (type === allEventTypes.FEES_COLLECTED) {
       await db.insertFeeCollection({
+        event_key: `${type}:${txDigest}:${timestamp}`,
         lot_id: data.lot_id,
+        source: "legacy_yield_engine",
         total_fee: Number(data.total_fee),
         burned: Number(data.burned),
         to_treasury: Number(data.to_treasury),
+        cumulative_burned: null,
+        processor: null,
+        tx_digest: txDigest,
+        timestamp,
+      });
+    } else if (type === allEventTypes.BURN_RATE_UPDATED) {
+      await db.insertFeeConverterUpdate({
+        event_key: `${type}:${txDigest}:${timestamp}`,
+        update_type: "burn_rate_updated",
+        old_bps: Number(data.old_bps),
+        new_bps: Number(data.new_bps),
+        tx_digest: txDigest,
+        timestamp,
+      });
+    } else if (type === allEventTypes.TREASURY_ADDRESS_UPDATED) {
+      await db.insertFeeConverterUpdate({
+        event_key: `${type}:${txDigest}:${timestamp}`,
+        update_type: "treasury_address_updated",
+        old_address: data.old_address,
+        new_address: data.new_address,
+        tx_digest: txDigest,
+        timestamp,
+      });
+    } else if (type === allEventTypes.STAKED) {
+      await db.insertStakingEvent({
+        event_key: `${type}:${txDigest}:${data.position_id}:${timestamp}`,
+        event_type: "staked",
+        staker: data.staker,
+        position_id: data.position_id,
+        amount: Number(data.amount),
+        new_total: Number(data.new_total),
+        tx_digest: txDigest,
+        timestamp,
+      });
+    } else if (type === allEventTypes.UNSTAKE_REQUESTED) {
+      await db.insertStakingEvent({
+        event_key: `${type}:${txDigest}:${data.position_id}:${timestamp}`,
+        event_type: "unstake_requested",
+        staker: data.staker,
+        position_id: data.position_id,
+        amount: Number(data.amount),
+        cooldown_ends_at: Number(data.cooldown_ends_at),
+        tx_digest: txDigest,
+        timestamp,
+      });
+    } else if (type === allEventTypes.UNSTAKE_CANCELLED) {
+      await db.insertStakingEvent({
+        event_key: `${type}:${txDigest}:${data.position_id}:${timestamp}`,
+        event_type: "unstake_cancelled",
+        staker: data.staker,
+        position_id: data.position_id,
+        restored_amount: Number(data.restored_amount),
+        tx_digest: txDigest,
+        timestamp,
+      });
+    } else if (type === allEventTypes.UNSTAKE_COMPLETED) {
+      await db.insertStakingEvent({
+        event_key: `${type}:${txDigest}:${data.position_id}:${timestamp}`,
+        event_type: "unstake_completed",
+        staker: data.staker,
+        position_id: data.position_id,
+        amount: Number(data.amount),
+        tx_digest: txDigest,
+        timestamp,
+      });
+    } else if (type === allEventTypes.COOLDOWN_UPDATED) {
+      await db.insertStakingConfigUpdate({
+        event_key: `${type}:${txDigest}:${timestamp}`,
+        update_type: "cooldown_updated",
+        old_value: Number(data.old_ms),
+        new_value: Number(data.new_ms),
+        tx_digest: txDigest,
+        timestamp,
+      });
+    } else if (type === allEventTypes.THRESHOLDS_UPDATED) {
+      await db.insertStakingConfigUpdate({
+        event_key: `${type}:${txDigest}:${timestamp}`,
+        update_type: "thresholds_updated",
+        governance: Number(data.governance),
+        premium: Number(data.premium),
+        fee_reduction: Number(data.fee_reduction),
+        priority_access: Number(data.priority_access),
         tx_digest: txDigest,
         timestamp,
       });
@@ -150,7 +249,7 @@ async function pollEvents() {
         await db.setCursor(cursorKey, JSON.stringify(result.nextCursor));
       }
     } catch (err) {
-      if (!err.message?.includes("not found")) {
+      if (!(err.message && err.message.includes("not found"))) {
         console.error(`Poll error for ${eventType.split("::").pop()}:`, err.message);
       }
     }
@@ -245,16 +344,16 @@ app.get("/api/farmers/directory", async (req, res) => {
 
 app.post("/api/farmers/directory", async (req, res) => {
   try {
-    const address = typeof req.body?.address === "string" ? req.body.address.trim() : "";
+    const address = req.body && typeof req.body.address === "string" ? req.body.address.trim() : "";
     if (!address) {
       return res.status(400).json({ error: "address is required" });
     }
 
     await db.upsertUserProfile({
       address,
-      email: req.body?.email || null,
-      name: req.body?.name || null,
-      picture: req.body?.picture || null,
+      email: req.body && req.body.email ? req.body.email : null,
+      name: req.body && req.body.name ? req.body.name : null,
+      picture: req.body && req.body.picture ? req.body.picture : null,
     });
 
     res.json({ ok: true });
@@ -373,11 +472,38 @@ app.get("/api/carib/burns", async (req, res) => {
 // Fee collection history
 app.get("/api/carib/fees", async (req, res) => {
   try {
-    const dbInstance = db.getDb();
-    const fees = await dbInstance.query(
-      "SELECT * FROM fee_collections ORDER BY timestamp DESC LIMIT 100",
-    );
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(Math.max(requestedLimit, 1), 250)
+      : 100;
+    const fees = await db.getRecentFeeCollections(limit);
     res.json(fees);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/staking/events", async (req, res) => {
+  try {
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(Math.max(requestedLimit, 1), 250)
+      : 100;
+    const events = await db.getRecentStakingEvents(limit);
+    res.json(events);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/staking/config-updates", async (req, res) => {
+  try {
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(Math.max(requestedLimit, 1), 250)
+      : 100;
+    const updates = await db.getRecentStakingConfigUpdates(limit);
+    res.json(updates);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

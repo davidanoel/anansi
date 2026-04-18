@@ -1,3 +1,7 @@
+import dotenv from "dotenv";
+
+dotenv.config({ path: new URL("./.env", import.meta.url).pathname });
+
 // Indexer configuration — update after deploying contracts
 
 export const config = {
@@ -10,7 +14,7 @@ export const config = {
   originalPackageId: process.env.ORIGINAL_PACKAGE_ID || process.env.PACKAGE_ID || "0x0",
 
   // Database (PostgreSQL)
-  dbUrl: process.env.DATABASE_URL || "postgres://user:password@localhost:5432/spice_indexer",
+  dbUrl: process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/spice_indexer",
 
   // API server
   port: parseInt(process.env.PORT || "4000"),
@@ -43,8 +47,22 @@ export function getEventTypes(packageId) {
     FEES_COLLECTED: `${packageId}::yield_engine::FeesCollected`,
     FEE_CONFIG_UPDATED: `${packageId}::yield_engine::FeeConfigUpdated`,
 
+    // Fee Converter events
+    FEE_PROCESSED: `${packageId}::fee_converter::FeeProcessed`,
+    BURN_RATE_UPDATED: `${packageId}::fee_converter::BurnRateUpdated`,
+    TREASURY_ADDRESS_UPDATED: `${packageId}::fee_converter::TreasuryAddressUpdated`,
+
+    // Staking events
+    STAKED: `${packageId}::staking::Staked`,
+    UNSTAKE_REQUESTED: `${packageId}::staking::UnstakeRequested`,
+    UNSTAKE_CANCELLED: `${packageId}::staking::UnstakeCancelled`,
+    UNSTAKE_COMPLETED: `${packageId}::staking::UnstakeCompleted`,
+    COOLDOWN_UPDATED: `${packageId}::staking::CooldownUpdated`,
+    THRESHOLDS_UPDATED: `${packageId}::staking::ThresholdsUpdated`,
+
     // CaribCoin events
     TOKENS_BURNED: `${packageId}::carib_coin::TokensBurned`,
     TOKENS_MINTED: `${packageId}::carib_coin::TokensMinted`,
+    TREASURY_TRANSFERRED: `${packageId}::carib_coin::TreasuryTransferred`,
   };
 }

@@ -30,7 +30,14 @@ export async function upsertLot(lot) {
 export async function updateLotStatus(lotId, status) {
   const db = getDb();
   await db.query(
-    "UPDATE lots SET status = $1, updated_at = (EXTRACT(EPOCH FROM NOW()) * 1000)::BIGINT WHERE id = $2",
+    `
+      UPDATE lots
+      SET
+        status = $1,
+        closed_at = CASE WHEN $1 = 3 THEN COALESCE(closed_at, (EXTRACT(EPOCH FROM NOW()) * 1000)::BIGINT) ELSE closed_at END,
+        updated_at = (EXTRACT(EPOCH FROM NOW()) * 1000)::BIGINT
+      WHERE id = $2
+    `,
     [status, lotId],
   );
 }
@@ -237,10 +244,11 @@ export async function insertBurn(burn) {
   const db = getDb();
   await db.query(
     `
-    INSERT INTO carib_burns (amount, burner, total_burned, tx_digest, timestamp)
-    VALUES ($1, $2, $3, $4, $5)
+    INSERT INTO carib_burns (event_key, amount, burner, total_burned, tx_digest, timestamp)
+    VALUES ($1, $2, $3, $4, $5, $6)
+    ON CONFLICT(event_key) DO NOTHING
   `,
-    [burn.amount, burn.burner, burn.total_burned, burn.tx_digest, burn.timestamp],
+    [burn.event_key, burn.amount, burn.burner, burn.total_burned, burn.tx_digest, burn.timestamp],
   );
 }
 
@@ -248,17 +256,104 @@ export async function insertFeeCollection(fee) {
   const db = getDb();
   await db.query(
     `
-    INSERT INTO fee_collections (lot_id, total_fee, burned, to_treasury, tx_digest, timestamp)
-    VALUES ($1, $2, $3, $4, $5, $6)
+    INSERT INTO fee_collections (
+      event_key, lot_id, source, total_fee, burned, to_treasury, cumulative_burned, processor, tx_digest, timestamp
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    ON CONFLICT(event_key) DO NOTHING
   `,
-    [fee.lot_id, fee.total_fee, fee.burned, fee.to_treasury, fee.tx_digest, fee.timestamp],
+    [
+      fee.event_key,
+      fee.lot_id || null,
+      fee.source || null,
+      fee.total_fee,
+      fee.burned,
+      fee.to_treasury,
+      fee.cumulative_burned == null ? null : fee.cumulative_burned,
+      fee.processor || null,
+      fee.tx_digest,
+      fee.timestamp,
+    ],
+  );
+}
+
+export async function insertFeeConverterUpdate(update) {
+  const db = getDb();
+  await db.query(
+    `
+    INSERT INTO fee_converter_updates (
+      event_key, update_type, old_bps, new_bps, old_address, new_address, tx_digest, timestamp
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    ON CONFLICT(event_key) DO NOTHING
+  `,
+    [
+      update.event_key,
+      update.update_type,
+      update.old_bps == null ? null : update.old_bps,
+      update.new_bps == null ? null : update.new_bps,
+      update.old_address == null ? null : update.old_address,
+      update.new_address == null ? null : update.new_address,
+      update.tx_digest,
+      update.timestamp,
+    ],
+  );
+}
+
+export async function insertStakingEvent(event) {
+  const db = getDb();
+  await db.query(
+    `
+    INSERT INTO staking_events (
+      event_key, event_type, staker, position_id, amount, new_total, restored_amount, cooldown_ends_at, tx_digest, timestamp
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    ON CONFLICT(event_key) DO NOTHING
+  `,
+    [
+      event.event_key,
+      event.event_type,
+      event.staker || null,
+      event.position_id || null,
+      event.amount == null ? null : event.amount,
+      event.new_total == null ? null : event.new_total,
+      event.restored_amount == null ? null : event.restored_amount,
+      event.cooldown_ends_at == null ? null : event.cooldown_ends_at,
+      event.tx_digest,
+      event.timestamp,
+    ],
+  );
+}
+
+export async function insertStakingConfigUpdate(update) {
+  const db = getDb();
+  await db.query(
+    `
+    INSERT INTO staking_config_updates (
+      event_key, update_type, old_value, new_value, governance, premium, fee_reduction, priority_access, tx_digest, timestamp
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    ON CONFLICT(event_key) DO NOTHING
+  `,
+    [
+      update.event_key,
+      update.update_type,
+      update.old_value == null ? null : update.old_value,
+      update.new_value == null ? null : update.new_value,
+      update.governance == null ? null : update.governance,
+      update.premium == null ? null : update.premium,
+      update.fee_reduction == null ? null : update.fee_reduction,
+      update.priority_access == null ? null : update.priority_access,
+      update.tx_digest,
+      update.timestamp,
+    ],
   );
 }
 
 export async function getTotalBurned() {
   const db = getDb();
   const row = await db.oneOrNone("SELECT COALESCE(MAX(total_burned), 0) as total FROM carib_burns");
-  return row?.total || 0;
+  return row && row.total ? row.total : 0;
 }
 
 // ============ Asset Types ============
@@ -296,7 +391,7 @@ export async function upsertAssetType(assetType) {
       assetType.unit || null,
       assetType.region,
       assetType.custodian,
-      assetType.active ?? 1,
+      assetType.active == null ? 1 : assetType.active,
       assetType.created_at,
     ],
   );
@@ -382,7 +477,7 @@ export async function getFarmerDirectory(options = {}) {
 export async function getCursor(key) {
   const db = getDb();
   const row = await db.oneOrNone("SELECT value FROM indexer_state WHERE key = $1", [key]);
-  return row?.value || null;
+  return row && row.value ? row.value : null;
 }
 
 export async function setCursor(key, value) {
@@ -444,6 +539,12 @@ export async function getAnalyticsOverview() {
         SELECT MAX(timestamp) AS ts FROM carib_burns
         UNION ALL
         SELECT MAX(timestamp) AS ts FROM fee_collections
+        UNION ALL
+        SELECT MAX(timestamp) AS ts FROM staking_events
+        UNION ALL
+        SELECT MAX(timestamp) AS ts FROM staking_config_updates
+        UNION ALL
+        SELECT MAX(timestamp) AS ts FROM fee_converter_updates
       ) events
     )
     SELECT
@@ -459,8 +560,14 @@ export async function getAnalyticsOverview() {
       (SELECT COUNT(*) FROM surplus_claims) AS surplus_claim_count,
       (SELECT COALESCE(SUM(total_surplus_deposited), 0) FROM lots) AS total_surplus_deposited,
       (SELECT COALESCE(SUM(total_surplus_distributed), 0) FROM lots) AS total_surplus_distributed,
+      (SELECT COUNT(*) FROM fee_collections) AS fee_event_count,
       (SELECT COALESCE(SUM(total_fee), 0) FROM fee_collections) AS total_fees_collected,
       (SELECT COALESCE(MAX(total_burned), 0) FROM carib_burns) AS total_carib_burned,
+      (SELECT COUNT(*) FROM staking_events WHERE event_type = 'staked') AS staking_stake_count,
+      (SELECT COUNT(*) FROM staking_events WHERE event_type = 'unstake_requested') AS staking_unstake_request_count,
+      (SELECT COUNT(*) FROM staking_events WHERE event_type = 'unstake_completed') AS staking_unstake_completed_count,
+      (SELECT COALESCE(SUM(amount), 0) FROM staking_events WHERE event_type = 'staked') AS total_carib_staked_gross,
+      (SELECT COALESCE(SUM(amount), 0) FROM staking_events WHERE event_type = 'unstake_completed') AS total_carib_unstaked_gross,
       (
         SELECT COALESCE(SUM(total_surplus_distributed), 0)::FLOAT
           / NULLIF(COALESCE(SUM(total_surplus_deposited), 0), 0)
@@ -659,6 +766,66 @@ export async function getRecentActivity(limit = 25) {
           cb.amount AS amount,
           cb.total_burned AS secondary_amount
         FROM carib_burns cb
+
+        UNION ALL
+
+        SELECT
+          fc.timestamp,
+          'fee_processed' AS kind,
+          fc.event_key AS reference_id,
+          fc.lot_id,
+          NULL::TEXT AS asset_type_symbol,
+          fc.processor AS actor,
+          fc.tx_digest,
+          fc.source AS label,
+          fc.total_fee AS amount,
+          fc.burned AS secondary_amount
+        FROM fee_collections fc
+
+        UNION ALL
+
+        SELECT
+          se.timestamp,
+          se.event_type AS kind,
+          se.event_key AS reference_id,
+          NULL::TEXT AS lot_id,
+          NULL::TEXT AS asset_type_symbol,
+          se.staker AS actor,
+          se.tx_digest,
+          se.position_id AS label,
+          COALESCE(se.amount, se.restored_amount) AS amount,
+          COALESCE(se.new_total, se.cooldown_ends_at) AS secondary_amount
+        FROM staking_events se
+
+        UNION ALL
+
+        SELECT
+          scu.timestamp,
+          scu.update_type AS kind,
+          scu.event_key AS reference_id,
+          NULL::TEXT AS lot_id,
+          NULL::TEXT AS asset_type_symbol,
+          NULL::TEXT AS actor,
+          scu.tx_digest,
+          NULL::TEXT AS label,
+          scu.new_value AS amount,
+          scu.old_value AS secondary_amount
+        FROM staking_config_updates scu
+
+        UNION ALL
+
+        SELECT
+          fcu.timestamp,
+          fcu.update_type AS kind,
+          fcu.event_key AS reference_id,
+          NULL::TEXT AS lot_id,
+          NULL::TEXT AS asset_type_symbol,
+          NULL::TEXT AS actor,
+          fcu.tx_digest,
+          COALESCE(fcu.new_address, fcu.old_address) AS label,
+          fcu.new_bps AS amount,
+          fcu.old_bps AS secondary_amount
+        FROM fee_converter_updates fcu
       ) activity
       ORDER BY timestamp DESC
       LIMIT $1
@@ -716,4 +883,28 @@ export async function getLotAnalyticsSummary(lotId) {
     },
     recentClaims,
   };
+}
+
+export async function getRecentFeeCollections(limit = 100) {
+  const db = getDb();
+  return await db.query(
+    "SELECT * FROM fee_collections ORDER BY timestamp DESC LIMIT $1",
+    [limit],
+  );
+}
+
+export async function getRecentStakingEvents(limit = 100) {
+  const db = getDb();
+  return await db.query(
+    "SELECT * FROM staking_events ORDER BY timestamp DESC LIMIT $1",
+    [limit],
+  );
+}
+
+export async function getRecentStakingConfigUpdates(limit = 100) {
+  const db = getDb();
+  return await db.query(
+    "SELECT * FROM staking_config_updates ORDER BY timestamp DESC LIMIT $1",
+    [limit],
+  );
 }

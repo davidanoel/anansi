@@ -1,58 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import PlatformAnalyticsPanel from "../../components/PlatformAnalyticsPanel";
+import PlatformAuthGate from "../../components/PlatformAuthGate";
 import { TOKEN_REGISTRY } from "../../lib/constants";
 
 export default function PlatformPage() {
-  const [authenticated, setAuthenticated] = useState(false);
-  const [password, setPassword] = useState("");
-  const [platformKey, setPlatformKey] = useState("");
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    setPlatformKey(password);
-    setAuthenticated(true);
-  };
-
-  if (!authenticated) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-anansi-cream">
-        <div className="max-w-sm w-full animate-fade-in">
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-anansi-red to-anansi-black mx-auto shadow-elevated" />
-          <h1 className="font-display text-display-sm text-center mt-6">Platform Admin</h1>
-          <p className="text-anansi-muted text-sm text-center mt-2 mb-8">
-            Anansi Technology Corporation
-          </p>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Platform admin key"
-              className="input-field font-mono text-center"
-              autoFocus
-            />
-            <button type="submit" disabled={!password} className="btn-primary w-full">
-              Sign in
-            </button>
-          </form>
-        </div>
-        <p className="text-[11px] text-anansi-muted mt-12">
-          Miami, FL · Anansi Technology Corporation
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <PlatformDashboard
-      platformKey={platformKey}
-      onLogout={() => {
-        setAuthenticated(false);
-        setPlatformKey("");
-      }}
-    />
+    <PlatformAuthGate>
+      {({ platformKey, onLogout }) => (
+        <PlatformDashboard platformKey={platformKey} onLogout={onLogout} />
+      )}
+    </PlatformAuthGate>
   );
 }
 
@@ -91,7 +49,6 @@ function PlatformDashboard({ platformKey, onLogout }) {
     { id: "dex", label: "DEX Pools" },
     { id: "treasury", label: "Treasury" },
     { id: "staking", label: "Staking" },
-    { id: "analytics", label: "Analytics" },
     { id: "overview", label: "Overview" },
   ];
 
@@ -144,16 +101,24 @@ function PlatformDashboard({ platformKey, onLogout }) {
           </div>
         )}
 
-        <div className="flex gap-1 mb-6 bg-anansi-light rounded-lg p-1">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${tab === t.id ? "bg-white text-anansi-black shadow-card" : "text-anansi-muted hover:text-anansi-black"}`}
-            >
-              {t.label}
-            </button>
-          ))}
+        <div className="flex flex-col gap-3 mb-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex gap-1 bg-anansi-light rounded-lg p-1 overflow-x-auto">
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap ${tab === t.id ? "bg-white text-anansi-black shadow-card" : "text-anansi-muted hover:text-anansi-black"}`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <a
+            href="/platform/analytics"
+            className="btn-ghost text-sm inline-flex items-center justify-center"
+          >
+            Open Analytics
+          </a>
         </div>
 
         {tab === "assets" && <AssetTypesPanel api={api} />}
@@ -163,7 +128,6 @@ function PlatformDashboard({ platformKey, onLogout }) {
         {tab === "dex" && <DexPanel api={api} />}
         {tab === "treasury" && <TreasuryPanel api={api} />}
         {tab === "staking" && <StakingPanel api={api} />}
-        {tab === "analytics" && <PlatformAnalyticsPanel api={api} />}
         {tab === "overview" && <OverviewPanel stats={stats} />}
       </div>
     </div>

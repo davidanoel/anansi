@@ -8,9 +8,11 @@ export default function PlatformAnalyticsPanel({ api }) {
   const [byAssetType, setByAssetType] = useState([]);
   const [farmers, setFarmers] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
+  const [activityPage, setActivityPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const activityPageSize = 8;
 
   async function request(path) {
     const data = await api(path);
@@ -29,7 +31,7 @@ export default function PlatformAnalyticsPanel({ api }) {
         request("analytics/deliveries-over-time?days=14"),
         request("analytics/by-asset-type"),
         request("analytics/farmers?limit=8"),
-        request("analytics/recent-activity?limit=18"),
+        request("analytics/recent-activity?limit=48"),
       ]);
 
       setOverview(overviewData);
@@ -37,6 +39,7 @@ export default function PlatformAnalyticsPanel({ api }) {
       setByAssetType(Array.isArray(assetData) ? assetData : []);
       setFarmers(Array.isArray(farmerData) ? farmerData : []);
       setRecentActivity(Array.isArray(activityData) ? activityData : []);
+      setActivityPage(1);
     } catch (err) {
       setError(err.message || "Failed to load analytics");
     } finally {
@@ -64,6 +67,14 @@ export default function PlatformAnalyticsPanel({ api }) {
     () => Math.max(...normalizedDeliveries.map((item) => item.deliveriesCount), 1),
     [normalizedDeliveries],
   );
+  const totalActivityPages = useMemo(
+    () => Math.max(1, Math.ceil(recentActivity.length / activityPageSize)),
+    [recentActivity.length],
+  );
+  const pagedActivity = useMemo(() => {
+    const start = (activityPage - 1) * activityPageSize;
+    return recentActivity.slice(start, start + activityPageSize);
+  }, [activityPage, recentActivity]);
 
   if (loading) {
     return (
@@ -263,15 +274,38 @@ export default function PlatformAnalyticsPanel({ api }) {
         </div>
 
         <div className="card p-6">
-          <div className="mb-5">
-            <h3 className="font-semibold">Recent Activity</h3>
-            <p className="text-sm text-anansi-muted mt-1">Fast view into the indexed platform event stream.</p>
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-semibold">Recent Activity</h3>
+              <p className="text-sm text-anansi-muted mt-1">Fast view into the indexed platform event stream.</p>
+            </div>
+            {recentActivity.length > activityPageSize && (
+              <div className="flex items-center gap-2 text-xs">
+                <button
+                  onClick={() => setActivityPage((page) => Math.max(1, page - 1))}
+                  disabled={activityPage === 1}
+                  className="btn-ghost px-3 py-1 disabled:opacity-50"
+                >
+                  Prev
+                </button>
+                <span className="text-anansi-muted whitespace-nowrap">
+                  Page {activityPage} of {totalActivityPages}
+                </span>
+                <button
+                  onClick={() => setActivityPage((page) => Math.min(totalActivityPages, page + 1))}
+                  disabled={activityPage === totalActivityPages}
+                  className="btn-ghost px-3 py-1 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
           <div className="space-y-3">
             {recentActivity.length === 0 ? (
               <div className="text-sm text-anansi-muted py-8 text-center">No recent activity yet.</div>
             ) : (
-              recentActivity.map((item) => {
+              pagedActivity.map((item) => {
                 const detail = describeActivity(item);
                 return (
                   <div key={`${item.kind}-${item.reference_id}-${item.timestamp}`} className="rounded-xl border border-anansi-border bg-white/60 px-4 py-3">
