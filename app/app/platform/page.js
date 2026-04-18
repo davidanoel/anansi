@@ -894,7 +894,7 @@ function DepositsPanel({ api }) {
         body: JSON.stringify({ lotId, amount: parseFloat(amount), tokenSymbol }),
       });
       if (data.error) throw new Error(data.error);
-      setResult({ success: true, digest: data.digest });
+      setResult(data);
       setAmount("");
     } catch (err) {
       setResult({ success: false, error: err.message });
@@ -969,10 +969,27 @@ function DepositsPanel({ api }) {
           </button>
         </form>
         {result && (
-          <ResultBanner
-            result={result}
-            successMsg={`Surplus deposited for ${tokenSymbol}. Farmers can now claim. Tx: ${result.digest?.slice(0, 24)}…`}
-          />
+          <>
+            <ResultBanner
+              result={result}
+              successMsg={`Surplus deposited for ${tokenSymbol}. Farmers can now claim. Tx: ${(result.depositDigest || result.digest)?.slice(0, 24)}…`}
+            />
+            {!result.feeConverted && (result.reason || result.feeCoinId) && (
+              <div className="mt-4 p-4 rounded-lg text-sm bg-amber-50 text-amber-900 border border-amber-200">
+                <p className="font-medium">
+                  {result.recoverable
+                    ? "Fee conversion did not complete automatically."
+                    : "Fee conversion was not completed in this deposit flow."}
+                </p>
+                {result.reason && <p className="mt-1">{result.reason}</p>}
+                {result.feeCoinId && (
+                  <p className="mt-2 font-mono text-[11px] break-all">
+                    Fee coin ID: {result.feeCoinId}
+                  </p>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 

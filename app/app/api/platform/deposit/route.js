@@ -25,7 +25,8 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      digest: result.digest,
+      digest: result.depositDigest || result.digest || null,
+      ...result,
     });
   } catch (err) {
     console.error("Deposit failed:", err);
