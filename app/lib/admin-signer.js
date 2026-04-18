@@ -82,6 +82,10 @@ export async function adminExecute(tx) {
 const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID;
 const ORIGINAL_PACKAGE_ID = process.env.NEXT_PUBLIC_ORIGINAL_PACKAGE_ID || PACKAGE_ID;
 const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID;
+const CARIB_TREASURY_ID = process.env.NEXT_PUBLIC_CARIB_TREASURY_ID;
+const FEE_CONVERTER_ID = process.env.NEXT_PUBLIC_FEE_CONVERTER_ID;
+const CARIB_TYPE = process.env.NEXT_PUBLIC_CARIB_TYPE;
+const CARIB_DECIMALS = 9;
 
 // Minimum USDC balance in admin wallet to bother converting.
 // Below this we leave it in place and wait for more to accumulate.
@@ -107,6 +111,18 @@ export async function getAdminCapId() {
     options: { showContent: true },
   });
   if (result.data.length === 0) throw new Error("No RegistryAdmin found");
+  return result.data[0].data?.objectId;
+}
+
+export async function getFeeConverterAdminId() {
+  const client = getClient();
+  const type = `${ORIGINAL_PACKAGE_ID}::fee_converter::FeeConverterAdmin`;
+  const result = await client.getOwnedObjects({
+    owner: getAdminAddress(),
+    filter: { StructType: type },
+    options: { showContent: true },
+  });
+  if (result.data.length === 0) throw new Error("No FeeConverterAdmin found");
   return result.data[0].data?.objectId;
 }
 
@@ -777,6 +793,67 @@ export async function getAdminStats() {
     totalLots: Number(regFields.lot_count || 0),
     totalAssetTypes: Number(regFields.asset_type_count || 0),
   };
+}
+
+function formatUnits(raw, decimals) {
+  return new Decimal(raw || 0).div(new Decimal(10).pow(decimals)).toFixed(decimals);
+}
+
+export async function getTreasuryStats() {
+  const client = getClient();
+
+  if (!CARIB_TREASURY_ID) throw new Error("NEXT_PUBLIC_CARIB_TREASURY_ID not configured");
+  if (!FEE_CONVERTER_ID) throw new Error("NEXT_PUBLIC_FEE_CONVERTER_ID not configured");
+  if (!CARIB_TYPE) throw new Error("NEXT_PUBLIC_CARIB_TYPE not configured");
+
+  const [treasuryObj, feeConverterObj] = await Promise.all([
+    client.getObject({ id: CARIB_TREASURY_ID, options: { showContent: true, showOwner: true } }),
+    client.getObject({ id: FEE_CONVERTER_ID, options: { showContent: true } }),
+  ]);
+
+  const treasuryFields = treasuryObj.data?.content?.fields || {};
+  const treasuryOwner = treasuryObj.data?.owner?.AddressOwner || null;
+
+  const converterFields = feeConverterObj.data?.content?.fields || {};
+  const treasuryReceiver = converterFields.treasury_address;
+
+  const balance = treasuryReceiver
+    ? await client.getBalance({ owner: treasuryReceiver, coinType: CARIB_TYPE })
+    : { totalBalance: "0" };
+
+  const totalBurnedAll = treasuryFields.total_burned || "0";
+  const burnedViaFees = converterFields.total_burned || "0";
+  const totalToTreasury = converterFields.total_to_treasury || "0";
+  const burnBps = Number(converterFields.burn_bps || 0);
+  const feeEventCount = Number(converterFields.fee_event_count || 0);
+
+  return {
+    caribTreasuryId: CARIB_TREASURY_ID,
+    feeConverterId: FEE_CONVERTER_ID,
+    treasuryObjectOwner: treasuryOwner,
+    treasuryReceiverAddress: treasuryReceiver,
+    treasuryBalanceRaw: balance.totalBalance || "0",
+    treasuryBalance: formatUnits(balance.totalBalance || "0", CARIB_DECIMALS),
+    totalBurnedRaw: totalBurnedAll,
+    totalBurned: formatUnits(totalBurnedAll, CARIB_DECIMALS),
+    burnedViaFeesRaw: burnedViaFees,
+    burnedViaFees: formatUnits(burnedViaFees, CARIB_DECIMALS),
+    totalToTreasuryRaw: totalToTreasury,
+    totalToTreasury: formatUnits(totalToTreasury, CARIB_DECIMALS),
+    burnBps,
+    burnPercent: (burnBps / 100).toFixed(2),
+    feeEventCount,
+  };
+}
+
+export async function adminUpdateTreasuryReceiver(newAddress) {
+  const feeConverterAdminId = await getFeeConverterAdminId();
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${PACKAGE_ID}::fee_converter::update_treasury_address`,
+    arguments: [tx.object(feeConverterAdminId), tx.object(FEE_CONVERTER_ID), tx.pure.address(newAddress)],
+  });
+  return adminExecute(tx);
 }
 
 // ============================================================
