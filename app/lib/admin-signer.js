@@ -856,6 +856,16 @@ export async function adminUpdateTreasuryReceiver(newAddress) {
   return adminExecute(tx);
 }
 
+export async function adminUpdateBurnRate(newBurnBps) {
+  const feeConverterAdminId = await getFeeConverterAdminId();
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${PACKAGE_ID}::fee_converter::update_burn_rate`,
+    arguments: [tx.object(feeConverterAdminId), tx.object(FEE_CONVERTER_ID), tx.pure.u64(newBurnBps)],
+  });
+  return adminExecute(tx);
+}
+
 // ============================================================
 // Compliance — KYC verification, freeze/unfreeze, enforcement
 // ============================================================

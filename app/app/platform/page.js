@@ -1068,139 +1068,6 @@ function OverviewPanel({ stats }) {
   );
 }
 
-function TreasuryPanel({ api }) {
-  const [treasury, setTreasury] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [result, setResult] = useState(null);
-  const [treasuryAddress, setTreasuryAddress] = useState("");
-
-  const loadTreasury = useCallback(async () => {
-    try {
-      const data = await api("treasury");
-      setTreasury(data);
-      setTreasuryAddress(data.treasuryReceiverAddress || "");
-    } finally {
-      setLoading(false);
-    }
-  }, [api]);
-
-  useEffect(() => {
-    loadTreasury().catch((err) => {
-      setResult({ success: false, error: err.message });
-    });
-  }, [loadTreasury]);
-
-  const handleUpdateReceiver = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    setResult(null);
-    try {
-      const data = await api("treasury", {
-        method: "PATCH",
-        body: JSON.stringify({ treasuryAddress }),
-      });
-      if (data.error) throw new Error(data.error);
-      setResult({ success: true, digest: data.digest });
-      await loadTreasury();
-    } catch (err) {
-      setResult({ success: false, error: err.message });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
-    return <div className="card p-6 h-48 animate-pulse" />;
-  }
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="font-semibold text-lg">Treasury</h2>
-        <p className="text-sm text-anansi-muted">
-          Monitor CARIB treasury balances, burn metrics, and where future treasury flows are routed.
-        </p>
-      </div>
-
-      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="card p-5">
-          <p className="stat-label">Treasury Balance</p>
-          <p className="stat-value text-lg">{treasury?.treasuryBalance || "0"} CARIB</p>
-          <p className="text-xs text-anansi-muted mt-1">At the current treasury receiver address</p>
-        </div>
-        <div className="card p-5">
-          <p className="stat-label">Total Burned</p>
-          <p className="stat-value text-lg">{treasury?.totalBurned || "0"} CARIB</p>
-          <p className="text-xs text-anansi-muted mt-1">All-time across the CARIB treasury object</p>
-        </div>
-        <div className="card p-5">
-          <p className="stat-label">Routed To Treasury</p>
-          <p className="stat-value text-lg">{treasury?.totalToTreasury || "0"} CARIB</p>
-          <p className="text-xs text-anansi-muted mt-1">Cumulative from fee_converter</p>
-        </div>
-        <div className="card p-5">
-          <p className="stat-label">Burn Rate</p>
-          <p className="stat-value text-lg">{treasury?.burnPercent || "0.00"}%</p>
-          <p className="text-xs text-anansi-muted mt-1">
-            {treasury?.feeEventCount || 0} fee events processed
-          </p>
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="card p-6">
-          <h3 className="font-semibold mb-4">Treasury Receiver</h3>
-          <form onSubmit={handleUpdateReceiver} className="space-y-4">
-            <Field
-              label="Treasury Address"
-              value={treasuryAddress}
-              onChange={setTreasuryAddress}
-              placeholder="0x..."
-              help="Future treasury CARIB flows will be sent here. Existing balances are not moved."
-              mono
-            />
-            <button
-              type="submit"
-              disabled={saving || !treasuryAddress}
-              className="px-6 py-2.5 bg-anansi-red text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-anansi-red-light transition-colors active:scale-[0.98]"
-            >
-              {saving ? "Updating..." : "Update Treasury Receiver"}
-            </button>
-          </form>
-          {result && (
-            <ResultBanner
-              result={result}
-              successMsg={`Treasury receiver updated. Tx: ${result.digest}`}
-            />
-          )}
-        </div>
-
-        <div className="card p-6">
-          <h3 className="font-semibold mb-4">On-Chain Details</h3>
-          <div className="space-y-3 text-sm">
-            {[
-              ["Receiver", treasury?.treasuryReceiverAddress],
-              ["Treasury Object Holder", treasury?.treasuryObjectOwner],
-              ["CARIB Treasury Object", treasury?.caribTreasuryId],
-              ["Fee Converter", treasury?.feeConverterId],
-              ["Burned Via Fees", `${treasury?.burnedViaFees || "0"} CARIB`],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="flex justify-between gap-4 py-2 border-b border-anansi-border last:border-0"
-              >
-                <span className="text-anansi-muted">{label}</span>
-                <span className="font-mono text-[11px] text-right break-all">{value || "—"}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ============================================================
 // Shared Components
 // ============================================================
@@ -1680,6 +1547,192 @@ function DexPanel({ api }) {
             );
           })}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function TreasuryPanel({ api }) {
+  const [treasury, setTreasury] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [savingReceiver, setSavingReceiver] = useState(false);
+  const [savingBurnRate, setSavingBurnRate] = useState(false);
+  const [result, setResult] = useState(null);
+  const [treasuryAddress, setTreasuryAddress] = useState("");
+  const [burnPercent, setBurnPercent] = useState("");
+
+  const loadTreasury = useCallback(async () => {
+    const data = await api("treasury");
+    setTreasury(data);
+    setTreasuryAddress(data.treasuryReceiverAddress || "");
+    setBurnPercent(data.burnPercent || "0.00");
+  }, [api]);
+
+  useEffect(() => {
+    loadTreasury()
+      .catch((err) => setResult({ success: false, error: err.message }))
+      .finally(() => setLoading(false));
+  }, [loadTreasury]);
+
+  const handleUpdateReceiver = async (e) => {
+    e.preventDefault();
+    setSavingReceiver(true);
+    setResult(null);
+    try {
+      const data = await api("treasury", {
+        method: "PATCH",
+        body: JSON.stringify({ action: "set_receiver", treasuryAddress }),
+      });
+      if (data.error) throw new Error(data.error);
+      setResult({ success: true, digest: data.digest });
+      await loadTreasury();
+    } catch (err) {
+      setResult({ success: false, error: err.message });
+    } finally {
+      setSavingReceiver(false);
+    }
+  };
+
+  const handleUpdateBurnRate = async (e) => {
+    e.preventDefault();
+    setSavingBurnRate(true);
+    setResult(null);
+    try {
+      const burnBps = Math.round(parseFloat(burnPercent || "0") * 100);
+      const data = await api("treasury", {
+        method: "PATCH",
+        body: JSON.stringify({ action: "set_burn_rate", burnBps }),
+      });
+      if (data.error) throw new Error(data.error);
+      setResult({ success: true, digest: data.digest });
+      await loadTreasury();
+    } catch (err) {
+      setResult({ success: false, error: err.message });
+    } finally {
+      setSavingBurnRate(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="card p-6 h-48 animate-pulse" />;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="font-semibold text-lg">Treasury</h2>
+        <p className="text-sm text-anansi-muted">
+          Monitor CARIB treasury balances and manage the fee-routing settings that control burns and treasury flows.
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="card p-5">
+          <p className="stat-label">Treasury Balance</p>
+          <p className="stat-value text-lg">{treasury?.treasuryBalance || "0"} CARIB</p>
+          <p className="text-xs text-anansi-muted mt-1">At the current treasury receiver address</p>
+        </div>
+        <div className="card p-5">
+          <p className="stat-label">Total Burned</p>
+          <p className="stat-value text-lg">{treasury?.totalBurned || "0"} CARIB</p>
+          <p className="text-xs text-anansi-muted mt-1">All-time across the CARIB treasury object</p>
+        </div>
+        <div className="card p-5">
+          <p className="stat-label">Routed To Treasury</p>
+          <p className="stat-value text-lg">{treasury?.totalToTreasury || "0"} CARIB</p>
+          <p className="text-xs text-anansi-muted mt-1">Cumulative from fee_converter</p>
+        </div>
+        <div className="card p-5">
+          <p className="stat-label">Burn Rate</p>
+          <p className="stat-value text-lg">{treasury?.burnPercent || "0.00"}%</p>
+          <p className="text-xs text-anansi-muted mt-1">
+            {treasury?.feeEventCount || 0} fee events processed
+          </p>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="card p-6">
+          <h3 className="font-semibold mb-4">Treasury Receiver</h3>
+          <form onSubmit={handleUpdateReceiver} className="space-y-4">
+            <Field
+              label="Treasury Address"
+              value={treasuryAddress}
+              onChange={setTreasuryAddress}
+              placeholder="0x..."
+              help="Future treasury CARIB flows will be sent here. Existing balances are not moved."
+              mono
+            />
+            <button
+              type="submit"
+              disabled={savingReceiver || !treasuryAddress}
+              className="px-6 py-2.5 bg-anansi-red text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-anansi-red-light transition-colors active:scale-[0.98]"
+            >
+              {savingReceiver ? "Updating..." : "Update Treasury Receiver"}
+            </button>
+          </form>
+        </div>
+
+        <div className="card p-6">
+          <h3 className="font-semibold mb-4">Fee Management</h3>
+          <form onSubmit={handleUpdateBurnRate} className="space-y-4">
+            <Field
+              label="Burn Percentage"
+              value={burnPercent}
+              onChange={setBurnPercent}
+              placeholder="50.00"
+              type="number"
+              help="Percent of each CARIB fee to burn. The remainder is routed to the treasury receiver."
+            />
+            <button
+              type="submit"
+              disabled={savingBurnRate || burnPercent === ""}
+              className="px-6 py-2.5 bg-anansi-black text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-anansi-black/90 transition-colors active:scale-[0.98]"
+            >
+              {savingBurnRate ? "Updating..." : "Update Burn Rate"}
+            </button>
+          </form>
+          <div className="mt-4 pt-4 border-t border-anansi-border text-sm space-y-2">
+            <div className="flex justify-between gap-4">
+              <span className="text-anansi-muted">Current Burned Via Fees</span>
+              <span className="font-mono text-[11px]">{treasury?.burnedViaFees || "0"} CARIB</span>
+            </div>
+            <div className="flex justify-between gap-4">
+              <span className="text-anansi-muted">Fee Converter</span>
+              <span className="font-mono text-[11px] break-all text-right">{treasury?.feeConverterId || "—"}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card p-6">
+        <h3 className="font-semibold mb-4">On-Chain Details</h3>
+        <div className="space-y-3 text-sm">
+          {[
+            ["Receiver", treasury?.treasuryReceiverAddress],
+            ["Treasury Object Holder", treasury?.treasuryObjectOwner],
+            ["CARIB Treasury Object", treasury?.caribTreasuryId],
+            ["Fee Converter", treasury?.feeConverterId],
+            ["Burned Via Fees", `${treasury?.burnedViaFees || "0"} CARIB`],
+          ].map(([label, value]) => (
+            <div
+              key={label}
+              className="flex justify-between gap-4 py-2 border-b border-anansi-border last:border-0"
+            >
+              <span className="text-anansi-muted">{label}</span>
+              <span className="font-mono text-[11px] text-right break-all">{value || "—"}</span>
+            </div>
+          ))}
+        </div>
+
+        {result && (
+          <div className="mt-4">
+            <ResultBanner
+              result={result}
+              successMsg={`Treasury setting updated. Tx: ${result.digest}`}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

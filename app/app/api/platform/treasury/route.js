@@ -1,5 +1,9 @@
 import { verifyPlatformAuth } from "../../../../lib/platform-auth";
-import { adminUpdateTreasuryReceiver, getTreasuryStats } from "../../../../lib/admin-signer";
+import {
+  adminUpdateBurnRate,
+  adminUpdateTreasuryReceiver,
+  getTreasuryStats,
+} from "../../../../lib/admin-signer";
 
 export async function GET(req) {
   const authError = verifyPlatformAuth(req);
@@ -20,14 +24,27 @@ export async function PATCH(req) {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const newAddress = body.treasuryAddress;
+    const action = body.action || "set_receiver";
 
-    if (!newAddress) {
-      return Response.json({ error: "Missing treasuryAddress" }, { status: 400 });
+    if (action === "set_receiver") {
+      const newAddress = body.treasuryAddress;
+      if (!newAddress) {
+        return Response.json({ error: "Missing treasuryAddress" }, { status: 400 });
+      }
+      const result = await adminUpdateTreasuryReceiver(newAddress);
+      return Response.json({ success: true, digest: result.digest });
     }
 
-    const result = await adminUpdateTreasuryReceiver(newAddress);
-    return Response.json({ success: true, digest: result.digest });
+    if (action === "set_burn_rate") {
+      const burnBps = Number(body.burnBps);
+      if (!Number.isFinite(burnBps) || burnBps < 0 || burnBps > 10000) {
+        return Response.json({ error: "burnBps must be between 0 and 10000" }, { status: 400 });
+      }
+      const result = await adminUpdateBurnRate(burnBps);
+      return Response.json({ success: true, digest: result.digest });
+    }
+
+    return Response.json({ error: "Unknown action. Use: set_receiver or set_burn_rate" }, { status: 400 });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
   }
