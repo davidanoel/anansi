@@ -1639,7 +1639,8 @@ function TreasuryPanel({ api }) {
       <div>
         <h2 className="font-semibold text-lg">Treasury</h2>
         <p className="text-sm text-anansi-muted">
-          Monitor CARIB treasury balances and manage the fee-routing settings that control burns and treasury flows.
+          Monitor CARIB treasury balances and manage the fee-routing settings that control burns and
+          treasury flows.
         </p>
       </div>
 
@@ -1652,7 +1653,9 @@ function TreasuryPanel({ api }) {
         <div className="card p-5">
           <p className="stat-label">Total Burned</p>
           <p className="stat-value text-lg">{treasury?.totalBurned || "0"} CARIB</p>
-          <p className="text-xs text-anansi-muted mt-1">All-time across the CARIB treasury object</p>
+          <p className="text-xs text-anansi-muted mt-1">
+            All-time across the CARIB treasury object
+          </p>
         </div>
         <div className="card p-5">
           <p className="stat-label">Routed To Treasury</p>
@@ -1716,7 +1719,9 @@ function TreasuryPanel({ api }) {
             </div>
             <div className="flex justify-between gap-4">
               <span className="text-anansi-muted">Fee Converter</span>
-              <span className="font-mono text-[11px] break-all text-right">{treasury?.feeConverterId || "—"}</span>
+              <span className="font-mono text-[11px] break-all text-right">
+                {treasury?.feeConverterId || "—"}
+              </span>
             </div>
           </div>
         </div>
