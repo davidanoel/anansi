@@ -85,6 +85,7 @@ function buildTokenRegistry() {
 
     registry[symbol] = {
       symbol,
+      kind: "commodity",
       moduleName,
       packageId,
       // Coin type uses the commodity's package ID (not core)
@@ -103,6 +104,7 @@ function buildTokenRegistry() {
 
     registry.CARIB = {
       symbol: "CARIB",
+      kind: "platform",
       moduleName,
       packageId,
       type: `${packageId}::${moduleName}::${typeName}`,
@@ -128,9 +130,25 @@ export function getAllTokens() {
   return Object.values(TOKEN_REGISTRY);
 }
 
+export function getTokensByKind(kind) {
+  return Object.values(TOKEN_REGISTRY).filter((t) => t.kind === kind);
+}
+
+export function getCommodityTokens() {
+  return getTokensByKind("commodity");
+}
+
+export function isCommodityToken(symbol) {
+  return TOKEN_REGISTRY[symbol]?.kind === "commodity";
+}
+
 // Helper: get all tokens with DEX pools
 export function getTradableTokens() {
   return Object.values(TOKEN_REGISTRY).filter((t) => t.hasPool);
+}
+
+export function getTradableCommodityTokens() {
+  return getTradableTokens().filter((t) => t.kind === "commodity");
 }
 
 // Convenience exports (derived from registry)

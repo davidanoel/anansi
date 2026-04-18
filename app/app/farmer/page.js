@@ -11,7 +11,7 @@ import {
   getClaimedDepositIds,
 } from "../../lib/data";
 import { claimSurplus, sellToken } from "../../lib/transactions";
-import { USDC_DECIMALS } from "../../lib/constants";
+import { USDC_DECIMALS, isCommodityToken } from "../../lib/constants";
 
 export default function FarmerPage() {
   const { user } = useAuth();
@@ -115,13 +115,14 @@ export default function FarmerPage() {
     );
   }
 
-  const totalAssetsValue = portfolio.reduce((acc, token) => {
+  const commodityPortfolio = portfolio.filter((token) => isCommodityToken(token.symbol));
+
+  const totalAssetsValue = commodityPortfolio.reduce((acc, token) => {
     const price = getPrice(token.symbol) || 0;
     return acc + token.displayBalance * price;
   }, 0);
 
   const totalEquity = totalAssetsValue + (usdc.displayBalance || 0);
-  const commodityPortfolio = portfolio.filter((token) => token.symbol !== "CARIB");
 
   const holdingsSummary = commodityPortfolio
     .filter((t) => t.displayBalance > 0)

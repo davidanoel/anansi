@@ -5,7 +5,7 @@ import { useAuth } from "../../components/AuthProvider";
 import AppNav from "../../components/AppNav";
 import { getMultiTokenPortfolio, getUsdcBalance, getActiveLots } from "../../lib/data";
 import { buyToken } from "../../lib/transactions";
-import { getTradableTokens, USDC_DECIMALS } from "../../lib/constants";
+import { getTradableCommodityTokens, isCommodityToken, USDC_DECIMALS } from "../../lib/constants";
 
 export default function BuyerPage() {
   const { user } = useAuth();
@@ -16,7 +16,7 @@ export default function BuyerPage() {
   const [loading, setLoading] = useState(true);
   const [buyState, setBuyState] = useState({ token: null, amount: "", buying: false });
 
-  const tradableTokens = getTradableTokens().filter((token) => token.symbol !== "CARIB");
+  const tradableTokens = getTradableCommodityTokens();
 
   async function loadPrices() {
     try {
@@ -87,7 +87,8 @@ export default function BuyerPage() {
   }
 
   const hasPrices = Object.keys(prices).length > 0;
-  const totalHoldingsValue = portfolio.reduce((sum, t) => {
+  const commodityPortfolio = portfolio.filter((token) => isCommodityToken(token.symbol));
+  const totalHoldingsValue = commodityPortfolio.reduce((sum, t) => {
     const price = getPrice(t.symbol);
     return sum + (price ? t.displayBalance * price : 0);
   }, 0);
@@ -115,7 +116,7 @@ export default function BuyerPage() {
               {hasPrices ? `$${totalHoldingsValue.toFixed(2)}` : "—"}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              {portfolio
+              {commodityPortfolio
                 .filter((t) => t.totalBalance > 0)
                 .map((t) => {
                   const price = getPrice(t.symbol);

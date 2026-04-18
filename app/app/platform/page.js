@@ -90,6 +90,7 @@ function PlatformDashboard({ platformKey, onLogout }) {
     { id: "deposits", label: "Surplus Deposits" },
     { id: "dex", label: "DEX Pools" },
     { id: "treasury", label: "Treasury" },
+    { id: "staking", label: "Staking" },
     { id: "analytics", label: "Analytics" },
     { id: "overview", label: "Overview" },
   ];
@@ -161,6 +162,7 @@ function PlatformDashboard({ platformKey, onLogout }) {
         {tab === "deposits" && <DepositsPanel api={api} />}
         {tab === "dex" && <DexPanel api={api} />}
         {tab === "treasury" && <TreasuryPanel api={api} />}
+        {tab === "staking" && <StakingPanel api={api} />}
         {tab === "analytics" && <PlatformAnalyticsPanel api={api} />}
         {tab === "overview" && <OverviewPanel stats={stats} />}
       </div>
@@ -1752,6 +1754,217 @@ function TreasuryPanel({ api }) {
             <ResultBanner
               result={result}
               successMsg={`Treasury setting updated. Tx: ${result.digest}`}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StakingPanel({ api }) {
+  const [staking, setStaking] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [savingCooldown, setSavingCooldown] = useState(false);
+  const [savingThresholds, setSavingThresholds] = useState(false);
+  const [result, setResult] = useState(null);
+  const [cooldownHours, setCooldownHours] = useState("");
+  const [form, setForm] = useState({
+    governanceThreshold: "",
+    premiumThreshold: "",
+    feeReductionThreshold: "",
+    priorityAccessThreshold: "",
+  });
+
+  const loadStaking = useCallback(async () => {
+    const data = await api("staking");
+    setStaking(data);
+    setCooldownHours(data.cooldownHours || "");
+    setForm({
+      governanceThreshold: data.governanceThreshold || "",
+      premiumThreshold: data.premiumThreshold || "",
+      feeReductionThreshold: data.feeReductionThreshold || "",
+      priorityAccessThreshold: data.priorityAccessThreshold || "",
+    });
+  }, [api]);
+
+  useEffect(() => {
+    loadStaking()
+      .catch((err) => setResult({ success: false, error: err.message }))
+      .finally(() => setLoading(false));
+  }, [loadStaking]);
+
+  const handleUpdateCooldown = async (e) => {
+    e.preventDefault();
+    setSavingCooldown(true);
+    setResult(null);
+    try {
+      const data = await api("staking", {
+        method: "PATCH",
+        body: JSON.stringify({ action: "set_cooldown", cooldownHours: parseFloat(cooldownHours) }),
+      });
+      if (data.error) throw new Error(data.error);
+      setResult({ success: true, digest: data.digest });
+      await loadStaking();
+    } catch (err) {
+      setResult({ success: false, error: err.message });
+    } finally {
+      setSavingCooldown(false);
+    }
+  };
+
+  const handleUpdateThresholds = async (e) => {
+    e.preventDefault();
+    setSavingThresholds(true);
+    setResult(null);
+    try {
+      const data = await api("staking", {
+        method: "PATCH",
+        body: JSON.stringify({
+          action: "set_thresholds",
+          governanceThreshold: parseFloat(form.governanceThreshold),
+          premiumThreshold: parseFloat(form.premiumThreshold),
+          feeReductionThreshold: parseFloat(form.feeReductionThreshold),
+          priorityAccessThreshold: parseFloat(form.priorityAccessThreshold),
+        }),
+      });
+      if (data.error) throw new Error(data.error);
+      setResult({ success: true, digest: data.digest });
+      await loadStaking();
+    } catch (err) {
+      setResult({ success: false, error: err.message });
+    } finally {
+      setSavingThresholds(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="card p-6 h-48 animate-pulse" />;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="font-semibold text-lg">Staking</h2>
+        <p className="text-sm text-anansi-muted">
+          Monitor CARIB participation and govern the staking cooldown and benefit thresholds.
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="card p-5">
+          <p className="stat-label">Total Staked</p>
+          <p className="stat-value text-lg">{staking?.totalStaked || "0"} CARIB</p>
+        </div>
+        <div className="card p-5">
+          <p className="stat-label">Total Stakers</p>
+          <p className="stat-value text-lg">{staking?.totalStakers || 0}</p>
+        </div>
+        <div className="card p-5">
+          <p className="stat-label">Cooldown</p>
+          <p className="stat-value text-lg">{staking?.cooldownHours || "0.00"} hrs</p>
+        </div>
+        <div className="card p-5">
+          <p className="stat-label">Staking Config</p>
+          <p className="font-mono text-[11px] break-all mt-2">{staking?.stakingConfigId || "—"}</p>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="card p-6">
+          <h3 className="font-semibold mb-4">Cooldown</h3>
+          <form onSubmit={handleUpdateCooldown} className="space-y-4">
+            <Field
+              label="Cooldown Hours"
+              value={cooldownHours}
+              onChange={setCooldownHours}
+              placeholder="24"
+              type="number"
+              help={`Allowed range: ${staking?.minCooldownHours || "0"} to ${staking?.maxCooldownHours || "0"} hours`}
+            />
+            <button
+              type="submit"
+              disabled={savingCooldown || cooldownHours === ""}
+              className="px-6 py-2.5 bg-anansi-red text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-anansi-red-light transition-colors active:scale-[0.98]"
+            >
+              {savingCooldown ? "Updating..." : "Update Cooldown"}
+            </button>
+          </form>
+        </div>
+
+        <div className="card p-6">
+          <h3 className="font-semibold mb-4">Benefit Thresholds</h3>
+          <form onSubmit={handleUpdateThresholds} className="space-y-4">
+            <Field
+              label="Governance"
+              value={form.governanceThreshold}
+              onChange={(v) => setForm((p) => ({ ...p, governanceThreshold: v }))}
+              placeholder="1000"
+              type="number"
+              help="Minimum active CARIB for governance voting"
+            />
+            <Field
+              label="Premium"
+              value={form.premiumThreshold}
+              onChange={(v) => setForm((p) => ({ ...p, premiumThreshold: v }))}
+              placeholder="5000"
+              type="number"
+              help="Minimum active CARIB for premium features"
+            />
+            <Field
+              label="Fee Reduction"
+              value={form.feeReductionThreshold}
+              onChange={(v) => setForm((p) => ({ ...p, feeReductionThreshold: v }))}
+              placeholder="10000"
+              type="number"
+              help="Minimum active CARIB for reduced fees"
+            />
+            <Field
+              label="Priority Access"
+              value={form.priorityAccessThreshold}
+              onChange={(v) => setForm((p) => ({ ...p, priorityAccessThreshold: v }))}
+              placeholder="50000"
+              type="number"
+              help="Minimum active CARIB for early access to new pools"
+            />
+            <button
+              type="submit"
+              disabled={
+                savingThresholds ||
+                Object.values(form).some((value) => value === "")
+              }
+              className="px-6 py-2.5 bg-anansi-black text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-anansi-black/90 transition-colors active:scale-[0.98]"
+            >
+              {savingThresholds ? "Updating..." : "Update Thresholds"}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div className="card p-6">
+        <h3 className="font-semibold mb-4">Current Thresholds</h3>
+        <div className="space-y-3 text-sm">
+          {[
+            ["Governance", `${staking?.governanceThreshold || "0"} CARIB`],
+            ["Premium", `${staking?.premiumThreshold || "0"} CARIB`],
+            ["Fee Reduction", `${staking?.feeReductionThreshold || "0"} CARIB`],
+            ["Priority Access", `${staking?.priorityAccessThreshold || "0"} CARIB`],
+          ].map(([label, value]) => (
+            <div
+              key={label}
+              className="flex justify-between gap-4 py-2 border-b border-anansi-border last:border-0"
+            >
+              <span className="text-anansi-muted">{label}</span>
+              <span className="font-mono text-[11px] text-right break-all">{value}</span>
+            </div>
+          ))}
+        </div>
+
+        {result && (
+          <div className="mt-4">
+            <ResultBanner
+              result={result}
+              successMsg={`Staking setting updated. Tx: ${result.digest}`}
             />
           </div>
         )}

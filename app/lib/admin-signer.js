@@ -37,13 +37,40 @@ export function getAdminAddress() {
   return getAdminKeypair().getPublicKey().toSuiAddress();
 }
 
+function shouldRetryAdminTx(err) {
+  const msg = String(err?.message || err || "").toLowerCase();
+
+  if (
+    msg.includes("moveabort") ||
+    msg.includes("transaction execution failed") ||
+    msg.includes("invalid") ||
+    msg.includes("not found") ||
+    msg.includes("not owned") ||
+    msg.includes("type mismatch")
+  ) {
+    return false;
+  }
+
+  return (
+    msg.includes("timeout") ||
+    msg.includes("timed out") ||
+    msg.includes("fetch failed") ||
+    msg.includes("network") ||
+    msg.includes("connection") ||
+    msg.includes("502") ||
+    msg.includes("503") ||
+    msg.includes("504") ||
+    msg.includes("rpc")
+  );
+}
+
 export async function adminExecute(tx) {
   const client = getClient();
   const kp = getAdminKeypair();
   tx.setSender(kp.getPublicKey().toSuiAddress());
 
   let lastError;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const result = await client.signAndExecuteTransaction({
         signer: kp,
@@ -73,7 +100,11 @@ export async function adminExecute(tx) {
     } catch (err) {
       lastError = err;
       console.log(`adminExecute attempt ${attempt + 1} failed:`, err.message);
-      if (attempt < 2) await new Promise((r) => setTimeout(r, 2000));
+      if (attempt < 1 && shouldRetryAdminTx(err)) {
+        await new Promise((r) => setTimeout(r, 1000));
+        continue;
+      }
+      break;
     }
   }
   throw lastError;
@@ -85,6 +116,7 @@ const REGISTRY_ID = process.env.NEXT_PUBLIC_REGISTRY_ID;
 const CARIB_TREASURY_ID = process.env.NEXT_PUBLIC_CARIB_TREASURY_ID;
 const FEE_CONVERTER_ID = process.env.NEXT_PUBLIC_FEE_CONVERTER_ID;
 const CARIB_TYPE = process.env.NEXT_PUBLIC_CARIB_TYPE;
+const STAKING_CONFIG_ID = process.env.NEXT_PUBLIC_STAKING_CONFIG_ID;
 const CARIB_DECIMALS = 9;
 
 // Minimum USDC balance in admin wallet to bother converting.
@@ -123,6 +155,18 @@ export async function getFeeConverterAdminId() {
     options: { showContent: true },
   });
   if (result.data.length === 0) throw new Error("No FeeConverterAdmin found");
+  return result.data[0].data?.objectId;
+}
+
+export async function getStakingAdminId() {
+  const client = getClient();
+  const type = `${PACKAGE_ID}::staking::StakingAdmin`;
+  const result = await client.getOwnedObjects({
+    owner: getAdminAddress(),
+    filter: { StructType: type },
+    options: { showContent: true },
+  });
+  if (result.data.length === 0) throw new Error("No StakingAdmin found");
   return result.data[0].data?.objectId;
 }
 
@@ -799,6 +843,10 @@ function formatUnits(raw, decimals) {
   return new Decimal(raw || 0).div(new Decimal(10).pow(decimals)).toFixed(decimals);
 }
 
+function formatUnitsCompact(raw, decimals) {
+  return new Decimal(raw || 0).div(new Decimal(10).pow(decimals)).toString();
+}
+
 export async function getTreasuryStats() {
   const client = getClient();
 
@@ -846,6 +894,48 @@ export async function getTreasuryStats() {
   };
 }
 
+export async function getStakingStats() {
+  const client = getClient();
+
+  if (!STAKING_CONFIG_ID) throw new Error("NEXT_PUBLIC_STAKING_CONFIG_ID not configured");
+
+  const stakingObj = await client.getObject({
+    id: STAKING_CONFIG_ID,
+    options: { showContent: true },
+  });
+
+  const fields = stakingObj.data?.content?.fields;
+  if (!fields) throw new Error("Staking config not found");
+
+  const cooldownMs = Number(fields.cooldown_ms || 0);
+  const minCooldownMs = Number(fields.min_cooldown_ms || 0);
+  const maxCooldownMs = Number(fields.max_cooldown_ms || 0);
+
+  return {
+    stakingConfigId: STAKING_CONFIG_ID,
+    totalStakedRaw: fields.total_staked || "0",
+    totalStaked: formatUnitsCompact(fields.total_staked || "0", CARIB_DECIMALS),
+    totalStakers: Number(fields.total_stakers || 0),
+    cooldownMs,
+    cooldownHours: (cooldownMs / 3_600_000).toFixed(2),
+    minCooldownMs,
+    minCooldownHours: (minCooldownMs / 3_600_000).toFixed(2),
+    maxCooldownMs,
+    maxCooldownHours: (maxCooldownMs / 3_600_000).toFixed(2),
+    governanceThresholdRaw: fields.governance_threshold || "0",
+    governanceThreshold: formatUnitsCompact(fields.governance_threshold || "0", CARIB_DECIMALS),
+    premiumThresholdRaw: fields.premium_threshold || "0",
+    premiumThreshold: formatUnitsCompact(fields.premium_threshold || "0", CARIB_DECIMALS),
+    feeReductionThresholdRaw: fields.fee_reduction_threshold || "0",
+    feeReductionThreshold: formatUnitsCompact(fields.fee_reduction_threshold || "0", CARIB_DECIMALS),
+    priorityAccessThresholdRaw: fields.priority_access_threshold || "0",
+    priorityAccessThreshold: formatUnitsCompact(
+      fields.priority_access_threshold || "0",
+      CARIB_DECIMALS,
+    ),
+  };
+}
+
 export async function adminUpdateTreasuryReceiver(newAddress) {
   const feeConverterAdminId = await getFeeConverterAdminId();
   const tx = new Transaction();
@@ -862,6 +952,38 @@ export async function adminUpdateBurnRate(newBurnBps) {
   tx.moveCall({
     target: `${PACKAGE_ID}::fee_converter::update_burn_rate`,
     arguments: [tx.object(feeConverterAdminId), tx.object(FEE_CONVERTER_ID), tx.pure.u64(newBurnBps)],
+  });
+  return adminExecute(tx);
+}
+
+export async function adminUpdateStakingCooldown(newCooldownMs) {
+  const stakingAdminId = await getStakingAdminId();
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${PACKAGE_ID}::staking::update_cooldown`,
+    arguments: [tx.object(stakingAdminId), tx.object(STAKING_CONFIG_ID), tx.pure.u64(newCooldownMs)],
+  });
+  return adminExecute(tx);
+}
+
+export async function adminUpdateStakingThresholds({
+  governanceRaw,
+  premiumRaw,
+  feeReductionRaw,
+  priorityAccessRaw,
+}) {
+  const stakingAdminId = await getStakingAdminId();
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${PACKAGE_ID}::staking::update_thresholds`,
+    arguments: [
+      tx.object(stakingAdminId),
+      tx.object(STAKING_CONFIG_ID),
+      tx.pure.u64(governanceRaw),
+      tx.pure.u64(premiumRaw),
+      tx.pure.u64(feeReductionRaw),
+      tx.pure.u64(priorityAccessRaw),
+    ],
   });
   return adminExecute(tx);
 }
