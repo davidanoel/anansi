@@ -26,6 +26,7 @@ export const MODULES = {
   PLATFORM: "platform",
   COMMODITY_REGISTRY: "commodity_registry",
   FEE_CONVERTER: "fee_converter",
+  STAKING: "staking",
 };
 
 // USDC on Sui
@@ -160,3 +161,10 @@ export const LOT_STATUS = {
   2: "Distributing",
   3: "Closed",
 };
+
+// CARIB coin type (fully-qualified)
+export const CARIB_TYPE =
+  process.env.NEXT_PUBLIC_CARIB_TYPE || `${PACKAGE_ID}::carib_coin::CARIB_COIN`;
+
+// Staking shared config (created at publish of staking.move)
+export const STAKING_CONFIG_ID = process.env.NEXT_PUBLIC_STAKING_CONFIG_ID || "0x0";

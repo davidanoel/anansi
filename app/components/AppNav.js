@@ -14,6 +14,7 @@ export default function AppNav() {
     { href: "/admin", label: "Admin" },
     { href: "/farmer", label: "Farmer" },
     { href: "/buyer", label: "Marketplace" },
+    { href: "/stake", label: "Stake" },
   ];
 
   return (

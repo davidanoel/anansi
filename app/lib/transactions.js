@@ -44,7 +44,7 @@ function buildZkLoginParams() {
 // Transaction Execution
 // ============================================================
 
-async function executeTransaction(tx) {
+export async function executeTransaction(tx) {
   const client = getSuiClient();
   const { session, ephemeralKey, zkProof, maxEpoch, addressSeed } = buildZkLoginParams();
 

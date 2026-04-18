@@ -94,6 +94,8 @@ try:
                 objects['NEXT_PUBLIC_CARIB_TREASURY_ID'] = obj_id
             elif obj_type.endswith('::fee_converter::FeeConverter'):
                 objects['NEXT_PUBLIC_FEE_CONVERTER_ID'] = obj_id
+            elif obj_type.endswith('::staking::StakingConfig'):
+                objects['NEXT_PUBLIC_STAKING_CONFIG_ID'] = obj_id
             elif obj_type.endswith('::commodity_registry::CommodityRegistryAdmin'):
                 objects['COMMODITY_REGISTRY_ADMIN_ID'] = obj_id
             elif obj_type.endswith('::commodity_registry::CommodityRegistry'):
