@@ -121,8 +121,9 @@ export default function FarmerPage() {
   }, 0);
 
   const totalEquity = totalAssetsValue + (usdc.displayBalance || 0);
+  const commodityPortfolio = portfolio.filter((token) => token.symbol !== "CARIB");
 
-  const holdingsSummary = portfolio
+  const holdingsSummary = commodityPortfolio
     .filter((t) => t.displayBalance > 0)
     .map((t) => `${t.displayBalance.toLocaleString()} ${t.symbol}`)
     .join(" · ");
@@ -199,11 +200,11 @@ export default function FarmerPage() {
         </div>
 
         {/* Token Holdings */}
-        {!loading && portfolio.length > 0 && (
+        {!loading && commodityPortfolio.length > 0 && (
           <div className="mt-6">
             <p className="section-title">Your tokens</p>
             <div className="space-y-3">
-              {portfolio.map((token) => {
+              {commodityPortfolio.map((token) => {
                 const price = getPrice(token.symbol);
                 return (
                   <div key={token.symbol} className="card p-5">

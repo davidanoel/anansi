@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../components/AuthProvider";
 import AppNav from "../../components/AppNav";
 import { recordDelivery, createLot, startSelling, updateValuation } from "../../lib/transactions";
-import { getCustodianCaps, getRecentDeliveries, getActiveLots } from "../../lib/data";
+import { getCustodianCaps, getRecentDeliveries, getActiveLots, getAllLots, getLot } from "../../lib/data";
 import { uploadToIPFS } from "../../lib/ipfs";
 
 export default function AdminPage() {
@@ -91,7 +91,7 @@ export default function AdminPage() {
       <AppNav />
       <div className="max-w-5xl mx-auto px-6 py-8 animate-fade-in">
         <div className="mb-8">
-          <p className="section-title">GCNA Dashboard</p>
+          <p className="section-title">Dashboard</p>
           <h1 className="text-display-sm font-display">Custodian Admin</h1>
           <p className="text-anansi-gray mt-1">
             Managing {custodianCaps.length} asset type{custodianCaps.length !== 1 ? "s" : ""}
@@ -220,6 +220,14 @@ function RecordDeliveryForm({ custodianCaps }) {
     setSubmitting(true);
     setResult(null);
     try {
+      const lot = await getLot(form.lotId);
+      if (!lot) {
+        throw new Error("Lot not found. Please choose an open lot or paste a valid lot id.");
+      }
+      if (lot.status !== 0) {
+        throw new Error(`You can only record deliveries for lots that are open. This lot is ${lot.statusLabel.toLowerCase()}.`);
+      }
+
       let receiptHash = "";
       if (receiptFile) {
         receiptHash = (await uploadToIPFS(receiptFile)).hash;
@@ -472,6 +480,7 @@ function shortAddress(address) {
 
 function LotManager({ custodianCaps }) {
   const [lots, setLots] = useState([]);
+  const [closedLots, setClosedLots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [result, setResult] = useState(null);
@@ -484,14 +493,15 @@ function LotManager({ custodianCaps }) {
   }, []);
   async function loadLots() {
     try {
-      const allLots = await getActiveLots();
+      const allLots = await getAllLots();
       // Extract the symbols this specific custodian is allowed to manage
       const authorizedSymbols = custodianCaps.map((cap) => cap.assetTypeSymbol);
 
       // Filter the global lots to only show their own
       const myLots = allLots.filter((lot) => authorizedSymbols.includes(lot.assetTypeSymbol));
 
-      setLots(myLots);
+      setLots(myLots.filter((lot) => lot.status < 3));
+      setClosedLots(myLots.filter((lot) => lot.status === 3));
     } catch (err) {
       console.error(err);
     } finally {
@@ -522,7 +532,7 @@ function LotManager({ custodianCaps }) {
   const handleLotAction = async (lotId, action) => {
     try {
       // FIX 5: Find the correct custodian cap based on the lot's actual asset type
-      const lot = lots.find((l) => l.id === lotId);
+      const lot = [...lots, ...closedLots].find((l) => l.id === lotId);
       const cap = custodianCaps.find((c) => c.assetTypeSymbol === lot.assetTypeSymbol);
       if (!cap) throw new Error("You do not have the custodian cap for this asset type.");
 
@@ -588,73 +598,127 @@ function LotManager({ custodianCaps }) {
             <div key={i} className="card p-5 h-32 animate-pulse" />
           ))}
         </div>
-      ) : lots.length === 0 ? (
-        <div className="card text-center py-16">
-          <p className="text-sm font-medium mt-3">No active lots</p>
-        </div>
       ) : (
-        <div className="space-y-3">
-          {lots.map((lot) => (
-            <div key={lot.id} className="card p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="font-semibold">
-                    {lot.assetTypeSymbol} — Lot #{lot.lotNumber}
-                  </span>
-                  <span className={`badge ${sBadge(lot.status)}`}>{lot.statusLabel}</span>
-                </div>
+        <div className="space-y-6">
+          <div className="space-y-3">
+            {lots.length === 0 ? (
+              <div className="card text-center py-16">
+                <p className="text-sm font-medium mt-3">No active lots</p>
               </div>
-              <div className="grid grid-cols-4 gap-4 mt-4 pt-3 border-t border-anansi-border">
-                <div>
-                  <p className="stat-label">Units</p>
-                  <p className="stat-value">{lot.totalUnits.toLocaleString()}</p>
+            ) : (
+              lots.map((lot) => (
+                <div key={lot.id} className="card p-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold">
+                        {lot.assetTypeSymbol} — Lot #{lot.lotNumber}
+                      </span>
+                      <span className={`badge ${sBadge(lot.status)}`}>{lot.statusLabel}</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 gap-4 mt-4 pt-3 border-t border-anansi-border">
+                    <div>
+                      <p className="stat-label">Units</p>
+                      <p className="stat-value">{lot.totalUnits.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="stat-label">Tokens</p>
+                      <p className="stat-value">{lot.totalTokensMinted.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="stat-label">Deliveries</p>
+                      <p className="stat-value">{lot.deliveryCount}</p>
+                    </div>
+                    <div>
+                      <p className="stat-label">Value</p>
+                      <p className="stat-value">
+                        {lot.estimatedValueUsdc > 0
+                          ? `$${(lot.estimatedValueUsdc / 1e6).toFixed(2)}`
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-anansi-border flex items-center justify-between">
+                    <p className="text-[10px] text-anansi-muted font-mono truncate flex-1">
+                      {lot.id}
+                    </p>
+                    {lot.status === 0 && (
+                      <button
+                        onClick={() => handleLotAction(lot.id, "selling")}
+                        className="ml-2 badge badge-selling cursor-pointer hover:opacity-80 transition-opacity"
+                      >
+                        Mark as Selling →
+                      </button>
+                    )}
+                    {lot.status === 1 && (
+                      <button
+                        onClick={() => handleLotAction(lot.id, "distributing")}
+                        className="ml-2 badge badge-distributing cursor-pointer hover:opacity-80 transition-opacity"
+                      >
+                        Start Distribution →
+                      </button>
+                    )}
+                    {lot.status === 2 && (
+                      <button
+                        onClick={() => handleLotAction(lot.id, "close")}
+                        className="ml-2 badge badge-closed cursor-pointer hover:opacity-80 transition-opacity"
+                      >
+                        Close Lot
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <p className="stat-label">Tokens</p>
-                  <p className="stat-value">{lot.totalTokensMinted.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="stat-label">Deliveries</p>
-                  <p className="stat-value">{lot.deliveryCount}</p>
-                </div>
-                <div>
-                  <p className="stat-label">Value</p>
-                  <p className="stat-value">
-                    {lot.estimatedValueUsdc > 0
-                      ? `$${(lot.estimatedValueUsdc / 1e6).toFixed(2)}`
-                      : "—"}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-anansi-border flex items-center justify-between">
-                <p className="text-[10px] text-anansi-muted font-mono truncate flex-1">{lot.id}</p>
-                {lot.status === 0 && (
-                  <button
-                    onClick={() => handleLotAction(lot.id, "selling")}
-                    className="ml-2 badge badge-selling cursor-pointer hover:opacity-80 transition-opacity"
-                  >
-                    Mark as Selling →
-                  </button>
-                )}
-                {lot.status === 1 && (
-                  <button
-                    onClick={() => handleLotAction(lot.id, "distributing")}
-                    className="ml-2 badge badge-distributing cursor-pointer hover:opacity-80 transition-opacity"
-                  >
-                    Start Distribution →
-                  </button>
-                )}
-                {lot.status === 2 && (
-                  <button
-                    onClick={() => handleLotAction(lot.id, "close")}
-                    className="ml-2 badge badge-closed cursor-pointer hover:opacity-80 transition-opacity"
-                  >
-                    Close Lot
-                  </button>
-                )}
-              </div>
+              ))
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-base">Closed Lots</h3>
+              <span className="text-xs text-anansi-muted">{closedLots.length}</span>
             </div>
-          ))}
+            {closedLots.length === 0 ? (
+              <div className="card p-5 text-sm text-anansi-muted">No closed lots yet.</div>
+            ) : (
+              closedLots.map((lot) => (
+                <div key={lot.id} className="card p-5 opacity-80">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold">
+                        {lot.assetTypeSymbol} — Lot #{lot.lotNumber}
+                      </span>
+                      <span className={`badge ${sBadge(lot.status)}`}>{lot.statusLabel}</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 gap-4 mt-4 pt-3 border-t border-anansi-border">
+                    <div>
+                      <p className="stat-label">Units</p>
+                      <p className="stat-value">{lot.totalUnits.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="stat-label">Tokens</p>
+                      <p className="stat-value">{lot.totalTokensMinted.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="stat-label">Deliveries</p>
+                      <p className="stat-value">{lot.deliveryCount}</p>
+                    </div>
+                    <div>
+                      <p className="stat-label">Value</p>
+                      <p className="stat-value">
+                        {lot.estimatedValueUsdc > 0
+                          ? `$${(lot.estimatedValueUsdc / 1e6).toFixed(2)}`
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-anansi-border">
+                    <p className="text-[10px] text-anansi-muted font-mono truncate">{lot.id}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
     </div>

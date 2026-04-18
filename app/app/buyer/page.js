@@ -16,7 +16,7 @@ export default function BuyerPage() {
   const [loading, setLoading] = useState(true);
   const [buyState, setBuyState] = useState({ token: null, amount: "", buying: false });
 
-  const tradableTokens = getTradableTokens();
+  const tradableTokens = getTradableTokens().filter((token) => token.symbol !== "CARIB");
 
   async function loadPrices() {
     try {
