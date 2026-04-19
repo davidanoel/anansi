@@ -40,19 +40,57 @@ export default function Home() {
             <circle cx="960" cy="540" r="720" fill="url(#glow-rim)" />
 
             {/* Thread lines — brighter, with two accented in red */}
-            <line x1="960" y1="540" x2="150"  y2="80"   stroke="url(#thread-bright)" strokeWidth="0.6" />
-            <line x1="960" y1="540" x2="1770" y2="120"  stroke="url(#thread)"        strokeWidth="0.6" />
-            <line x1="960" y1="540" x2="80"   y2="750"  stroke="url(#thread)"        strokeWidth="0.6" />
-            <line x1="960" y1="540" x2="1840" y2="850"  stroke="url(#thread-bright)" strokeWidth="0.6" />
-            <line x1="960" y1="540" x2="300"  y2="30"   stroke="url(#thread)"        strokeWidth="0.4" />
-            <line x1="960" y1="540" x2="1620" y2="1000" stroke="url(#thread)"        strokeWidth="0.4" />
-            <line x1="960" y1="540" x2="50"   y2="400"  stroke="url(#thread)"        strokeWidth="0.4" />
-            <line x1="960" y1="540" x2="1870" y2="500"  stroke="url(#thread)"        strokeWidth="0.4" />
+            <line
+              x1="960"
+              y1="540"
+              x2="150"
+              y2="80"
+              stroke="url(#thread-bright)"
+              strokeWidth="0.6"
+            />
+            <line x1="960" y1="540" x2="1770" y2="120" stroke="url(#thread)" strokeWidth="0.6" />
+            <line x1="960" y1="540" x2="80" y2="750" stroke="url(#thread)" strokeWidth="0.6" />
+            <line
+              x1="960"
+              y1="540"
+              x2="1840"
+              y2="850"
+              stroke="url(#thread-bright)"
+              strokeWidth="0.6"
+            />
+            <line x1="960" y1="540" x2="300" y2="30" stroke="url(#thread)" strokeWidth="0.4" />
+            <line x1="960" y1="540" x2="1620" y2="1000" stroke="url(#thread)" strokeWidth="0.4" />
+            <line x1="960" y1="540" x2="50" y2="400" stroke="url(#thread)" strokeWidth="0.4" />
+            <line x1="960" y1="540" x2="1870" y2="500" stroke="url(#thread)" strokeWidth="0.4" />
 
             {/* Concentric rings — slightly more visible than before */}
-            <circle cx="960" cy="540" r="210" fill="none" stroke="white" strokeOpacity="0.04" strokeWidth="0.5" />
-            <circle cx="960" cy="540" r="350" fill="none" stroke="white" strokeOpacity="0.03" strokeWidth="0.5" />
-            <circle cx="960" cy="540" r="500" fill="none" stroke="white" strokeOpacity="0.02" strokeWidth="0.5" />
+            <circle
+              cx="960"
+              cy="540"
+              r="210"
+              fill="none"
+              stroke="white"
+              strokeOpacity="0.04"
+              strokeWidth="0.5"
+            />
+            <circle
+              cx="960"
+              cy="540"
+              r="350"
+              fill="none"
+              stroke="white"
+              strokeOpacity="0.03"
+              strokeWidth="0.5"
+            />
+            <circle
+              cx="960"
+              cy="540"
+              r="500"
+              fill="none"
+              stroke="white"
+              strokeOpacity="0.02"
+              strokeWidth="0.5"
+            />
           </svg>
         </div>
 
@@ -278,21 +316,39 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-px bg-anansi-line mt-16 reveal-stagger">
             <Capability
               num="01"
-              title={<>AI &amp;<br />Intelligence</>}
+              title={
+                <>
+                  AI &amp;
+                  <br />
+                  Intelligence
+                </>
+              }
               desc="Applied AI products and systems for professionals, institutions, and teams that need leverage fast."
               primary="CogniCare"
               secondary="Thryve"
             />
             <Capability
               num="02"
-              title={<>Finance &amp;<br />Real Assets</>}
+              title={
+                <>
+                  Finance &amp;
+                  <br />
+                  Real Assets
+                </>
+              }
               desc="Financial rails for people and markets shut out of modern capital. From tokenized commodities to web3 savings products."
               primary="Spice"
               secondary="DollarBank"
             />
             <Capability
               num="03"
-              title={<>Custom AI &amp;<br />Software</>}
+              title={
+                <>
+                  Custom AI &amp;
+                  <br />
+                  Software
+                </>
+              }
               desc="Senior-level engagements for enterprise clients and institutions who need AI, data, or Web3 systems built right. Selective, premium, by inbound only."
               primary="Custom AI Solutions"
               secondary="Enterprise Partnerships"
@@ -315,8 +371,7 @@ export default function Home() {
           <div
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full animate-pulse-glow"
             style={{
-              background:
-                "radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 60%)",
+              background: "radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 60%)",
             }}
           />
         </div>
@@ -326,7 +381,7 @@ export default function Home() {
             <p className="text-[10px] tracking-[0.4em] uppercase text-anansi-red font-semibold mb-8">
               Coming Soon
             </p>
-            <h2 className="font-display font-bold text-[clamp(48px,8vw,96px)] leading-[0.95] tracking-tight text-white">
+            <h2 className="font-display text-[clamp(48px,8vw,96px)] leading-[0.95] tracking-tight">
               CARIB
               <span className="text-anansi-red text-glow-red">COIN</span>
             </h2>
@@ -385,7 +440,9 @@ export default function Home() {
                 height={120}
                 className="opacity-[0.28] mb-10"
               />
-              <h2 className="font-display font-bold text-4xl leading-[1.2] text-white">Why Anansi</h2>
+              <h2 className="font-display font-bold text-4xl leading-[1.2] text-white">
+                Why Anansi
+              </h2>
               <p className="text-[16px] text-anansi-gray-400 leading-[1.8] mt-6">
                 Anansi — the spider from West African and Caribbean folklore. The trickster who
                 outsmarts larger powers through cleverness, not force. He builds webs that connect
@@ -440,7 +497,9 @@ export default function Home() {
               Explore Spice
             </Link>
           </div>
-          <p className="text-[11px] tracking-[0.2em] uppercase text-anansi-gray-500 mt-10">Miami, FL</p>
+          <p className="text-[11px] tracking-[0.2em] uppercase text-anansi-gray-500 mt-10">
+            Miami, FL
+          </p>
         </div>
       </section>
     </>

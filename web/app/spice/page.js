@@ -13,7 +13,7 @@ export default function SpicePage() {
   return (
     <>
       {/* ===== HERO ===== */}
-      <section className="hero-section min-h-[85vh] flex flex-col items-center justify-center relative overflow-hidden">
+      <section className="hero-section hero-grid-bg min-h-[85vh] flex flex-col items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <svg
             className="w-full h-full"
@@ -21,33 +21,51 @@ export default function SpicePage() {
             preserveAspectRatio="xMidYMid slice"
           >
             <defs>
-              <radialGradient id="spiceGlow" cx="50%" cy="50%" r="35%">
-                <stop offset="0%" stopColor="#7A0F14" stopOpacity="0.08" />
-                <stop offset="100%" stopColor="#7A0F14" stopOpacity="0" />
+              <radialGradient id="spiceGlow" cx="50%" cy="50%" r="40%">
+                <stop offset="0%" stopColor="#DC2626" stopOpacity="0.20" />
+                <stop offset="40%" stopColor="#991B1B" stopOpacity="0.09" />
+                <stop offset="100%" stopColor="#991B1B" stopOpacity="0" />
+              </radialGradient>
+              <radialGradient id="spiceGlowRim" cx="50%" cy="50%" r="55%">
+                <stop offset="60%" stopColor="#DC2626" stopOpacity="0" />
+                <stop offset="85%" stopColor="#DC2626" stopOpacity="0.035" />
+                <stop offset="100%" stopColor="#DC2626" stopOpacity="0" />
               </radialGradient>
               <linearGradient id="spiceThread" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="white" stopOpacity="0.04" />
+                <stop offset="0%" stopColor="white" stopOpacity="0.09" />
                 <stop offset="100%" stopColor="white" stopOpacity="0" />
               </linearGradient>
+              <linearGradient id="spiceThreadBright" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#EF4444" stopOpacity="0.22" />
+                <stop offset="100%" stopColor="#DC2626" stopOpacity="0" />
+              </linearGradient>
             </defs>
-            <circle cx="960" cy="540" r="400" fill="url(#spiceGlow)" />
-            <line x1="960" y1="540" x2="150" y2="80" stroke="url(#spiceThread)" strokeWidth="0.5" />
+            <circle cx="960" cy="540" r="460" fill="url(#spiceGlow)" />
+            <circle cx="960" cy="540" r="680" fill="url(#spiceGlowRim)" />
+            <line
+              x1="960"
+              y1="540"
+              x2="150"
+              y2="80"
+              stroke="url(#spiceThreadBright)"
+              strokeWidth="0.6"
+            />
             <line
               x1="960"
               y1="540"
               x2="1770"
               y2="120"
               stroke="url(#spiceThread)"
-              strokeWidth="0.5"
+              strokeWidth="0.6"
             />
-            <line x1="960" y1="540" x2="80" y2="750" stroke="url(#spiceThread)" strokeWidth="0.5" />
+            <line x1="960" y1="540" x2="80" y2="750" stroke="url(#spiceThread)" strokeWidth="0.6" />
             <line
               x1="960"
               y1="540"
               x2="1840"
               y2="850"
-              stroke="url(#spiceThread)"
-              strokeWidth="0.5"
+              stroke="url(#spiceThreadBright)"
+              strokeWidth="0.6"
             />
             <circle
               cx="960"
@@ -55,7 +73,7 @@ export default function SpicePage() {
               r="300"
               fill="none"
               stroke="white"
-              strokeOpacity="0.02"
+              strokeOpacity="0.035"
               strokeWidth="0.5"
             />
             <circle
@@ -64,24 +82,28 @@ export default function SpicePage() {
               r="450"
               fill="none"
               stroke="white"
-              strokeOpacity="0.015"
+              strokeOpacity="0.025"
               strokeWidth="0.5"
             />
           </svg>
         </div>
 
         <div className="relative max-w-[1200px] mx-auto px-6 md:px-12 text-center animate-fade-up animate-fade-up-delay-1">
-          <p className="text-[11px] tracking-[0.3em] uppercase text-anansi-red font-medium mb-8">
-            Flagship Product — Live on Sui
-          </p>
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <span className="block w-8 h-px bg-anansi-red" />
+            <p className="text-[11px] tracking-[0.3em] uppercase text-anansi-red font-semibold">
+              Flagship Product — Live on Sui
+            </p>
+            <span className="block w-8 h-px bg-anansi-red" />
+          </div>
 
-          <h1 className="font-display font-bold text-[clamp(44px,7vw,96px)] leading-[0.98] tracking-tight max-w-[900px] mx-auto">
+          <h1 className="font-display font-bold text-[clamp(44px,7vw,96px)] leading-[0.98] tracking-tight max-w-[900px] mx-auto text-white">
             Real-world assets.
             <br />
-            <span className="text-anansi-red">Global liquidity.</span>
+            <span className="text-anansi-red text-glow-red">Global liquidity.</span>
           </h1>
 
-          <p className="max-w-[640px] mx-auto font-display font-medium text-[clamp(18px,2.2vw,26px)] leading-[1.4] mt-10 text-white/75 animate-fade-up animate-fade-up-delay-2">
+          <p className="max-w-[640px] mx-auto font-display font-medium text-[clamp(18px,2.2vw,26px)] leading-[1.4] mt-10 text-anansi-gray-300 animate-fade-up animate-fade-up-delay-2">
             A farmer delivers nutmeg. Tokens appear on his phone. He can hold, or exit to USDC
             instantly. No wallet. No gas fees. Sign in with Google.
           </p>
@@ -93,8 +115,9 @@ export default function SpicePage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-3 px-9 py-4
                          font-display font-semibold text-[13px] tracking-[0.1em] uppercase
-                         text-anansi-black bg-white border border-white rounded-sm
-                         hover:bg-anansi-red hover:border-anansi-red hover:text-white transition-all group"
+                         text-white bg-anansi-red rounded-sm
+                         hover:bg-anansi-red-deep hover:shadow-red-glow-intense
+                         transition-all duration-300 group"
             >
               Launch App <span className="transition-transform group-hover:translate-x-1">→</span>
             </a>
@@ -102,8 +125,8 @@ export default function SpicePage() {
               href="#how-it-works"
               className="inline-flex items-center gap-3 px-9 py-4
                          font-display font-semibold text-[13px] tracking-[0.1em] uppercase
-                         text-white/65 border border-white/12 rounded-sm
-                         hover:text-white hover:border-white/30 transition-all"
+                         text-anansi-gray-300 border border-anansi-line rounded-sm
+                         hover:text-white hover:border-anansi-gray-500 transition-all"
             >
               See how it works
             </a>
@@ -405,8 +428,9 @@ export default function SpicePage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-3 px-9 py-4
                          font-display font-semibold text-[13px] tracking-[0.1em] uppercase
-                         text-anansi-black bg-white border border-white rounded-sm
-                         hover:bg-anansi-red hover:border-anansi-red hover:text-white transition-all group"
+                         text-white bg-anansi-red rounded-sm
+                         hover:bg-anansi-red-deep hover:shadow-red-glow-intense
+                         transition-all duration-300 group"
             >
               Launch App <span className="transition-transform group-hover:translate-x-1">→</span>
             </a>
@@ -414,8 +438,8 @@ export default function SpicePage() {
               href="mailto:spice@anansi.tech"
               className="inline-flex items-center gap-3 px-9 py-4
                          font-display font-semibold text-[13px] tracking-[0.1em] uppercase
-                         text-white/65 border border-white/12 rounded-sm
-                         hover:text-white hover:border-white/30 transition-all"
+                         text-anansi-gray-300 border border-anansi-line rounded-sm
+                         hover:text-white hover:border-anansi-gray-500 transition-all"
             >
               Partner with us
             </a>
@@ -428,17 +452,23 @@ export default function SpicePage() {
 
 function Eyebrow({ children }) {
   return (
-    <p className="text-[10px] tracking-[0.25em] uppercase text-anansi-red font-medium mb-7">
-      {children}
-    </p>
+    <div className="flex items-center gap-3 mb-7">
+      <span className="block w-8 h-px bg-anansi-red" />
+      <p className="text-[10px] tracking-[0.25em] uppercase text-anansi-red font-semibold">
+        {children}
+      </p>
+    </div>
   );
 }
 
 function EyebrowLight({ children }) {
   return (
-    <p className="text-[10px] tracking-[0.25em] uppercase text-anansi-red font-medium mb-7">
-      {children}
-    </p>
+    <div className="flex items-center gap-3 mb-7">
+      <span className="block w-8 h-px bg-anansi-red" />
+      <p className="text-[10px] tracking-[0.25em] uppercase text-anansi-red font-semibold">
+        {children}
+      </p>
+    </div>
   );
 }
 
