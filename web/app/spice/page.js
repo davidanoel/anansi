@@ -424,7 +424,7 @@ export default function SpicePage() {
               className="inline-flex items-center gap-3 px-9 py-4
                          font-display font-semibold text-[13px] tracking-[0.1em] uppercase
                          text-white bg-anansi-red rounded-sm
-                         hover:bg-anansi-red-deep hover:shadow-red-glow-intense
+                         hover:bg-anansi-red-deep hover:shadow-red-glow
                          transition-all duration-300 group"
             >
               Launch App <span className="transition-transform group-hover:translate-x-1">→</span>

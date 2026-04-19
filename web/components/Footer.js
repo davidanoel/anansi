@@ -2,14 +2,27 @@ import Image from "next/image";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-anansi-line py-10 px-6 md:px-12">
-      <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-        <Image src="/logo-dark.png" alt="Anansi" width={24} height={24} className="opacity-20" />
-        <div className="flex gap-8 items-center">
-          <span className="text-[11px] text-white/15 tracking-wider">
+    <footer className="relative border-t border-anansi-line py-10 px-6 md:px-12 overflow-hidden">
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 0%, rgba(220,38,38,0.08) 0%, rgba(220,38,38,0.03) 20%, transparent 58%)",
+        }}
+      />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-anansi-red/55 to-transparent pointer-events-none" />
+      <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4 relative">
+        <div className="flex items-center gap-3">
+          <Image src="/logo-dark.png" alt="Anansi" width={24} height={24} className="opacity-60" />
+          <span className="text-[11px] uppercase tracking-[0.18em] text-white/55 font-display">
+            Anansi
+          </span>
+        </div>
+        <div className="flex gap-8 items-center flex-wrap justify-center">
+          <span className="text-[11px] text-white/38 tracking-wider">
             © {new Date().getFullYear()} Anansi Technology Corporation
           </span>
-          <span className="text-[11px] text-white/15 tracking-wider">Miami, FL</span>
+          <span className="text-[11px] text-white/32 tracking-wider">Miami, FL</span>
         </div>
       </div>
     </footer>

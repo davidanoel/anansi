@@ -76,10 +76,16 @@ export default function Header() {
       }`}
       style={
         scrolled
-          ? { backgroundColor: overLight ? "rgba(255,255,255,0.92)" : "rgba(20,20,20,0.95)" }
+          ? {
+              backgroundColor: overLight ? "rgba(255,250,250,0.92)" : "rgba(12,12,14,0.88)",
+              boxShadow: overLight
+                ? "0 10px 40px rgba(10,10,10,0.08)"
+                : "0 10px 40px rgba(0,0,0,0.28)",
+            }
           : undefined
       }
     >
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-anansi-red/60 to-transparent pointer-events-none" />
       <div className="max-w-[1200px] mx-auto px-6 md:px-12 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3.5 group">
           {/* Spider mark - hidden while the hero is visible, fades in on scroll. */}
@@ -113,7 +119,9 @@ export default function Header() {
               key={link.label}
               href={link.href}
               className={`text-[12px] tracking-[0.1em] uppercase transition-colors duration-300 ${
-                light ? "text-[#0A0A0A]/40 hover:text-[#0A0A0A]" : "text-white/35 hover:text-white"
+                light
+                  ? "text-[#0A0A0A]/65 hover:text-[#0A0A0A]"
+                  : "text-white/70 hover:text-white"
               }`}
             >
               {link.label}
@@ -123,10 +131,10 @@ export default function Header() {
             href="https://anansi-navy.vercel.app"
             target="_blank"
             className={`text-[12px] tracking-[0.1em] uppercase font-display font-semibold
-                       px-6 py-2.5 rounded-sm transition-all duration-300 border ${
+                       px-6 py-2.5 rounded-sm transition-all duration-300 border shadow-[0_0_0_rgba(0,0,0,0)] ${
                          light
-                           ? "text-[#0A0A0A] border-[#0A0A0A]/15 hover:bg-[#0A0A0A] hover:text-white hover:border-[#0A0A0A]"
-                           : "text-white border-white/12 hover:bg-white hover:text-[#0A0A0A] hover:border-white"
+                           ? "text-[#0A0A0A] border-[#0A0A0A]/20 hover:bg-[#0A0A0A] hover:text-white hover:border-[#0A0A0A]"
+                           : "text-white border-anansi-red/35 bg-anansi-red/8 hover:bg-anansi-red hover:text-white hover:border-anansi-red hover:shadow-[0_0_32px_rgba(220,38,38,0.22)]"
                        }`}
           >
             {ctaLabel}
@@ -135,7 +143,7 @@ export default function Header() {
 
         <button
           className={`md:hidden text-xl p-2 transition-colors duration-300 ${
-            light ? "text-[#0A0A0A]/60" : "text-white/60"
+            light ? "text-[#0A0A0A]/70" : "text-white/75"
           }`}
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu"
@@ -155,7 +163,7 @@ export default function Header() {
               key={item.label}
               href={item.href}
               className={`block text-sm uppercase tracking-widest ${
-                light ? "text-[#0A0A0A]/50" : "text-white/50"
+                light ? "text-[#0A0A0A]/70" : "text-white/75"
               }`}
               onClick={() => setMenuOpen(false)}
             >
@@ -165,7 +173,9 @@ export default function Header() {
           <a
             href="https://anansi-navy.vercel.app"
             className={`block text-center text-sm uppercase tracking-widest py-3 rounded-sm border ${
-              light ? "text-[#0A0A0A] border-[#0A0A0A]/15" : "text-white border-white/12"
+              light
+                ? "text-[#0A0A0A] border-[#0A0A0A]/18"
+                : "text-white border-anansi-red/35 bg-anansi-red/8"
             }`}
             onClick={() => setMenuOpen(false)}
           >
