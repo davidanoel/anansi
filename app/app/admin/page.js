@@ -4,7 +4,13 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../components/AuthProvider";
 import AppNav from "../../components/AppNav";
 import { recordDelivery, createLot, startSelling, updateValuation } from "../../lib/transactions";
-import { getCustodianCaps, getRecentDeliveries, getActiveLots, getAllLots, getLot } from "../../lib/data";
+import {
+  getCustodianCaps,
+  getRecentDeliveries,
+  getActiveLots,
+  getAllLots,
+  getLot,
+} from "../../lib/data";
 import { uploadToIPFS } from "../../lib/ipfs";
 
 export default function AdminPage() {
@@ -225,7 +231,9 @@ function RecordDeliveryForm({ custodianCaps }) {
         throw new Error("Lot not found. Please choose an open lot or paste a valid lot id.");
       }
       if (lot.status !== 0) {
-        throw new Error(`You can only record deliveries for lots that are open. This lot is ${lot.statusLabel.toLowerCase()}.`);
+        throw new Error(
+          `You can only record deliveries for lots that are open. This lot is ${lot.statusLabel.toLowerCase()}.`,
+        );
       }
 
       let receiptHash = "";
@@ -467,7 +475,8 @@ function formatFarmerOption(farmer) {
   const secondary =
     farmer.name && farmer.email
       ? farmer.email
-      : farmer.email || (primary === shortAddress(farmer.address) ? "" : shortAddress(farmer.address));
+      : farmer.email ||
+        (primary === shortAddress(farmer.address) ? "" : shortAddress(farmer.address));
   const priorDeliveries = Number(farmer.prior_deliveries || 0);
   return `${primary}${secondary ? ` | ${secondary}` : ""}${priorDeliveries > 0 ? ` | ${priorDeliveries} prior deliver${priorDeliveries === 1 ? "y" : "ies"}` : ""}`;
 }
@@ -562,7 +571,7 @@ function LotManager({ custodianCaps }) {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-lg">Active Lots</h2>
+        <h2 className="font-semibold text-lg">Active Lots ({lots.length})</h2>
         <div className="flex gap-3">
           {custodianCaps.length > 1 && (
             <select
@@ -674,8 +683,7 @@ function LotManager({ custodianCaps }) {
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-base">Closed Lots</h3>
-              <span className="text-xs text-anansi-muted">{closedLots.length}</span>
+              <h3 className="font-semibold text-base">Closed Lots ({closedLots.length})</h3>
             </div>
             {closedLots.length === 0 ? (
               <div className="card p-5 text-sm text-anansi-muted">No closed lots yet.</div>

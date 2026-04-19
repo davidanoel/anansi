@@ -76,13 +76,13 @@ export default function Home() {
           ANANSI
         </h1>
 
-        <h2 className="relative max-w-[820px] text-center font-display font-medium text-[clamp(22px,3.2vw,42px)] leading-[1.15] mt-7 px-6 animate-fade-up animate-fade-up-delay-2">
-          Technology for markets the world has{" "}
-          <span className="text-anansi-red font-semibold">ignored.</span>
+        <h2 className="relative max-w-[860px] text-center font-display font-medium text-[clamp(22px,3.2vw,42px)] leading-[1.15] mt-7 px-6 animate-fade-up animate-fade-up-delay-2">
+          We build AI and decentralized software that creates{" "}
+          <span className="text-anansi-red font-semibold">economic access</span>.
         </h2>
 
         <p className="relative text-[11px] tracking-[0.22em] uppercase text-white/18 mt-7 animate-fade-up animate-fade-up-delay-3">
-          Applied AI · Real Assets · Built in Miami
+          Applied AI · Real Assets · Starting in the Caribbean, built for the world
         </p>
 
         <div className="absolute bottom-10 flex flex-col items-center gap-3 animate-fade-up animate-fade-up-delay-3">
@@ -98,17 +98,18 @@ export default function Home() {
             <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.1] max-w-[760px]">
               AI is becoming practical. Real assets are moving on-chain.
             </h2>
-            <p className="text-[16px] text-anansi-gray max-w-[620px] mt-6 leading-[1.75]">
+            <p className="text-[16px] text-anansi-gray max-w-[640px] mt-6 leading-[1.75]">
               Trillions in real-world value are locked in markets that traditional software never
-              reached. AI is finally cheap enough to deploy. Blockchain is finally fast enough to
-              use. We build for the gap.
+              reached — from smallholder farms in Grenada to mid-market SMBs in São Paulo. AI is
+              finally cheap enough to deploy. Blockchain is finally fast enough to use. We build for
+              the gap.
             </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 reveal-stagger">
             <Stat number="$15.7T" label="AI contribution to global GDP by 2030 (PwC)" />
             <Stat number="$16T" label="Projected RWA tokenization market by 2030 (BCG)" />
-            <Stat number="$40B" unit="+" label="Trapped value in Caribbean real assets" />
+            <Stat number="$5T" unit="+" label="Trapped value in emerging-market real assets" />
             <Stat number="0" label="Infrastructure that connects it all" />
           </div>
         </div>
@@ -223,7 +224,7 @@ export default function Home() {
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="grid md:grid-cols-2 gap-20 items-center reveal">
             <div>
-              <Eyebrow>AI Academy</Eyebrow>
+              <Eyebrow>Anansi Academy</Eyebrow>
               <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.15]">
                 Learn AI.
                 <br />
@@ -275,9 +276,9 @@ export default function Home() {
               <br />
               Three <span className="text-anansi-red">engines.</span>
             </h2>
-            <p className="text-[16px] text-anansi-gray max-w-[560px] mt-6 leading-[1.75]">
-              Anansi builds across applied AI, financial rails, and niche software — with each area
-              reinforcing the others.
+            <p className="text-[16px] text-anansi-gray max-w-[580px] mt-6 leading-[1.75]">
+              Anansi builds across applied AI, financial rails, and custom engineering — with each
+              area reinforcing the others.
             </p>
           </div>
 
@@ -312,14 +313,14 @@ export default function Home() {
               num="03"
               title={
                 <>
-                  Software &amp;
+                  Custom AI &amp;
                   <br />
-                  Trust
+                  Software
                 </>
               }
-              desc="Custom systems, identity rails, and software for institutions operating where trust and precision matter."
+              desc="Senior-level engagements for enterprise clients and institutions who need AI, data, or Web3 systems built right. Selective, premium, by inbound only."
               primary="Custom AI Solutions"
-              secondary="ZK Identity"
+              secondary="Enterprise Partnerships"
             />
           </div>
         </div>

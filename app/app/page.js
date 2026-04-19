@@ -42,7 +42,7 @@ export default function HomePage() {
         <div className="grid md:grid-cols-3 gap-5">
           <RoleCard
             href="/admin"
-            title="GCNA Admin"
+            title="Admin"
             subtitle="Custodian"
             description="Record deliveries, manage lots, and trigger distributions."
             gradient="from-amber-500/10 to-orange-500/5"

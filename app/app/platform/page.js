@@ -908,7 +908,7 @@ function DepositsPanel({ api }) {
             value={lotId}
             onChange={setLotId}
             placeholder="0x..."
-            help="The lot that was sold. Find in GCNA admin → Manage Lots."
+            help="The lot that was sold. Find in Admin → Manage Lots."
             mono
           />
           <Field
@@ -1893,10 +1893,7 @@ function StakingPanel({ api }) {
             />
             <button
               type="submit"
-              disabled={
-                savingThresholds ||
-                Object.values(form).some((value) => value === "")
-              }
+              disabled={savingThresholds || Object.values(form).some((value) => value === "")}
               className="px-6 py-2.5 bg-anansi-black text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-anansi-black/90 transition-colors active:scale-[0.98]"
             >
               {savingThresholds ? "Updating..." : "Update Thresholds"}

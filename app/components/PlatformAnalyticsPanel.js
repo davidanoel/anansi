@@ -12,7 +12,7 @@ export default function PlatformAnalyticsPanel({ api }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-  const activityPageSize = 8;
+  const activityPageSize = 5;
 
   async function request(path) {
     const data = await api(path);
@@ -102,7 +102,11 @@ export default function PlatformAnalyticsPanel({ api }) {
             Parallel indexer-backed dashboard for internal operations and platform health.
           </p>
         </div>
-        <button onClick={() => loadAnalytics(true)} className="btn-ghost text-sm" disabled={refreshing}>
+        <button
+          onClick={() => loadAnalytics(true)}
+          className="btn-ghost text-sm"
+          disabled={refreshing}
+        >
           {refreshing ? "Refreshing..." : "Refresh"}
         </button>
       </div>
@@ -117,13 +121,31 @@ export default function PlatformAnalyticsPanel({ api }) {
         <MetricCard label="Asset Types" value={formatNumber(normalizedOverview.totalAssetTypes)} />
         <MetricCard label="Total Lots" value={formatNumber(normalizedOverview.totalLots)} />
         <MetricCard label="Active Lots" value={formatNumber(normalizedOverview.activeLots)} />
-        <MetricCard label="Total Deliveries" value={formatNumber(normalizedOverview.totalDeliveries)} />
+        <MetricCard
+          label="Total Deliveries"
+          value={formatNumber(normalizedOverview.totalDeliveries)}
+        />
         <MetricCard label="Unique Farmers" value={formatNumber(normalizedOverview.uniqueFarmers)} />
-        <MetricCard label="Units Tokenized" value={formatNumber(normalizedOverview.totalUnitsTokenized)} />
-        <MetricCard label="Tokens Minted" value={formatNumber(normalizedOverview.totalTokensMinted)} />
-        <MetricCard label="Surplus Deposited" value={formatUsd(normalizedOverview.totalSurplusDeposited)} />
-        <MetricCard label="Surplus Distributed" value={formatUsd(normalizedOverview.totalSurplusDistributed)} />
-        <MetricCard label="CARIB Burned" value={formatToken(normalizedOverview.totalCaribBurned, 9)} />
+        <MetricCard
+          label="Units Tokenized"
+          value={formatNumber(normalizedOverview.totalUnitsTokenized)}
+        />
+        <MetricCard
+          label="Tokens Minted"
+          value={formatNumber(normalizedOverview.totalTokensMinted)}
+        />
+        <MetricCard
+          label="Surplus Deposited"
+          value={formatUsd(normalizedOverview.totalSurplusDeposited)}
+        />
+        <MetricCard
+          label="Surplus Distributed"
+          value={formatUsd(normalizedOverview.totalSurplusDistributed)}
+        />
+        <MetricCard
+          label="CARIB Burned"
+          value={formatToken(normalizedOverview.totalCaribBurned, 9)}
+        />
       </div>
 
       <div className="grid lg:grid-cols-[1.4fr,0.8fr] gap-6">
@@ -135,7 +157,9 @@ export default function PlatformAnalyticsPanel({ api }) {
             </div>
             <div className="text-right">
               <p className="stat-label">Total Units</p>
-              <p className="text-sm font-semibold">{formatNumber(sumBy(normalizedDeliveries, "totalUnits"))}</p>
+              <p className="text-sm font-semibold">
+                {formatNumber(sumBy(normalizedDeliveries, "totalUnits"))}
+              </p>
             </div>
           </div>
 
@@ -156,7 +180,9 @@ export default function PlatformAnalyticsPanel({ api }) {
                         title={`${item.date}: ${item.deliveriesCount} deliveries`}
                       />
                     </div>
-                    <p className="text-[11px] text-anansi-muted mt-3 truncate">{formatChartDate(item.date)}</p>
+                    <p className="text-[11px] text-anansi-muted mt-3 truncate">
+                      {formatChartDate(item.date)}
+                    </p>
                     <p className="text-xs font-medium mt-1">{item.deliveriesCount}</p>
                   </div>
                 );
@@ -170,14 +196,33 @@ export default function PlatformAnalyticsPanel({ api }) {
           <div className="space-y-4 text-sm">
             <SnapshotRow label="Closed Lots" value={formatNumber(normalizedOverview.closedLots)} />
             <SnapshotRow label="Claim Rate" value={formatPercent(normalizedOverview.claimRate)} />
-            <SnapshotRow label="Unclaimed Surplus" value={formatUsd(normalizedOverview.unclaimedSurplus)} />
-            <SnapshotRow label="Surplus Deposits" value={formatNumber(normalizedOverview.surplusDepositCount)} />
-            <SnapshotRow label="Surplus Claims" value={formatNumber(normalizedOverview.surplusClaimCount)} />
-            <SnapshotRow label="Fees Collected" value={formatUsd(normalizedOverview.totalFeesCollected)} />
-            <SnapshotRow label="Cursor Slots" value={formatNumber(normalizedOverview.cursorCount)} />
+            <SnapshotRow
+              label="Unclaimed Surplus"
+              value={formatUsd(normalizedOverview.unclaimedSurplus)}
+            />
+            <SnapshotRow
+              label="Surplus Deposits"
+              value={formatNumber(normalizedOverview.surplusDepositCount)}
+            />
+            <SnapshotRow
+              label="Surplus Claims"
+              value={formatNumber(normalizedOverview.surplusClaimCount)}
+            />
+            <SnapshotRow
+              label="Fees Collected"
+              value={formatUsd(normalizedOverview.totalFeesCollected)}
+            />
+            <SnapshotRow
+              label="Cursor Slots"
+              value={formatNumber(normalizedOverview.cursorCount)}
+            />
             <SnapshotRow
               label="Latest Indexed Event"
-              value={normalizedOverview.latestIndexedEventAt ? formatRelativeTime(normalizedOverview.latestIndexedEventAt) : "Awaiting data"}
+              value={
+                normalizedOverview.latestIndexedEventAt
+                  ? formatRelativeTime(normalizedOverview.latestIndexedEventAt)
+                  : "Awaiting data"
+              }
             />
           </div>
         </div>
@@ -186,17 +231,24 @@ export default function PlatformAnalyticsPanel({ api }) {
       <div className="card overflow-hidden">
         <div className="px-6 py-5 border-b border-anansi-border">
           <h3 className="font-semibold">By Asset Type</h3>
-          <p className="text-sm text-anansi-muted mt-1">Supply, activity, and surplus rollups by commodity.</p>
+          <p className="text-sm text-anansi-muted mt-1">
+            Supply, activity, and surplus rollups by commodity.
+          </p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-anansi-border bg-anansi-light/50">
-                {["Asset", "Lots", "Deliveries", "Units", "Tokens", "Surplus", "Claimed"].map((heading) => (
-                  <th key={heading} className="text-left px-6 py-3 stat-label font-medium whitespace-nowrap">
-                    {heading}
-                  </th>
-                ))}
+                {["Asset", "Lots", "Deliveries", "Units", "Tokens", "Surplus", "Claimed"].map(
+                  (heading) => (
+                    <th
+                      key={heading}
+                      className="text-left px-6 py-3 stat-label font-medium whitespace-nowrap"
+                    >
+                      {heading}
+                    </th>
+                  ),
+                )}
               </tr>
             </thead>
             <tbody>
@@ -208,7 +260,10 @@ export default function PlatformAnalyticsPanel({ api }) {
                 </tr>
               ) : (
                 byAssetType.map((row) => (
-                  <tr key={row.symbol} className="border-b border-anansi-border last:border-0 hover:bg-anansi-light/30 transition-colors">
+                  <tr
+                    key={row.symbol}
+                    className="border-b border-anansi-border last:border-0 hover:bg-anansi-light/30 transition-colors"
+                  >
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-semibold">{row.symbol}</p>
@@ -222,8 +277,12 @@ export default function PlatformAnalyticsPanel({ api }) {
                     <td className="px-6 py-4">{formatNumber(toNumber(row.deliveries_count))}</td>
                     <td className="px-6 py-4">{formatNumber(toNumber(row.total_units))}</td>
                     <td className="px-6 py-4">{formatNumber(toNumber(row.total_tokens_minted))}</td>
-                    <td className="px-6 py-4">{formatUsd(toNumber(row.total_surplus_deposited))}</td>
-                    <td className="px-6 py-4">{formatUsd(toNumber(row.total_surplus_distributed))}</td>
+                    <td className="px-6 py-4">
+                      {formatUsd(toNumber(row.total_surplus_deposited))}
+                    </td>
+                    <td className="px-6 py-4">
+                      {formatUsd(toNumber(row.total_surplus_distributed))}
+                    </td>
                   </tr>
                 ))
               )}
@@ -236,17 +295,24 @@ export default function PlatformAnalyticsPanel({ api }) {
         <div className="card overflow-hidden">
           <div className="px-6 py-5 border-b border-anansi-border">
             <h3 className="font-semibold">Top Farmers</h3>
-            <p className="text-sm text-anansi-muted mt-1">Participation ranked by delivered volume.</p>
+            <p className="text-sm text-anansi-muted mt-1">
+              Participation ranked by delivered volume.
+            </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-anansi-border bg-anansi-light/50">
-                  {["Farmer", "Units", "Tokens", "Lots", "Claimed", "Last Active"].map((heading) => (
-                    <th key={heading} className="text-left px-6 py-3 stat-label font-medium whitespace-nowrap">
-                      {heading}
-                    </th>
-                  ))}
+                  {["Farmer", "Units", "Tokens", "Lots", "Claimed", "Last Active"].map(
+                    (heading) => (
+                      <th
+                        key={heading}
+                        className="text-left px-6 py-3 stat-label font-medium whitespace-nowrap"
+                      >
+                        {heading}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -258,13 +324,28 @@ export default function PlatformAnalyticsPanel({ api }) {
                   </tr>
                 ) : (
                   farmers.map((farmer) => (
-                    <tr key={farmer.address} className="border-b border-anansi-border last:border-0 hover:bg-anansi-light/30 transition-colors">
-                      <td className="px-6 py-4 font-mono text-xs">{shortAddress(farmer.address)}</td>
-                      <td className="px-6 py-4">{formatNumber(toNumber(farmer.total_units_delivered))}</td>
-                      <td className="px-6 py-4">{formatNumber(toNumber(farmer.total_tokens_minted))}</td>
-                      <td className="px-6 py-4">{formatNumber(toNumber(farmer.lots_participated))}</td>
-                      <td className="px-6 py-4">{formatUsd(toNumber(farmer.total_surplus_claimed))}</td>
-                      <td className="px-6 py-4 text-anansi-muted">{formatRelativeTime(farmer.last_activity_at)}</td>
+                    <tr
+                      key={farmer.address}
+                      className="border-b border-anansi-border last:border-0 hover:bg-anansi-light/30 transition-colors"
+                    >
+                      <td className="px-6 py-4 font-mono text-xs">
+                        {shortAddress(farmer.address)}
+                      </td>
+                      <td className="px-6 py-4">
+                        {formatNumber(toNumber(farmer.total_units_delivered))}
+                      </td>
+                      <td className="px-6 py-4">
+                        {formatNumber(toNumber(farmer.total_tokens_minted))}
+                      </td>
+                      <td className="px-6 py-4">
+                        {formatNumber(toNumber(farmer.lots_participated))}
+                      </td>
+                      <td className="px-6 py-4">
+                        {formatUsd(toNumber(farmer.total_surplus_claimed))}
+                      </td>
+                      <td className="px-6 py-4 text-anansi-muted">
+                        {formatRelativeTime(farmer.last_activity_at)}
+                      </td>
                     </tr>
                   ))
                 )}
@@ -277,7 +358,9 @@ export default function PlatformAnalyticsPanel({ api }) {
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
               <h3 className="font-semibold">Recent Activity</h3>
-              <p className="text-sm text-anansi-muted mt-1">Fast view into the indexed platform event stream.</p>
+              <p className="text-sm text-anansi-muted mt-1">
+                Fast view into the indexed platform event stream.
+              </p>
             </div>
             {recentActivity.length > activityPageSize && (
               <div className="flex items-center gap-2 text-xs">
@@ -303,18 +386,27 @@ export default function PlatformAnalyticsPanel({ api }) {
           </div>
           <div className="space-y-3">
             {recentActivity.length === 0 ? (
-              <div className="text-sm text-anansi-muted py-8 text-center">No recent activity yet.</div>
+              <div className="text-sm text-anansi-muted py-8 text-center">
+                No recent activity yet.
+              </div>
             ) : (
               pagedActivity.map((item) => {
                 const detail = describeActivity(item);
                 return (
-                  <div key={`${item.kind}-${item.reference_id}-${item.timestamp}`} className="rounded-xl border border-anansi-border bg-white/60 px-4 py-3">
+                  <div
+                    key={`${item.kind}-${item.reference_id}-${item.timestamp}`}
+                    className="rounded-xl border border-anansi-border bg-white/60 px-4 py-3"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold">{detail.title}</p>
-                        <p className="text-sm text-anansi-gray mt-1 leading-relaxed">{detail.description}</p>
+                        <p className="text-sm text-anansi-gray mt-1 leading-relaxed">
+                          {detail.description}
+                        </p>
                       </div>
-                      <span className="text-[11px] text-anansi-muted whitespace-nowrap">{formatRelativeTime(item.timestamp)}</span>
+                      <span className="text-[11px] text-anansi-muted whitespace-nowrap">
+                        {formatRelativeTime(item.timestamp)}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between gap-3 mt-3 text-[11px] text-anansi-muted">
                       <span>{detail.meta}</span>
