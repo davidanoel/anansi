@@ -557,9 +557,9 @@ export default function CaribCoinPage() {
             <Eyebrow>Stewardship</Eyebrow>
             <h2 className="font-display font-bold text-3xl mb-6">The Foundation</h2>
             <p className="text-[16px] text-anansi-gray leading-[1.8]">
-              CaribCoin is stewarded by a foundation that exists to support ecosystem development,
-              fund public goods and grants, maintain protocol infrastructure, and represent the
-              network externally when necessary.
+              CaribCoin will be stewarded by a foundation that exists to support ecosystem
+              development, fund public goods and grants, maintain protocol infrastructure, and
+              represent the network externally when necessary.
             </p>
           </div>
           <div>
