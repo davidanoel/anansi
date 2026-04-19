@@ -13,6 +13,7 @@ export default function Header() {
   const navRef = useRef(null);
   const pathname = usePathname();
   const isHomePage = pathname === "/";
+  const ctaLabel = pathname === "/spice" ? "Launch App" : "Explore Spice";
 
   const navLinks = [
     { label: "What We Build", href: isHomePage ? "#pillars" : "/#pillars" },
@@ -20,6 +21,7 @@ export default function Header() {
     { label: "Academy", href: isHomePage ? "#academy" : "/#academy" },
     { label: "CaribCoin", href: "/caribcoin" },
   ];
+  const visibleNavLinks = navLinks.filter((link) => link.href !== pathname);
 
   useEffect(() => {
     const checkState = () => {
@@ -106,7 +108,7 @@ export default function Header() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-9">
-          {navLinks.map((link) => (
+          {visibleNavLinks.map((link) => (
             <Link
               key={link.label}
               href={link.href}
@@ -127,7 +129,7 @@ export default function Header() {
                            : "text-white border-white/12 hover:bg-white hover:text-[#0A0A0A] hover:border-white"
                        }`}
           >
-            Explore Spice
+            {ctaLabel}
           </a>
         </nav>
 
@@ -148,7 +150,7 @@ export default function Header() {
             light ? "bg-white/95 border-black/[0.06]" : "bg-[#060606]/95 border-white/[0.03]"
           }`}
         >
-          {navLinks.map((item) => (
+          {visibleNavLinks.map((item) => (
             <Link
               key={item.label}
               href={item.href}
@@ -167,7 +169,7 @@ export default function Header() {
             }`}
             onClick={() => setMenuOpen(false)}
           >
-            Explore Spice
+            {ctaLabel}
           </a>
         </div>
       )}

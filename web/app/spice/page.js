@@ -13,7 +13,7 @@ export default function SpicePage() {
   return (
     <>
       {/* ===== HERO ===== */}
-      <section className="hero-section hero-grid-bg min-h-[85vh] flex flex-col items-center justify-center relative overflow-hidden">
+      <section className="hero-section hero-grid-bg min-h-screen pt-32 md:pt-40 pb-10 md:pb-12 flex flex-col items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <svg
             className="w-full h-full"
@@ -88,48 +88,45 @@ export default function SpicePage() {
           </svg>
         </div>
 
-        <div className="relative max-w-[1200px] mx-auto px-6 md:px-12 text-center animate-fade-up animate-fade-up-delay-1">
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <span className="block w-8 h-px bg-anansi-red" />
-            <p className="text-[11px] tracking-[0.3em] uppercase text-anansi-red font-semibold">
-              Flagship Product — Live on Sui
+        <div className="relative max-w-[980px] mx-auto px-6 md:px-12 text-center">
+          <div className="inline-flex items-center justify-center px-4 py-2 rounded-full border border-anansi-line bg-white/[0.03] mb-6 animate-fade-up animate-fade-up-delay-1">
+            <p className="text-[11px] tracking-[0.22em] uppercase text-anansi-red font-semibold">
+              Flagship Product · Live on Sui
             </p>
-            <span className="block w-8 h-px bg-anansi-red" />
           </div>
 
-          <h1 className="font-display font-bold text-[clamp(44px,7vw,96px)] leading-[0.98] tracking-tight max-w-[900px] mx-auto text-white">
+          <h1 className="font-display font-bold text-[clamp(44px,7vw,92px)] leading-[0.98] tracking-tight max-w-[820px] mx-auto text-white animate-fade-up animate-fade-up-delay-2">
             Real-world assets.
             <br />
             <span className="text-anansi-red text-glow-red">Global liquidity.</span>
           </h1>
 
-          <p className="max-w-[640px] mx-auto font-display font-medium text-[clamp(18px,2.2vw,26px)] leading-[1.4] mt-10 text-anansi-gray-300 animate-fade-up animate-fade-up-delay-2">
-            A farmer delivers nutmeg. Tokens appear on his phone. He can hold, or exit to USDC
-            instantly. No wallet. No gas fees. Sign in with Google.
+          <p className="max-w-[620px] mx-auto font-display font-medium text-[clamp(18px,2.1vw,24px)] leading-[1.45] mt-8 text-anansi-gray-300 animate-fade-up animate-fade-up-delay-2">
+            A farmer delivers nutmeg. Tokens appear on his phone. He can hold for surplus, or exit
+            to USDC immediately when he needs liquidity.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-5 mt-12 animate-fade-up animate-fade-up-delay-3">
-            <a
-              href={APP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-3 px-9 py-4
-                         font-display font-semibold text-[13px] tracking-[0.1em] uppercase
-                         text-white bg-anansi-red rounded-sm
-                         hover:bg-anansi-red-deep hover:shadow-red-glow-intense
-                         transition-all duration-300 group"
-            >
-              Launch App <span className="transition-transform group-hover:translate-x-1">→</span>
-            </a>
+          <div className="flex flex-wrap items-center justify-center gap-4 mt-10 animate-fade-up animate-fade-up-delay-3">
             <a
               href="#how-it-works"
               className="inline-flex items-center gap-3 px-9 py-4
                          font-display font-semibold text-[13px] tracking-[0.1em] uppercase
                          text-anansi-gray-300 border border-anansi-line rounded-sm
-                         hover:text-white hover:border-anansi-gray-500 transition-all"
+                         hover:text-white hover:border-anansi-gray-500 transition-all group"
             >
-              See how it works
+              See how it works{" "}
+              <span className="transition-transform group-hover:translate-x-1">→</span>
             </a>
+          </div>
+
+          <div className="mt-8 flex justify-center animate-fade-up animate-fade-up-delay-3">
+            <div className="flex flex-wrap items-center justify-center text-[11px] tracking-[0.14em] uppercase text-anansi-gray-500">
+              <span className="whitespace-nowrap px-4 py-2">Google sign-in</span>
+              <span className="hidden sm:inline h-3.5 w-px bg-white/12" />
+              <span className="whitespace-nowrap px-4 py-2">No wallet</span>
+              <span className="hidden sm:inline h-3.5 w-px bg-white/12" />
+              <span className="whitespace-nowrap px-4 py-2">Instant USDC exit</span>
+            </div>
           </div>
         </div>
       </section>
@@ -159,10 +156,10 @@ export default function SpicePage() {
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="reveal">
             <EyebrowLight>How It Works</EyebrowLight>
-            <h2 className="font-display font-bold text-[clamp(32px,4.5vw,56px)] leading-[1.05]">
+            <h2 className="font-display font-bold text-[clamp(32px,4.5vw,56px)] leading-[1.14]">
               James is a nutmeg farmer
               <br />
-              <span className="text-anansi-red">in Grenada.</span>
+              <span className="text-anansi-red font-semibold">in Grenada.</span>
             </h2>
           </div>
 
@@ -261,22 +258,22 @@ export default function SpicePage() {
                   <p className="font-display font-bold text-[11px] text-anansi-red tracking-[0.15em] mb-6">
                     Core Innovation
                   </p>
-                  <h3 className="font-display font-bold text-[clamp(28px,3.2vw,42px)] leading-[1.1]">
-                    Sign in with Google.
+                  <h3 className="font-display font-bold text-[clamp(28px,3.2vw,42px)] leading-[1.16]">
+                    Why it feels simple.
                     <br />
-                    <span className="text-anansi-red">That's it.</span>
+                    <span className="text-anansi-red font-semibold">zkLogin + sponsored gas.</span>
                   </h3>
                 </div>
                 <div>
                   <p className="text-[16px] text-anansi-gray leading-[1.8]">
-                    Sui zkLogin creates an invisible, non-custodial blockchain wallet from a Google
-                    account. No seed phrases. No wallet apps. No browser extensions. The user's
-                    private key is derived from their OAuth login — they own it, but never see it.
+                    Sui zkLogin creates an invisible, non-custodial wallet from a Google account.
+                    The blockchain stays behind the scenes, while the user simply signs in and uses
+                    the product like normal software.
                   </p>
                   <p className="text-[16px] text-anansi-gray leading-[1.8] mt-5">
-                    Every transaction fee is sponsored by Anansi. Users never pay gas, never hold
-                    SUI, never see a "confirm transaction" prompt. The blockchain becomes an
-                    implementation detail.
+                    Anansi sponsors transaction fees, so the experience behaves like a consumer app
+                    instead of a crypto workflow. The infrastructure matters, but it does not need
+                    to surface.
                   </p>
                 </div>
               </div>
@@ -309,7 +306,7 @@ export default function SpicePage() {
             <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.1] max-w-[680px]">
               One platform.
               <br />
-              Every real asset.
+              <span className="font-semibold">Every real asset.</span>
             </h2>
             <p className="text-[16px] text-anansi-gray max-w-[580px] mt-6 leading-[1.75]">
               The architecture that tokenizes nutmeg can tokenize any real-world asset. Adding a new
@@ -376,7 +373,7 @@ export default function SpicePage() {
             <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.1] max-w-[720px]">
               Three roles.
               <br />
-              One platform.
+              <span className="font-semibold">One platform.</span>
             </h2>
           </div>
 
@@ -409,16 +406,14 @@ export default function SpicePage() {
           }}
         />
         <div className="max-w-[1200px] mx-auto px-6 md:px-12 reveal relative">
-          <p className="text-[11px] tracking-[0.3em] uppercase text-anansi-red font-medium mb-8">
-            Live on Sui
-          </p>
-          <h2 className="font-display font-bold text-[clamp(36px,5vw,64px)] leading-[1.05]">
+          <h2 className="font-display font-bold text-[clamp(36px,5vw,64px)] leading-[1.14]">
             Try it now.
             <br />
-            <span className="text-anansi-red">Sign in with Google.</span>
+            <span className="text-anansi-red font-semibold">Sign in with Google.</span>
           </h2>
-          <p className="text-[16px] text-anansi-gray mt-6 max-w-[520px] mx-auto leading-[1.7]">
-            No wallet. No crypto knowledge required. Just a Google account and sixty seconds.
+          <p className="text-[16px] text-anansi-gray mt-6 max-w-[560px] mx-auto leading-[1.7]">
+            Open Spice in any browser, see the flow end to end, and understand how commodity-backed
+            liquidity can work without crypto friction.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-5 mt-12">
