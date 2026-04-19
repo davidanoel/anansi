@@ -5,7 +5,8 @@ export default function Home() {
   return (
     <>
       {/* ===== HERO ===== */}
-      <section className="hero-section min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+      <section className="hero-section hero-grid-bg min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+        {/* Deep radial glow behind the logo — now bolder */}
         <div className="absolute inset-0 pointer-events-none">
           <svg
             className="w-full h-full"
@@ -13,53 +14,45 @@ export default function Home() {
             preserveAspectRatio="xMidYMid slice"
           >
             <defs>
-              <radialGradient id="glow" cx="50%" cy="50%" r="35%">
-                <stop offset="0%" stopColor="#7A0F14" stopOpacity="0.09" />
-                <stop offset="100%" stopColor="#7A0F14" stopOpacity="0" />
+              {/* Primary glow — warm command red, significantly stronger than before */}
+              <radialGradient id="glow" cx="50%" cy="50%" r="40%">
+                <stop offset="0%" stopColor="#DC2626" stopOpacity="0.22" />
+                <stop offset="40%" stopColor="#991B1B" stopOpacity="0.10" />
+                <stop offset="100%" stopColor="#991B1B" stopOpacity="0" />
+              </radialGradient>
+              {/* Secondary rim glow for depth */}
+              <radialGradient id="glow-rim" cx="50%" cy="50%" r="55%">
+                <stop offset="60%" stopColor="#DC2626" stopOpacity="0" />
+                <stop offset="85%" stopColor="#DC2626" stopOpacity="0.04" />
+                <stop offset="100%" stopColor="#DC2626" stopOpacity="0" />
               </radialGradient>
               <linearGradient id="thread" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="white" stopOpacity="0.045" />
+                <stop offset="0%" stopColor="white" stopOpacity="0.10" />
                 <stop offset="100%" stopColor="white" stopOpacity="0" />
+              </linearGradient>
+              <linearGradient id="thread-bright" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#EF4444" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#DC2626" stopOpacity="0" />
               </linearGradient>
             </defs>
 
-            <circle cx="960" cy="540" r="420" fill="url(#glow)" />
-            <line x1="960" y1="540" x2="150" y2="80" stroke="url(#thread)" strokeWidth="0.5" />
-            <line x1="960" y1="540" x2="1770" y2="120" stroke="url(#thread)" strokeWidth="0.5" />
-            <line x1="960" y1="540" x2="80" y2="750" stroke="url(#thread)" strokeWidth="0.5" />
-            <line x1="960" y1="540" x2="1840" y2="850" stroke="url(#thread)" strokeWidth="0.5" />
-            <line x1="960" y1="540" x2="300" y2="30" stroke="url(#thread)" strokeWidth="0.3" />
-            <line x1="960" y1="540" x2="1620" y2="1000" stroke="url(#thread)" strokeWidth="0.3" />
-            <line x1="960" y1="540" x2="50" y2="400" stroke="url(#thread)" strokeWidth="0.3" />
-            <line x1="960" y1="540" x2="1870" y2="500" stroke="url(#thread)" strokeWidth="0.3" />
+            <circle cx="960" cy="540" r="480" fill="url(#glow)" />
+            <circle cx="960" cy="540" r="720" fill="url(#glow-rim)" />
 
-            <circle
-              cx="960"
-              cy="540"
-              r="210"
-              fill="none"
-              stroke="white"
-              strokeOpacity="0.02"
-              strokeWidth="0.5"
-            />
-            <circle
-              cx="960"
-              cy="540"
-              r="350"
-              fill="none"
-              stroke="white"
-              strokeOpacity="0.015"
-              strokeWidth="0.5"
-            />
-            <circle
-              cx="960"
-              cy="540"
-              r="500"
-              fill="none"
-              stroke="white"
-              strokeOpacity="0.01"
-              strokeWidth="0.5"
-            />
+            {/* Thread lines — brighter, with two accented in red */}
+            <line x1="960" y1="540" x2="150"  y2="80"   stroke="url(#thread-bright)" strokeWidth="0.6" />
+            <line x1="960" y1="540" x2="1770" y2="120"  stroke="url(#thread)"        strokeWidth="0.6" />
+            <line x1="960" y1="540" x2="80"   y2="750"  stroke="url(#thread)"        strokeWidth="0.6" />
+            <line x1="960" y1="540" x2="1840" y2="850"  stroke="url(#thread-bright)" strokeWidth="0.6" />
+            <line x1="960" y1="540" x2="300"  y2="30"   stroke="url(#thread)"        strokeWidth="0.4" />
+            <line x1="960" y1="540" x2="1620" y2="1000" stroke="url(#thread)"        strokeWidth="0.4" />
+            <line x1="960" y1="540" x2="50"   y2="400"  stroke="url(#thread)"        strokeWidth="0.4" />
+            <line x1="960" y1="540" x2="1870" y2="500"  stroke="url(#thread)"        strokeWidth="0.4" />
+
+            {/* Concentric rings — slightly more visible than before */}
+            <circle cx="960" cy="540" r="210" fill="none" stroke="white" strokeOpacity="0.04" strokeWidth="0.5" />
+            <circle cx="960" cy="540" r="350" fill="none" stroke="white" strokeOpacity="0.03" strokeWidth="0.5" />
+            <circle cx="960" cy="540" r="500" fill="none" stroke="white" strokeOpacity="0.02" strokeWidth="0.5" />
           </svg>
         </div>
 
@@ -72,21 +65,21 @@ export default function Home() {
           className="relative animate-fade-up animate-fade-up-delay-1"
         />
 
-        <h1 className="relative font-display font-extrabold text-[clamp(32px,5vw,56px)] tracking-[0.2em] uppercase mt-10 animate-fade-up animate-fade-up-delay-2">
+        <h1 className="relative font-display font-extrabold text-[clamp(32px,5vw,56px)] tracking-[0.2em] uppercase mt-10 text-white animate-fade-up animate-fade-up-delay-2">
           ANANSI
         </h1>
 
-        <h2 className="relative max-w-[860px] text-center font-display font-medium text-[clamp(22px,3.2vw,42px)] leading-[1.15] mt-7 px-6 animate-fade-up animate-fade-up-delay-2">
+        <h2 className="relative max-w-[860px] text-center font-display font-medium text-[clamp(22px,3.2vw,42px)] leading-[1.15] mt-7 px-6 text-anansi-gray-200 animate-fade-up animate-fade-up-delay-2">
           We build AI and decentralized software that creates{" "}
-          <span className="text-anansi-red font-semibold">economic access</span>.
+          <span className="text-anansi-red font-semibold text-glow-red">economic access</span>.
         </h2>
 
-        <p className="relative text-[11px] tracking-[0.22em] uppercase text-white/18 mt-7 animate-fade-up animate-fade-up-delay-3">
+        <p className="relative text-[11px] tracking-[0.22em] uppercase text-anansi-gray-500 mt-7 animate-fade-up animate-fade-up-delay-3">
           Applied AI · Real Assets · Starting in the Caribbean, built for the world
         </p>
 
         <div className="absolute bottom-10 flex flex-col items-center gap-3 animate-fade-up animate-fade-up-delay-3">
-          <span className="block w-px h-10 bg-gradient-to-b from-white/20 to-transparent animate-scroll-pulse" />
+          <span className="block w-px h-10 bg-gradient-to-b from-anansi-red/40 to-transparent animate-scroll-pulse" />
         </div>
       </section>
 
@@ -95,10 +88,10 @@ export default function Home() {
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="reveal mb-14">
             <Eyebrow>Why Now</Eyebrow>
-            <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.1] max-w-[760px]">
+            <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.1] max-w-[760px] text-white">
               AI is becoming practical. Real assets are moving on-chain.
             </h2>
-            <p className="text-[16px] text-anansi-gray max-w-[640px] mt-6 leading-[1.75]">
+            <p className="text-[16px] text-anansi-gray-400 max-w-[640px] mt-6 leading-[1.75]">
               Trillions in real-world value are locked in markets that traditional software never
               reached — from smallholder farms in Grenada to mid-market SMBs in São Paulo. AI is
               finally cheap enough to deploy. Blockchain is finally fast enough to use. We build for
@@ -148,9 +141,9 @@ export default function Home() {
               <div className="mt-10 flex flex-wrap items-center gap-6">
                 <Link
                   href="/spice"
-                  className="font-display font-semibold text-[13px] tracking-[0.1em] uppercase text-anansi-black/55 hover:text-anansi-black transition-colors"
+                  className="font-display font-semibold text-[13px] tracking-[0.1em] uppercase text-anansi-black/55 hover:text-anansi-red transition-colors"
                 >
-                  How Spice Works
+                  How Spice Works →
                 </Link>
               </div>
             </div>
@@ -225,14 +218,14 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-20 items-center reveal">
             <div>
               <Eyebrow>Anansi Academy</Eyebrow>
-              <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.15]">
+              <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.15] text-white">
                 Learn AI.
                 <br />
                 Face to face.
                 <br />
                 In 2-3 days.
               </h2>
-              <p className="text-[17px] text-anansi-gray max-w-[500px] mt-6 leading-[1.75]">
+              <p className="text-[17px] text-anansi-gray-400 max-w-[500px] mt-6 leading-[1.75]">
                 A practical intensive for working professionals who keep hearing about AI and still
                 do not have a clear framework for using it. No fluff. No passive slides. You leave
                 knowing what AI is, where it fits, and how to apply it immediately.
@@ -241,8 +234,8 @@ export default function Home() {
                 href="mailto:academy@anansi.tech"
                 className="inline-flex items-center gap-3 mt-9 px-9 py-4
                            font-display font-semibold text-[13px] tracking-[0.1em] uppercase
-                           text-white border border-white/12 rounded-sm
-                           hover:bg-white hover:text-anansi-black hover:border-white transition-all group"
+                           text-white bg-anansi-red rounded-sm
+                           hover:bg-anansi-red-deep hover:shadow-red-glow transition-all group"
               >
                 Inquire <span className="transition-transform group-hover:translate-x-1">→</span>
               </a>
@@ -255,10 +248,10 @@ export default function Home() {
                 { label: "Location", value: "Miami / Caribbean" },
               ].map((d, i) => (
                 <div key={i} className="pt-5 border-t border-anansi-line">
-                  <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray mb-1.5">
+                  <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray-500 mb-1.5">
                     {d.label}
                   </p>
-                  <p className="font-display font-bold text-xl">{d.value}</p>
+                  <p className="font-display font-bold text-xl text-white">{d.value}</p>
                 </div>
               ))}
             </div>
@@ -271,12 +264,12 @@ export default function Home() {
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="reveal">
             <Eyebrow>What Anansi Builds</Eyebrow>
-            <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.1] max-w-[720px]">
+            <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.1] max-w-[720px] text-white">
               One company.
               <br />
               Three <span className="text-anansi-red">engines.</span>
             </h2>
-            <p className="text-[16px] text-anansi-gray max-w-[580px] mt-6 leading-[1.75]">
+            <p className="text-[16px] text-anansi-gray-400 max-w-[580px] mt-6 leading-[1.75]">
               Anansi builds across applied AI, financial rails, and custom engineering — with each
               area reinforcing the others.
             </p>
@@ -285,39 +278,21 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-px bg-anansi-line mt-16 reveal-stagger">
             <Capability
               num="01"
-              title={
-                <>
-                  AI &amp;
-                  <br />
-                  Intelligence
-                </>
-              }
+              title={<>AI &amp;<br />Intelligence</>}
               desc="Applied AI products and systems for professionals, institutions, and teams that need leverage fast."
               primary="CogniCare"
               secondary="Thryve"
             />
             <Capability
               num="02"
-              title={
-                <>
-                  Finance &amp;
-                  <br />
-                  Real Assets
-                </>
-              }
+              title={<>Finance &amp;<br />Real Assets</>}
               desc="Financial rails for people and markets shut out of modern capital. From tokenized commodities to web3 savings products."
               primary="Spice"
               secondary="DollarBank"
             />
             <Capability
               num="03"
-              title={
-                <>
-                  Custom AI &amp;
-                  <br />
-                  Software
-                </>
-              }
+              title={<>Custom AI &amp;<br />Software</>}
               desc="Senior-level engagements for enterprise clients and institutions who need AI, data, or Web3 systems built right. Selective, premium, by inbound only."
               primary="Custom AI Solutions"
               secondary="Enterprise Partnerships"
@@ -328,48 +303,56 @@ export default function Home() {
 
       {/* ===== CARIBCOIN ===== */}
       <section className="relative border-t border-anansi-line overflow-hidden" id="caribcoin">
+        {/* Layered ambient glow — warmer, deeper, more confident */}
         <div className="absolute inset-0 pointer-events-none">
           <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] rounded-full"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1100px] h-[1100px] rounded-full"
             style={{
               background:
-                "radial-gradient(circle, rgba(122,15,20,0.12) 0%, rgba(122,15,20,0.03) 40%, transparent 70%)",
+                "radial-gradient(circle, rgba(220,38,38,0.22) 0%, rgba(153,27,27,0.08) 35%, transparent 70%)",
+            }}
+          />
+          <div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full animate-pulse-glow"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 60%)",
             }}
           />
         </div>
 
         <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-48 relative">
           <div className="reveal text-center">
-            <p className="text-[10px] tracking-[0.4em] uppercase text-anansi-red font-medium mb-8">
+            <p className="text-[10px] tracking-[0.4em] uppercase text-anansi-red font-semibold mb-8">
               Coming Soon
             </p>
-            <h2 className="font-display text-[clamp(48px,8vw,96px)] leading-[0.95] tracking-tight">
+            <h2 className="font-display font-bold text-[clamp(48px,8vw,96px)] leading-[0.95] tracking-tight text-white">
               CARIB
-              <span className="text-anansi-red">COIN</span>
+              <span className="text-anansi-red text-glow-red">COIN</span>
             </h2>
-            <p className="text-[18px] text-white/40 mt-6 max-w-[520px] mx-auto leading-relaxed">
+            <p className="text-[18px] text-anansi-gray-400 mt-6 max-w-[560px] mx-auto leading-relaxed">
               The protocol token that powers every product Anansi builds. Fixed supply. Deflationary
               burns. No promises — only participation.
             </p>
 
             <div className="flex items-center justify-center gap-12 mt-14">
               <div className="text-center">
-                <p className="font-display font-bold text-2xl">10B</p>
-                <p className="text-[10px] text-white/25 uppercase tracking-widest mt-1">
+                <p className="font-display font-bold text-2xl text-white">10B</p>
+                <p className="text-[10px] text-anansi-gray-500 uppercase tracking-widest mt-1">
                   Fixed Supply
                 </p>
               </div>
-              <div className="w-px h-10 bg-white/10" />
+              <div className="w-px h-10 bg-anansi-line" />
               <div className="text-center">
-                <p className="font-display font-bold text-2xl">50%</p>
-                <p className="text-[10px] text-white/25 uppercase tracking-widest mt-1">
+                <p className="font-display font-bold text-2xl text-white">50%</p>
+                <p className="text-[10px] text-anansi-gray-500 uppercase tracking-widest mt-1">
                   Fee Burn Rate
                 </p>
               </div>
-              <div className="w-px h-10 bg-white/10" />
+              <div className="w-px h-10 bg-anansi-line" />
               <div className="text-center">
-                <p className="font-display font-bold text-2xl">∞</p>
-                <p className="text-[10px] text-white/25 uppercase tracking-widest mt-1">
+                <p className="font-display font-bold text-2xl text-anansi-red">∞</p>
+                <p className="text-[10px] text-anansi-gray-500 uppercase tracking-widest mt-1">
                   Deflationary
                 </p>
               </div>
@@ -379,8 +362,9 @@ export default function Home() {
               href="/caribcoin"
               className="inline-flex items-center gap-3 mt-14 px-9 py-4
                          font-display font-semibold text-[13px] tracking-[0.1em] uppercase
-                         text-white border border-anansi-red/40 rounded-sm
-                         hover:bg-anansi-red hover:border-anansi-red transition-all group"
+                         text-white bg-anansi-red rounded-sm
+                         hover:bg-anansi-red-deep hover:shadow-red-glow-intense
+                         transition-all duration-300 group"
             >
               Read the Charter{" "}
               <span className="transition-transform group-hover:translate-x-1">→</span>
@@ -399,17 +383,17 @@ export default function Home() {
                 alt=""
                 width={120}
                 height={120}
-                className="opacity-[0.22] mb-10"
+                className="opacity-[0.28] mb-10"
               />
-              <h2 className="font-display font-bold text-4xl leading-[1.2]">Why Anansi</h2>
-              <p className="text-[16px] text-anansi-gray leading-[1.8] mt-6">
+              <h2 className="font-display font-bold text-4xl leading-[1.2] text-white">Why Anansi</h2>
+              <p className="text-[16px] text-anansi-gray-400 leading-[1.8] mt-6">
                 Anansi — the spider from West African and Caribbean folklore. The trickster who
                 outsmarts larger powers through cleverness, not force. He builds webs that connect
                 what was disconnected. He turns nothing into something valuable.
               </p>
             </div>
             <div>
-              <p className="text-[16px] text-anansi-gray leading-[1.8]">
+              <p className="text-[16px] text-anansi-gray-400 leading-[1.8]">
                 The figure in our mark is both spider and human — inspired by indigenous Carib
                 petroglyphs found across the islands. Technology rooted in culture. Intelligence
                 from the edges, not the center.
@@ -420,26 +404,28 @@ export default function Home() {
       </section>
 
       {/* ===== FINAL CTA ===== */}
-      <section className="py-52 text-center relative">
+      <section className="py-52 text-center relative overflow-hidden">
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full pointer-events-none"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full pointer-events-none"
           style={{
-            background: "radial-gradient(circle, rgba(122,15,20,0.05) 0%, transparent 60%)",
+            background:
+              "radial-gradient(circle, rgba(220,38,38,0.12) 0%, rgba(153,27,27,0.04) 40%, transparent 70%)",
           }}
         />
         <div className="max-w-[1200px] mx-auto px-6 md:px-12 reveal relative">
-          <h2 className="font-display font-bold text-[clamp(32px,4vw,56px)] leading-[1.1]">
+          <h2 className="font-display font-bold text-[clamp(32px,4vw,56px)] leading-[1.1] text-white">
             Built from insight.
             <br />
-            Designed for <span className="text-anansi-red">scale.</span>
+            Designed for <span className="text-anansi-red text-glow-red">scale.</span>
           </h2>
           <div className="flex flex-wrap items-center justify-center gap-5 mt-14">
             <a
               href="mailto:hello@anansi.tech"
               className="inline-flex items-center gap-3 px-9 py-4
                          font-display font-semibold text-[13px] tracking-[0.1em] uppercase
-                         text-white border border-white/12 rounded-sm
-                         hover:bg-white hover:text-anansi-black hover:border-white transition-all group"
+                         text-white bg-anansi-red rounded-sm
+                         hover:bg-anansi-red-deep hover:shadow-red-glow
+                         transition-all duration-300 group"
             >
               Partner with us{" "}
               <span className="transition-transform group-hover:translate-x-1">→</span>
@@ -448,35 +434,39 @@ export default function Home() {
               href="/spice"
               className="inline-flex items-center gap-3 px-9 py-4
                          font-display font-semibold text-[13px] tracking-[0.1em] uppercase
-                         text-white/65 border border-white/8 rounded-sm
-                         hover:text-white hover:border-white/20 transition-all"
+                         text-anansi-gray-300 border border-anansi-line rounded-sm
+                         hover:text-white hover:border-anansi-gray-500 transition-all"
             >
               Explore Spice
             </Link>
           </div>
-          <p className="text-[11px] tracking-[0.2em] uppercase text-white/25 mt-10">Miami, FL</p>
+          <p className="text-[11px] tracking-[0.2em] uppercase text-anansi-gray-500 mt-10">Miami, FL</p>
         </div>
       </section>
     </>
   );
 }
 
+/* ===== Eyebrow: now with a red accent bar for command presence ===== */
 function Eyebrow({ children }) {
   return (
-    <p className="text-[10px] tracking-[0.25em] uppercase text-anansi-red font-medium mb-7">
-      {children}
-    </p>
+    <div className="flex items-center gap-3 mb-7">
+      <span className="block w-8 h-px bg-anansi-red" />
+      <p className="text-[10px] tracking-[0.25em] uppercase text-anansi-red font-semibold">
+        {children}
+      </p>
+    </div>
   );
 }
 
 function Stat({ number, unit, label }) {
   return (
     <div className="px-4 md:px-8 border-l border-anansi-line first:border-l-0 first:pl-0">
-      <p className="font-display font-bold text-[clamp(32px,3.5vw,52px)] leading-none">
+      <p className="font-display font-bold text-[clamp(32px,3.5vw,52px)] leading-none text-white">
         {number}
-        {unit && <span className="text-[0.55em] opacity-50">{unit}</span>}
+        {unit && <span className="text-[0.55em] text-anansi-red">{unit}</span>}
       </p>
-      <p className="text-[11px] text-anansi-gray mt-3 uppercase tracking-[0.08em] leading-[1.5]">
+      <p className="text-[11px] text-anansi-gray-500 mt-3 uppercase tracking-[0.08em] leading-[1.5]">
         {label}
       </p>
     </div>
@@ -485,21 +475,35 @@ function Stat({ number, unit, label }) {
 
 function Capability({ num, title, desc, primary, secondary }) {
   return (
-    <div className="bg-anansi-deep p-12 md:p-11 hover:bg-[#0f0f0f] transition-colors">
-      <p className="font-display font-bold text-[11px] text-anansi-red tracking-[0.15em] mb-6">
-        {num}
-      </p>
-      <h3 className="font-display font-bold text-[26px] leading-[1.2]">{title}</h3>
-      <p className="text-[14px] text-anansi-gray leading-[1.7] mt-4">{desc}</p>
+    <div className="bg-anansi-deep p-12 md:p-11 hover:bg-anansi-surface transition-colors duration-300 group relative overflow-hidden">
+      {/* Subtle red glow on hover */}
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle at top left, rgba(220,38,38,0.06) 0%, transparent 50%)",
+        }}
+      />
+      <div className="relative">
+        <p className="font-display font-bold text-[11px] text-anansi-red tracking-[0.15em] mb-6">
+          {num}
+        </p>
+        <h3 className="font-display font-bold text-[26px] leading-[1.2] text-white">{title}</h3>
+        <p className="text-[14px] text-anansi-gray-400 leading-[1.7] mt-4">{desc}</p>
 
-      <div className="mt-8 pt-6 border-t border-anansi-line space-y-3">
-        <div>
-          <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray mb-1">Flagship</p>
-          <p className="text-[15px] font-medium">{primary}</p>
-        </div>
-        <div>
-          <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray mb-1">Also</p>
-          <p className="text-[15px] font-medium text-white/75">{secondary}</p>
+        <div className="mt-8 pt-6 border-t border-anansi-line space-y-3">
+          <div>
+            <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray-500 mb-1">
+              Flagship
+            </p>
+            <p className="text-[15px] font-medium text-white">{primary}</p>
+          </div>
+          <div>
+            <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray-500 mb-1">
+              Also
+            </p>
+            <p className="text-[15px] font-medium text-anansi-gray-300">{secondary}</p>
+          </div>
         </div>
       </div>
     </div>

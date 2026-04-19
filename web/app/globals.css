@@ -2,19 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
-
 html {
   scroll-behavior: smooth;
+  background: #0A0A0B;
 }
 
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Layered rich-black background:
+     1) warm radial vignette anchored at top (hero area)
+     2) subtle grain texture baked in via SVG data URI
+     3) fallback flat color beneath
+     Result: black that feels like a surface with depth, not a void */
+  background-color: #0A0A0B;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(220, 38, 38, 0.04), transparent 70%),
+    radial-gradient(ellipse 100% 60% at 50% 100%, rgba(220, 38, 38, 0.025), transparent 70%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-attachment: fixed, fixed, fixed;
+  background-size: 100% 100%, 100% 100%, 240px 240px;
+  background-repeat: no-repeat, no-repeat, repeat;
+  color: #F4F4F5;
+}
+
+/* When sections flip to a light background, neutralize the body gradient showing through */
+.section-light {
+  position: relative;
+  isolation: isolate;
 }
 
 ::selection {
-  background-color: #7a0f14;
-  color: white;
+  background-color: #DC2626;
+  color: #FFFFFF;
+}
+
+/* ===== Glow utilities (use sparingly) ===== */
+.glow-red {
+  box-shadow: 0 0 60px rgba(220, 38, 38, 0.25);
+}
+.glow-red-soft {
+  box-shadow: 0 0 80px rgba(220, 38, 38, 0.15);
+}
+.text-glow-red {
+  text-shadow: 0 0 24px rgba(220, 38, 38, 0.45);
+}
+
+/* ===== Red accent underline (for eyebrows that need to command) ===== */
+.eyebrow-accent {
+  position: relative;
+  display: inline-block;
+}
+.eyebrow-accent::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 24px;
+  height: 1px;
+  background: linear-gradient(to right, #DC2626, transparent);
+  transform: translateX(-32px);
 }
 
 /* ===== Scroll reveal ===== */
@@ -42,21 +90,11 @@ body {
   opacity: 1;
   transform: translateY(0);
 }
-.reveal-stagger.visible > *:nth-child(1) {
-  transition-delay: 0s;
-}
-.reveal-stagger.visible > *:nth-child(2) {
-  transition-delay: 0.1s;
-}
-.reveal-stagger.visible > *:nth-child(3) {
-  transition-delay: 0.2s;
-}
-.reveal-stagger.visible > *:nth-child(4) {
-  transition-delay: 0.3s;
-}
-.reveal-stagger.visible > *:nth-child(5) {
-  transition-delay: 0.4s;
-}
+.reveal-stagger.visible > *:nth-child(1) { transition-delay: 0s; }
+.reveal-stagger.visible > *:nth-child(2) { transition-delay: 0.1s; }
+.reveal-stagger.visible > *:nth-child(3) { transition-delay: 0.2s; }
+.reveal-stagger.visible > *:nth-child(4) { transition-delay: 0.3s; }
+.reveal-stagger.visible > *:nth-child(5) { transition-delay: 0.4s; }
 
 /* ===== Hero animations ===== */
 @keyframes fadeUp {
@@ -70,27 +108,33 @@ body {
   }
 }
 @keyframes scrollPulse {
-  0%,
-  100% {
-    opacity: 0.15;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.5; }
+}
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 .animate-fade-up {
   opacity: 0;
   animation: fadeUp 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-.animate-fade-up-delay-1 {
-  animation-delay: 0.2s;
-}
-.animate-fade-up-delay-2 {
-  animation-delay: 0.7s;
-}
-.animate-fade-up-delay-3 {
-  animation-delay: 1.6s;
-}
-.animate-scroll-pulse {
-  animation: scrollPulse 2.5s ease-in-out infinite;
+.animate-fade-up-delay-1 { animation-delay: 0.2s; }
+.animate-fade-up-delay-2 { animation-delay: 0.7s; }
+.animate-fade-up-delay-3 { animation-delay: 1.6s; }
+.animate-scroll-pulse { animation: scrollPulse 2.5s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulseGlow 3s ease-in-out infinite; }
+
+/* ===== Subtle grid pattern overlay for hero ===== */
+.hero-grid-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 80px 80px;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 30%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 30%, transparent 70%);
 }
