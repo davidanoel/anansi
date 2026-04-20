@@ -121,9 +121,10 @@ fun test_burn_multiple_times_accumulates() {
 
     ts::next_tx(&mut scenario, ADMIN);
     {
-        let chunk1 = split_from_genesis(&mut scenario, 100 * ONE_CARIB);
-        let chunk2 = split_from_genesis(&mut scenario, 250 * ONE_CARIB);
-        let chunk3 = split_from_genesis(&mut scenario, 50 * ONE_CARIB);
+        let mut genesis: Coin<CARIB_COIN> = ts::take_from_sender(&scenario);
+        let chunk1 = coin::split(&mut genesis, 100 * ONE_CARIB, ts::ctx(&mut scenario));
+        let chunk2 = coin::split(&mut genesis, 250 * ONE_CARIB, ts::ctx(&mut scenario));
+        let chunk3 = coin::split(&mut genesis, 50 * ONE_CARIB, ts::ctx(&mut scenario));
         let mut treasury: Treasury = ts::take_from_sender(&scenario);
 
         carib_coin::burn(&mut treasury, chunk1, ts::ctx(&mut scenario));
@@ -132,11 +133,13 @@ fun test_burn_multiple_times_accumulates() {
 
         assert!(carib_coin::total_burned(&treasury) == 400 * ONE_CARIB, 0);
 
+        ts::return_to_sender(&scenario, genesis);
         ts::return_to_sender(&scenario, treasury);
     };
 
     ts::end(scenario);
 }
+
 
 #[test]
 fun test_burn_by_non_admin_caller_succeeds() {
