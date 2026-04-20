@@ -134,8 +134,14 @@ public fun deposit_surplus<PaymentT, CommodityT>(
     // Split the deposit amount from the payment coin
     let mut deposit_coin = coin::split(payment, gross_amount, ctx);
 
-    // Calculate and extract fee
-    let fee_amount = (gross_amount * engine.fee_rate_bps) / BPS_DENOMINATOR;
+    // Calculate and extract fee.
+    // Use u128 intermediate to prevent u64 overflow — gross_amount can be 1e13+
+    // (e.g., $10M+ USDC with 6 decimals) and fee_rate_bps up to 1000. Same pattern
+    // as fee_converter and fee_discount after the overflow bug earlier in the project.
+    let fee_amount = (
+        ((gross_amount as u128) * (engine.fee_rate_bps as u128)) /
+        (BPS_DENOMINATOR as u128)
+    ) as u64;
     let net_amount = gross_amount - fee_amount;
 
     // Extract fee coin — returned to caller for PTB to swap + burn
@@ -198,8 +204,16 @@ public fun claim_surplus<PaymentT, CommodityT>(
     let token_balance = coin::value(holder_coin);
     assert!(token_balance > 0, ENoTokensToRedeem);
 
-    // Pro-rata calculation
-    let share = (deposit.total_amount * token_balance) / deposit.total_tokens_at_snapshot;
+    // Pro-rata calculation.
+    // Use u128 intermediate to prevent u64 overflow. Both operands can be large:
+    // - deposit.total_amount = net payment units (USDC 1e6 decimals)
+    // - token_balance = holder commodity units (NUTMEG 1e9 decimals)
+    // Product easily exceeds u64 max (~1.84e19) at realistic scale:
+    // e.g., 10M USDC deposit (1e13) × 2M-token holder (2e15) = 2e28.
+    let share = (
+        ((deposit.total_amount as u128) * (token_balance as u128)) /
+        (deposit.total_tokens_at_snapshot as u128)
+    ) as u64;
     assert!(share > 0, ENoTokensToRedeem);
     assert!(balance::value(&deposit.balance) >= share, EInsufficientBalance);
 
