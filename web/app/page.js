@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <>
       {/* ===== HERO ===== */}
-      <section className="hero-section hero-grid-bg min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+      <section className="hero-section hero-grid-bg min-h-screen relative overflow-hidden">
         {/* Deep radial glow behind the logo — now bolder */}
         <div className="absolute inset-0 pointer-events-none">
           <svg
@@ -94,29 +94,92 @@ export default function Home() {
           </svg>
         </div>
 
-        <Image
-          src="/logo-dark.png"
-          alt="Anansi"
-          width={240}
-          height={240}
-          priority
-          className="relative animate-fade-up animate-fade-up-delay-1"
-        />
+        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+          <div className="hero-orbit-wrap animate-fade-up animate-fade-up-delay-1">
+            <svg
+              className="hero-orbit-svg"
+              viewBox="0 0 420 420"
+              fill="none"
+              aria-hidden="true"
+            >
+              <defs>
+                <linearGradient id="heroOrbitRed" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#f87171" stopOpacity="0.95" />
+                  <stop offset="100%" stopColor="#dc2626" stopOpacity="0.25" />
+                </linearGradient>
+                <linearGradient id="heroOrbitWhite" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="#ffffff" stopOpacity="0.08" />
+                </linearGradient>
+              </defs>
 
-        <h1 className="relative font-display font-extrabold text-[clamp(32px,5vw,56px)] tracking-[0.2em] uppercase mt-10 text-white animate-fade-up animate-fade-up-delay-2">
-          ANANSI
-        </h1>
+              <g className="hero-orbit-rotation-slow">
+                <circle cx="210" cy="210" r="198" className="hero-orbit-ring-faint" />
+                <path
+                  d="M210 12 A198 198 0 0 1 364 86"
+                  className="hero-orbit-arc hero-orbit-arc-red"
+                />
+                <path
+                  d="M395 245 A198 198 0 0 1 320 365"
+                  className="hero-orbit-arc hero-orbit-arc-white"
+                />
+                <circle cx="210" cy="12" r="4.5" className="hero-orbit-node hero-orbit-node-red" />
+              </g>
 
-        <h2 className="relative max-w-[860px] text-center font-display font-medium text-[clamp(22px,3.2vw,42px)] leading-[1.15] mt-7 px-6 text-anansi-gray-200 animate-fade-up animate-fade-up-delay-2">
-          We build AI and decentralized software that creates{" "}
-          <span className="text-anansi-red font-semibold text-glow-red">economic access</span>.
-        </h2>
+              <g className="hero-orbit-rotation-reverse">
+                <circle cx="210" cy="210" r="158" className="hero-orbit-ring-mid" />
+                <path
+                  d="M60 165 A158 158 0 0 1 145 80"
+                  className="hero-orbit-arc hero-orbit-arc-white"
+                />
+                <path
+                  d="M278 356 A158 158 0 0 0 365 245"
+                  className="hero-orbit-arc hero-orbit-arc-red"
+                />
+                <circle cx="365" cy="245" r="3.5" className="hero-orbit-node hero-orbit-node-pink" />
+              </g>
 
-        <p className="relative text-[11px] tracking-[0.22em] uppercase text-anansi-gray-500 mt-7 animate-fade-up animate-fade-up-delay-3">
-          Applied AI · Real Assets · Starting in the Caribbean, built for the world
-        </p>
+              <g className="hero-orbit-rotation-fast">
+                <circle cx="210" cy="210" r="118" className="hero-orbit-ring-dashed" />
+                <path
+                  d="M118 135 A118 118 0 0 1 210 92"
+                  className="hero-orbit-arc hero-orbit-arc-soft"
+                />
+                <path
+                  d="M236 325 A118 118 0 0 1 136 308"
+                  className="hero-orbit-arc hero-orbit-arc-white"
+                />
+              </g>
+            </svg>
+            <div className="hero-orbit-core">
+              <Image
+                src="/logo-dark.png"
+                alt="Anansi"
+                width={280}
+                height={280}
+                priority
+                className="hero-orbit-logo relative z-10 drop-shadow-[0_0_80px_rgba(220,38,38,0.5)]"
+              />
+            </div>
+          </div>
+        </div>
 
-        <div className="absolute bottom-10 flex flex-col items-center gap-3 animate-fade-up animate-fade-up-delay-3">
+        <div className="relative z-20 min-h-screen flex flex-col items-center pt-[calc(50vh+145px)] md:pt-[calc(50vh+175px)] pb-20 px-6">
+          <h1 className="font-display font-extrabold text-[clamp(32px,5vw,56px)] tracking-[0.2em] uppercase text-white animate-fade-up animate-fade-up-delay-2">
+            ANANSI
+          </h1>
+
+          <h2 className="max-w-[860px] text-center font-display font-medium text-[clamp(22px,3.2vw,42px)] leading-[1.15] mt-7 text-anansi-gray-200 animate-fade-up animate-fade-up-delay-2">
+            We build AI and decentralized software that creates{" "}
+            <span className="text-anansi-red font-semibold text-glow-red">economic access</span>.
+          </h2>
+
+          <p className="text-[11px] tracking-[0.22em] uppercase text-anansi-gray-500 mt-7 text-center animate-fade-up animate-fade-up-delay-3">
+            Applied AI · Real Assets · Starting in the Caribbean, built for the world
+          </p>
+        </div>
+
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 animate-fade-up animate-fade-up-delay-3">
           <span className="block w-px h-10 bg-gradient-to-b from-anansi-red/40 to-transparent animate-scroll-pulse" />
         </div>
       </section>

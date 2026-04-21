@@ -4,7 +4,7 @@
 
 html {
   scroll-behavior: smooth;
-  background: #0A0A0B;
+  background: #0a0a0b;
 }
 
 body {
@@ -16,15 +16,18 @@ body {
      2) subtle grain texture baked in via SVG data URI
      3) fallback flat color beneath
      Result: black that feels like a surface with depth, not a void */
-  background-color: #0A0A0B;
+  background-color: #0a0a0b;
   background-image:
     radial-gradient(ellipse 80% 50% at 50% 0%, rgba(220, 38, 38, 0.04), transparent 70%),
     radial-gradient(ellipse 100% 60% at 50% 100%, rgba(220, 38, 38, 0.025), transparent 70%),
     url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-attachment: fixed, fixed, fixed;
-  background-size: 100% 100%, 100% 100%, 240px 240px;
+  background-size:
+    100% 100%,
+    100% 100%,
+    240px 240px;
   background-repeat: no-repeat, no-repeat, repeat;
-  color: #F4F4F5;
+  color: #f4f4f5;
 }
 
 /* When sections flip to a light background, neutralize the body gradient showing through */
@@ -34,8 +37,8 @@ body {
 }
 
 ::selection {
-  background-color: #DC2626;
-  color: #FFFFFF;
+  background-color: #dc2626;
+  color: #ffffff;
 }
 
 /* ===== Glow utilities (use sparingly) ===== */
@@ -61,7 +64,7 @@ body {
   top: 50%;
   width: 24px;
   height: 1px;
-  background: linear-gradient(to right, #DC2626, transparent);
+  background: linear-gradient(to right, #dc2626, transparent);
   transform: translateX(-32px);
 }
 
@@ -90,11 +93,21 @@ body {
   opacity: 1;
   transform: translateY(0);
 }
-.reveal-stagger.visible > *:nth-child(1) { transition-delay: 0s; }
-.reveal-stagger.visible > *:nth-child(2) { transition-delay: 0.1s; }
-.reveal-stagger.visible > *:nth-child(3) { transition-delay: 0.2s; }
-.reveal-stagger.visible > *:nth-child(4) { transition-delay: 0.3s; }
-.reveal-stagger.visible > *:nth-child(5) { transition-delay: 0.4s; }
+.reveal-stagger.visible > *:nth-child(1) {
+  transition-delay: 0s;
+}
+.reveal-stagger.visible > *:nth-child(2) {
+  transition-delay: 0.1s;
+}
+.reveal-stagger.visible > *:nth-child(3) {
+  transition-delay: 0.2s;
+}
+.reveal-stagger.visible > *:nth-child(4) {
+  transition-delay: 0.3s;
+}
+.reveal-stagger.visible > *:nth-child(5) {
+  transition-delay: 0.4s;
+}
 
 /* ===== Hero animations ===== */
 @keyframes fadeUp {
@@ -108,22 +121,58 @@ body {
   }
 }
 @keyframes scrollPulse {
-  0%, 100% { opacity: 0.15; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 @keyframes pulseGlow {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes orbitSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes orbitSpinReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
 }
 .animate-fade-up {
   opacity: 0;
   animation: fadeUp 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-.animate-fade-up-delay-1 { animation-delay: 0.2s; }
-.animate-fade-up-delay-2 { animation-delay: 0.7s; }
-.animate-fade-up-delay-3 { animation-delay: 1.6s; }
-.animate-scroll-pulse { animation: scrollPulse 2.5s ease-in-out infinite; }
-.animate-pulse-glow { animation: pulseGlow 3s ease-in-out infinite; }
+.animate-fade-up-delay-1 {
+  animation-delay: 0.2s;
+}
+.animate-fade-up-delay-2 {
+  animation-delay: 0.7s;
+}
+.animate-fade-up-delay-3 {
+  animation-delay: 1.6s;
+}
+.animate-scroll-pulse {
+  animation: scrollPulse 2.5s ease-in-out infinite;
+}
+.animate-pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
 
 /* ===== Subtle grid pattern overlay for hero ===== */
 .hero-grid-bg::before {
@@ -137,4 +186,114 @@ body {
   pointer-events: none;
   mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 30%, transparent 70%);
   -webkit-mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 30%, transparent 70%);
+}
+
+/* ===== Landing logo orbit system ===== */
+.hero-orbit-wrap {
+  width: min(74vw, 420px);
+  aspect-ratio: 1;
+  position: relative;
+}
+
+.hero-orbit-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.hero-orbit-rotation-slow {
+  transform-origin: 210px 210px;
+  animation: orbitSpin 24s linear infinite;
+}
+
+.hero-orbit-rotation-reverse {
+  transform-origin: 210px 210px;
+  animation: orbitSpinReverse 18s linear infinite;
+}
+
+.hero-orbit-rotation-fast {
+  transform-origin: 210px 210px;
+  animation: orbitSpin 11s linear infinite;
+}
+
+.hero-orbit-ring-faint {
+  stroke: rgba(255, 255, 255, 0.14);
+  stroke-width: 1.1;
+}
+
+.hero-orbit-ring-mid {
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 1;
+}
+
+.hero-orbit-ring-dashed {
+  stroke: rgba(255, 255, 255, 0.18);
+  stroke-width: 1;
+  stroke-dasharray: 7 10;
+}
+
+.hero-orbit-arc {
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.08));
+}
+
+.hero-orbit-arc-red {
+  stroke: url(#heroOrbitRed);
+}
+
+.hero-orbit-arc-white {
+  stroke: url(#heroOrbitWhite);
+}
+
+.hero-orbit-arc-soft {
+  stroke: rgba(255, 255, 255, 0.36);
+}
+
+.hero-orbit-node {
+  filter: drop-shadow(0 0 12px rgba(220, 38, 38, 0.3));
+}
+
+.hero-orbit-node-red {
+  fill: #f87171;
+}
+
+.hero-orbit-node-pink {
+  fill: #fecaca;
+}
+
+.hero-orbit-core {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  z-index: 3;
+  width: 74%;
+  height: 74%;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 48%, transparent 74%),
+    radial-gradient(circle at 50% 56%, rgba(220, 38, 38, 0.10) 0%, rgba(220, 38, 38, 0.03) 42%, transparent 72%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 50px rgba(220, 38, 38, 0.15);
+}
+
+.hero-orbit-logo {
+  width: 88%;
+  height: auto;
+}
+
+@keyframes orbit3D {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
 }
