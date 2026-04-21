@@ -20,12 +20,6 @@ export default function Home() {
                 <stop offset="40%" stopColor="#991B1B" stopOpacity="0.10" />
                 <stop offset="100%" stopColor="#991B1B" stopOpacity="0" />
               </radialGradient>
-              {/* Secondary rim glow for depth */}
-              <radialGradient id="glow-rim" cx="50%" cy="50%" r="55%">
-                <stop offset="60%" stopColor="#DC2626" stopOpacity="0" />
-                <stop offset="85%" stopColor="#DC2626" stopOpacity="0.04" />
-                <stop offset="100%" stopColor="#DC2626" stopOpacity="0" />
-              </radialGradient>
               <linearGradient id="thread" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="white" stopOpacity="0.10" />
                 <stop offset="100%" stopColor="white" stopOpacity="0" />
@@ -37,7 +31,6 @@ export default function Home() {
             </defs>
 
             <circle cx="960" cy="540" r="480" fill="url(#glow)" />
-            <circle cx="960" cy="540" r="720" fill="url(#glow-rim)" />
 
             {/* Thread lines — brighter, with two accented in red */}
             <line
@@ -95,13 +88,11 @@ export default function Home() {
         </div>
 
         <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-          <div className="hero-orbit-wrap animate-fade-up animate-fade-up-delay-1">
-            <svg
-              className="hero-orbit-svg"
-              viewBox="0 0 420 420"
-              fill="none"
-              aria-hidden="true"
-            >
+          <div
+            className="hero-orbit-wrap animate-fade-up animate-fade-up-delay-1"
+            style={{ transform: "translateY(-48px)" }}
+          >
+            <svg className="hero-orbit-svg" viewBox="0 0 420 420" fill="none" aria-hidden="true">
               <defs>
                 <linearGradient id="heroOrbitRed" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#f87171" stopOpacity="0.95" />
@@ -136,7 +127,12 @@ export default function Home() {
                   d="M278 356 A158 158 0 0 0 365 245"
                   className="hero-orbit-arc hero-orbit-arc-red"
                 />
-                <circle cx="365" cy="245" r="3.5" className="hero-orbit-node hero-orbit-node-pink" />
+                <circle
+                  cx="365"
+                  cy="245"
+                  r="3.5"
+                  className="hero-orbit-node hero-orbit-node-pink"
+                />
               </g>
 
               <g className="hero-orbit-rotation-fast">
@@ -158,25 +154,40 @@ export default function Home() {
                 width={280}
                 height={280}
                 priority
-                className="hero-orbit-logo relative z-10 drop-shadow-[0_0_80px_rgba(220,38,38,0.5)]"
+                className="hero-orbit-logo relative z-10 drop-shadow-[0_0_50px_rgba(220,38,38,0.3)]"
               />
             </div>
           </div>
         </div>
 
-        <div className="relative z-20 min-h-screen flex flex-col items-center pt-[calc(50vh+145px)] md:pt-[calc(50vh+175px)] pb-20 px-6">
-          <h1 className="font-display font-extrabold text-[clamp(32px,5vw,56px)] tracking-[0.2em] uppercase text-white animate-fade-up animate-fade-up-delay-2">
+        <div className="relative z-20 min-h-screen flex flex-col items-center pt-[calc(50vh+100px)] md:pt-[calc(50vh+125px)] pb-20 px-6">
+          <h1 className="font-display font-extrabold text-[clamp(22px,3.2vw,36px)] tracking-[0.28em] uppercase text-white/90 animate-fade-up animate-fade-up-delay-2">
             ANANSI
           </h1>
 
-          <h2 className="max-w-[860px] text-center font-display font-medium text-[clamp(22px,3.2vw,42px)] leading-[1.15] mt-7 text-anansi-gray-200 animate-fade-up animate-fade-up-delay-2">
+          <h2 className="max-w-[860px] text-center font-display font-medium text-[clamp(22px,3.2vw,42px)] leading-[1.15] mt-6 text-anansi-gray-200 animate-fade-up animate-fade-up-delay-2">
             We build AI and decentralized software that creates{" "}
             <span className="text-anansi-red font-semibold text-glow-red">economic access</span>.
           </h2>
 
-          <p className="text-[11px] tracking-[0.22em] uppercase text-anansi-gray-500 mt-7 text-center animate-fade-up animate-fade-up-delay-3">
+          <p className="text-[11px] tracking-[0.22em] uppercase text-anansi-gray-400 mt-6 text-center animate-fade-up animate-fade-up-delay-3">
             Applied AI · Real Assets · Starting in the Caribbean, built for the world
           </p>
+
+          <div className="mt-9 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 animate-fade-up animate-fade-up-delay-3">
+            <a
+              href="#pillars"
+              className="inline-flex items-center justify-center px-6 py-3 bg-anansi-red hover:bg-anansi-red-deep text-white text-[13px] tracking-[0.1em] uppercase font-semibold transition-all duration-200 shadow-red-glow hover:shadow-red-glow-intense min-w-[180px]"
+            >
+              See What We Build
+            </a>
+            <Link
+              href="/spice"
+              className="inline-flex items-center justify-center px-6 py-3 border border-white/20 hover:border-anansi-red/60 text-white text-[13px] tracking-[0.1em] uppercase font-semibold transition-all duration-200 min-w-[180px]"
+            >
+              Try Spice
+            </Link>
+          </div>
         </div>
 
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 animate-fade-up animate-fade-up-delay-3">
@@ -204,7 +215,10 @@ export default function Home() {
             <Stat number="$15.7T" label="AI contribution to global GDP by 2030 (PwC)" />
             <Stat number="$16T" label="Projected RWA tokenization market by 2030 (BCG)" />
             <Stat number="$5T" unit="+" label="Trapped value in emerging-market real assets" />
-            <Stat number="0" label="Infrastructure that connects it all" />
+            <Stat
+              number="1.7B"
+              label="Adults without access to basic financial services (World Bank)"
+            />
           </div>
         </div>
       </section>
