@@ -97,20 +97,22 @@ export default function Header() {
             }}
           >
             <Image
-              src={light ? "/logo-mark.png" : "/logo-dark.png"}
+              src="/brand/symbol/anansi-symbol-primary-darksite.png"
               alt="Anansi"
               width={32}
               height={32}
               className="transition-transform group-hover:scale-105"
             />
           </div>
-          <span
-            className={`font-display font-bold text-[15px] tracking-[0.12em] transition-colors duration-300 ${
-              light ? "text-[#0A0A0A]" : "text-white"
+          <Image
+            src="/brand/wordmark/anansi-wordmark-primary.svg"
+            alt="Anansi"
+            width={1916}
+            height={821}
+            className={`w-[92px] md:w-[102px] h-auto transition-all duration-300 ${
+              light ? "opacity-95" : "invert opacity-95"
             }`}
-          >
-            ANANSI
-          </span>
+          />
         </Link>
 
         <nav className="hidden md:flex items-center gap-9">

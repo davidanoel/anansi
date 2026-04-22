@@ -158,7 +158,7 @@ export default function Home() {
               </svg>
               <div className="hero-orbit-core">
                 <Image
-                  src="/logo-dark.png"
+                  src="/brand/symbol/anansi-symbol-primary-darksite.png"
                   alt="Anansi"
                   width={280}
                   height={280}
@@ -171,9 +171,17 @@ export default function Home() {
         </div>
 
         <div className="relative z-20 min-h-screen flex flex-col items-center pt-[calc(50vh+100px)] md:pt-[calc(50vh+125px)] pb-20 px-6">
-          <h1 className="hero-wordmark font-display font-extrabold text-[clamp(24px,3.6vw,40px)] tracking-[0.24em] uppercase animate-fade-up animate-fade-up-delay-2">
-            ANANSI
-          </h1>
+          <h1 className="sr-only">ANANSI</h1>
+          <div className="mt-1 md:mt-2 animate-fade-up animate-fade-up-delay-2">
+            <Image
+              src="/brand/wordmark/anansi-wordmark-primary.svg"
+              alt="ANANSI"
+              width={1916}
+              height={821}
+              priority
+              className="w-[min(76vw,420px)] md:w-[min(44vw,500px)] h-auto invert opacity-95 drop-shadow-[0_10px_28px_rgba(0,0,0,0.32)]"
+            />
+          </div>
 
           <h2 className="max-w-[860px] text-center font-display font-medium text-[clamp(22px,3.2vw,42px)] leading-[1.15] mt-8 md:mt-9 text-anansi-gray-300 animate-fade-up animate-fade-up-delay-2">
             We build AI and decentralized software that creates{" "}
@@ -206,7 +214,7 @@ export default function Home() {
       </section>
 
       {/* ===== WHY NOW ===== */}
-      <section className="py-24 border-t border-b border-anansi-line">
+      <section className="py-20 md:py-24 border-t border-b border-anansi-line">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="reveal mb-14">
             <Eyebrow>Why Now</Eyebrow>
@@ -234,7 +242,7 @@ export default function Home() {
       </section>
 
       {/* ===== SPICE ===== */}
-      <section className="section-light bg-anansi-white text-anansi-black py-40" id="spice">
+      <section className="section-light bg-anansi-white text-anansi-black py-28 md:py-32" id="spice">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="reveal">
             <Eyebrow>Flagship Product</Eyebrow>
@@ -338,7 +346,7 @@ export default function Home() {
       </section>
 
       {/* ===== ACADEMY ===== */}
-      <section className="py-28 border-b border-anansi-line" id="academy">
+      <section className="py-24 md:py-28 border-b border-anansi-line" id="academy">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="grid md:grid-cols-2 gap-20 items-center reveal">
             <div>
@@ -385,7 +393,7 @@ export default function Home() {
       </section>
 
       {/* ===== WHAT ANANSI BUILDS ===== */}
-      <section className="py-40" id="pillars">
+      <section className="py-28 md:py-32" id="pillars">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="reveal">
             <Eyebrow>What Anansi Builds</Eyebrow>
@@ -471,7 +479,7 @@ export default function Home() {
           />
         </div>
 
-        <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-48 relative">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-32 md:py-36 relative">
           <div className="reveal text-center">
             <p className="text-[10px] tracking-[0.4em] uppercase text-anansi-red font-semibold mb-8">
               Coming Soon
@@ -524,17 +532,19 @@ export default function Home() {
       </section>
 
       {/* ===== WHY ANANSI ===== */}
-      <section className="py-40 border-t border-anansi-line">
+      <section className="py-28 md:py-32 border-t border-anansi-line">
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="grid md:grid-cols-2 gap-20 reveal">
             <div>
-              <Image
-                src="/logo-dark.png"
-                alt=""
-                width={120}
-                height={120}
-                className="opacity-[0.28] mb-10"
-              />
+              <div className="inline-flex items-center justify-center w-28 h-28 md:w-32 md:h-32 rounded-full border border-white/[0.12] bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(247,248,251,0.98)_48%,rgba(232,236,242,0.98)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.78),inset_0_-14px_22px_rgba(17,19,26,0.08),0_18px_36px_rgba(0,0,0,0.24)] mb-10">
+                <Image
+                  src="/brand/symbol/anansi-symbol-primary-transparent.png"
+                  alt=""
+                  width={610}
+                  height={872}
+                  className="w-[66px] md:w-[80px] h-auto opacity-[0.98] drop-shadow-[0_8px_18px_rgba(0,0,0,0.12)]"
+                />
+              </div>
               <h2 className="font-display font-bold text-4xl leading-[1.2] text-white">
                 Why Anansi
               </h2>
@@ -556,7 +566,7 @@ export default function Home() {
       </section>
 
       {/* ===== FINAL CTA ===== */}
-      <section className="py-52 text-center relative overflow-hidden">
+      <section className="py-36 md:py-40 text-center relative overflow-hidden">
         <div
           className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[860px] h-[860px] rounded-full pointer-events-none"
           style={{
