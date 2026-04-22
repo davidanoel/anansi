@@ -16,20 +16,26 @@ export default function Home() {
             <defs>
               {/* Primary glow — warm command red, significantly stronger than before */}
               <radialGradient id="glow" cx="50%" cy="50%" r="40%">
-                <stop offset="0%" stopColor="#DC2626" stopOpacity="0.22" />
-                <stop offset="40%" stopColor="#991B1B" stopOpacity="0.10" />
+                <stop offset="0%" stopColor="#DC2626" stopOpacity="0.16" />
+                <stop offset="40%" stopColor="#991B1B" stopOpacity="0.055" />
                 <stop offset="100%" stopColor="#991B1B" stopOpacity="0" />
+              </radialGradient>
+              <radialGradient id="heroGloss" cx="50%" cy="34%" r="28%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.08" />
+                <stop offset="42%" stopColor="#ffffff" stopOpacity="0.02" />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
               </radialGradient>
               <linearGradient id="thread" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="white" stopOpacity="0.10" />
                 <stop offset="100%" stopColor="white" stopOpacity="0" />
               </linearGradient>
               <linearGradient id="thread-bright" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#EF4444" stopOpacity="0.25" />
+                <stop offset="0%" stopColor="#EF4444" stopOpacity="0.16" />
                 <stop offset="100%" stopColor="#DC2626" stopOpacity="0" />
               </linearGradient>
             </defs>
 
+            <circle cx="960" cy="420" r="290" fill="url(#heroGloss)" />
             <circle cx="960" cy="540" r="480" fill="url(#glow)" />
 
             {/* Thread lines — brighter, with two accented in red */}
@@ -88,84 +94,88 @@ export default function Home() {
         </div>
 
         <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-          <div
-            className="hero-orbit-wrap animate-fade-up animate-fade-up-delay-1"
-            style={{ transform: "translateY(-48px)" }}
-          >
-            <svg className="hero-orbit-svg" viewBox="0 0 420 420" fill="none" aria-hidden="true">
-              <defs>
-                <linearGradient id="heroOrbitRed" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#f87171" stopOpacity="0.95" />
-                  <stop offset="100%" stopColor="#dc2626" stopOpacity="0.25" />
-                </linearGradient>
-                <linearGradient id="heroOrbitWhite" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
-                  <stop offset="100%" stopColor="#ffffff" stopOpacity="0.08" />
-                </linearGradient>
-              </defs>
+          <div className="hero-orbit-position">
+            <div className="hero-orbit-wrap animate-fade-up animate-fade-up-delay-1">
+              <svg className="hero-orbit-svg" viewBox="0 0 420 420" fill="none" aria-hidden="true">
+                <defs>
+                  <linearGradient id="heroOrbitRed" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#f87171" stopOpacity="0.95" />
+                    <stop offset="100%" stopColor="#dc2626" stopOpacity="0.25" />
+                  </linearGradient>
+                  <linearGradient id="heroOrbitWhite" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
+                    <stop offset="100%" stopColor="#ffffff" stopOpacity="0.08" />
+                  </linearGradient>
+                </defs>
 
-              <g className="hero-orbit-rotation-slow">
-                <circle cx="210" cy="210" r="198" className="hero-orbit-ring-faint" />
-                <path
-                  d="M210 12 A198 198 0 0 1 364 86"
-                  className="hero-orbit-arc hero-orbit-arc-red"
-                />
-                <path
-                  d="M395 245 A198 198 0 0 1 320 365"
-                  className="hero-orbit-arc hero-orbit-arc-white"
-                />
-                <circle cx="210" cy="12" r="4.5" className="hero-orbit-node hero-orbit-node-red" />
-              </g>
+                <g className="hero-orbit-rotation-slow">
+                  <circle cx="210" cy="210" r="198" className="hero-orbit-ring-faint" />
+                  <path
+                    d="M210 12 A198 198 0 0 1 364 86"
+                    className="hero-orbit-arc hero-orbit-arc-red"
+                  />
+                  <path
+                    d="M395 245 A198 198 0 0 1 320 365"
+                    className="hero-orbit-arc hero-orbit-arc-white"
+                  />
+                  <circle
+                    cx="210"
+                    cy="12"
+                    r="4.5"
+                    className="hero-orbit-node hero-orbit-node-red"
+                  />
+                </g>
 
-              <g className="hero-orbit-rotation-reverse">
-                <circle cx="210" cy="210" r="158" className="hero-orbit-ring-mid" />
-                <path
-                  d="M60 165 A158 158 0 0 1 145 80"
-                  className="hero-orbit-arc hero-orbit-arc-white"
-                />
-                <path
-                  d="M278 356 A158 158 0 0 0 365 245"
-                  className="hero-orbit-arc hero-orbit-arc-red"
-                />
-                <circle
-                  cx="365"
-                  cy="245"
-                  r="3.5"
-                  className="hero-orbit-node hero-orbit-node-pink"
-                />
-              </g>
+                <g className="hero-orbit-rotation-reverse">
+                  <circle cx="210" cy="210" r="158" className="hero-orbit-ring-mid" />
+                  <path
+                    d="M60 165 A158 158 0 0 1 145 80"
+                    className="hero-orbit-arc hero-orbit-arc-white"
+                  />
+                  <path
+                    d="M278 356 A158 158 0 0 0 365 245"
+                    className="hero-orbit-arc hero-orbit-arc-red"
+                  />
+                  <circle
+                    cx="365"
+                    cy="245"
+                    r="3.5"
+                    className="hero-orbit-node hero-orbit-node-pink"
+                  />
+                </g>
 
-              <g className="hero-orbit-rotation-fast">
-                <circle cx="210" cy="210" r="118" className="hero-orbit-ring-dashed" />
-                <path
-                  d="M118 135 A118 118 0 0 1 210 92"
-                  className="hero-orbit-arc hero-orbit-arc-soft"
+                <g className="hero-orbit-rotation-fast">
+                  <circle cx="210" cy="210" r="118" className="hero-orbit-ring-dashed" />
+                  <path
+                    d="M118 135 A118 118 0 0 1 210 92"
+                    className="hero-orbit-arc hero-orbit-arc-soft"
+                  />
+                  <path
+                    d="M236 325 A118 118 0 0 1 136 308"
+                    className="hero-orbit-arc hero-orbit-arc-white"
+                  />
+                </g>
+              </svg>
+              <div className="hero-orbit-core">
+                <Image
+                  src="/logo-dark.png"
+                  alt="Anansi"
+                  width={280}
+                  height={280}
+                  priority
+                  className="hero-orbit-logo relative z-10 drop-shadow-[0_12px_28px_rgba(0,0,0,0.38)]"
                 />
-                <path
-                  d="M236 325 A118 118 0 0 1 136 308"
-                  className="hero-orbit-arc hero-orbit-arc-white"
-                />
-              </g>
-            </svg>
-            <div className="hero-orbit-core">
-              <Image
-                src="/logo-dark.png"
-                alt="Anansi"
-                width={280}
-                height={280}
-                priority
-                className="hero-orbit-logo relative z-10 drop-shadow-[0_0_50px_rgba(220,38,38,0.3)]"
-              />
+              </div>
             </div>
           </div>
         </div>
 
         <div className="relative z-20 min-h-screen flex flex-col items-center pt-[calc(50vh+100px)] md:pt-[calc(50vh+125px)] pb-20 px-6">
-          <h1 className="font-display font-extrabold text-[clamp(22px,3.2vw,36px)] tracking-[0.28em] uppercase text-white/90 animate-fade-up animate-fade-up-delay-2">
+          <h1 className="hero-wordmark font-display font-extrabold text-[clamp(24px,3.6vw,40px)] tracking-[0.24em] uppercase animate-fade-up animate-fade-up-delay-2">
             ANANSI
           </h1>
 
-          <h2 className="max-w-[860px] text-center font-display font-medium text-[clamp(22px,3.2vw,42px)] leading-[1.15] mt-6 text-anansi-gray-200 animate-fade-up animate-fade-up-delay-2">
+          <h2 className="max-w-[860px] text-center font-display font-medium text-[clamp(22px,3.2vw,42px)] leading-[1.15] mt-8 md:mt-9 text-anansi-gray-300 animate-fade-up animate-fade-up-delay-2">
             We build AI and decentralized software that creates{" "}
             <span className="text-anansi-red font-semibold text-glow-red">economic access</span>.
           </h2>
@@ -439,16 +449,24 @@ export default function Home() {
         {/* Layered ambient glow — warmer, deeper, more confident */}
         <div className="absolute inset-0 pointer-events-none">
           <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1100px] h-[1100px] rounded-full"
+            className="absolute top-[44%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[980px] h-[980px] rounded-full"
             style={{
               background:
-                "radial-gradient(circle, rgba(220,38,38,0.22) 0%, rgba(153,27,27,0.08) 35%, transparent 70%)",
+                "radial-gradient(circle, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.012) 32%, transparent 72%)",
             }}
           />
           <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full animate-pulse-glow"
+            className="absolute top-[58%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[760px] h-[760px] rounded-full"
             style={{
-              background: "radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 60%)",
+              background:
+                "radial-gradient(circle, rgba(220,38,38,0.075) 0%, rgba(153,27,27,0.02) 34%, transparent 74%)",
+            }}
+          />
+          <div
+            className="absolute top-[61%] left-[54%] -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] rounded-full animate-pulse-glow"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(239,68,68,0.035) 0%, rgba(239,68,68,0.01) 38%, transparent 72%)",
             }}
           />
         </div>
@@ -540,10 +558,17 @@ export default function Home() {
       {/* ===== FINAL CTA ===== */}
       <section className="py-52 text-center relative overflow-hidden">
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full pointer-events-none"
+          className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[860px] h-[860px] rounded-full pointer-events-none"
           style={{
             background:
-              "radial-gradient(circle, rgba(220,38,38,0.12) 0%, rgba(153,27,27,0.04) 40%, transparent 70%)",
+              "radial-gradient(circle, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.012) 34%, transparent 72%)",
+          }}
+        />
+        <div
+          className="absolute top-[58%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(220,38,38,0.035) 0%, rgba(153,27,27,0.01) 36%, transparent 74%)",
           }}
         />
         <div className="max-w-[1200px] mx-auto px-6 md:px-12 reveal relative">
@@ -617,7 +642,7 @@ function Capability({ num, title, desc, primary, secondary }) {
         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
         style={{
           background:
-            "radial-gradient(circle at top left, rgba(220,38,38,0.06) 0%, transparent 50%)",
+            "radial-gradient(circle at top left, rgba(255,255,255,0.03) 0%, rgba(220,38,38,0.018) 28%, transparent 56%)",
         }}
       />
       <div className="relative">

@@ -55,8 +55,33 @@ export default function CaribCoinPage() {
   return (
     <>
       {/* ===== HERO ===== */}
-      <section className="max-w-[1200px] mx-auto px-6 md:px-12 pt-40 pb-20">
-        <div className="reveal">
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[420px]"
+            style={{
+              background:
+                "radial-gradient(ellipse at center, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.018) 34%, transparent 72%)",
+            }}
+          />
+          <div
+            className="absolute top-20 right-[10%] w-[420px] h-[420px] rounded-full"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(220,38,38,0.065) 0%, rgba(220,38,38,0.018) 42%, transparent 74%)",
+            }}
+          />
+          <div
+            className="absolute top-10 left-[14%] w-[320px] h-[320px] rounded-full"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 46%, transparent 76%)",
+            }}
+          />
+        </div>
+
+        <div className="max-w-[1200px] mx-auto px-6 md:px-12 pt-40 pb-20 relative">
+          <div className="reveal">
           <p className="text-[10px] tracking-[0.25em] uppercase text-anansi-red font-medium mb-7">
             CaribCoin (CARIB) — The Charter
           </p>
@@ -70,6 +95,7 @@ export default function CaribCoinPage() {
             value from real economic activity — not promises. Fixed supply. Deflationary burns. Open
             ecosystem. Open to anyone.
           </p>
+        </div>
         </div>
       </section>
 

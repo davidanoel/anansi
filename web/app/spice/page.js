@@ -22,14 +22,19 @@ export default function SpicePage() {
           >
             <defs>
               <radialGradient id="spiceGlow" cx="50%" cy="50%" r="40%">
-                <stop offset="0%" stopColor="#DC2626" stopOpacity="0.20" />
-                <stop offset="40%" stopColor="#991B1B" stopOpacity="0.09" />
+                <stop offset="0%" stopColor="#DC2626" stopOpacity="0.15" />
+                <stop offset="40%" stopColor="#991B1B" stopOpacity="0.06" />
                 <stop offset="100%" stopColor="#991B1B" stopOpacity="0" />
               </radialGradient>
               <radialGradient id="spiceGlowRim" cx="50%" cy="50%" r="55%">
                 <stop offset="60%" stopColor="#DC2626" stopOpacity="0" />
-                <stop offset="85%" stopColor="#DC2626" stopOpacity="0.035" />
+                <stop offset="85%" stopColor="#DC2626" stopOpacity="0.02" />
                 <stop offset="100%" stopColor="#DC2626" stopOpacity="0" />
+              </radialGradient>
+              <radialGradient id="spiceSheen" cx="50%" cy="35%" r="34%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.08" />
+                <stop offset="48%" stopColor="#ffffff" stopOpacity="0.02" />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
               </radialGradient>
               <linearGradient id="spiceThread" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="white" stopOpacity="0.09" />
@@ -40,6 +45,7 @@ export default function SpicePage() {
                 <stop offset="100%" stopColor="#DC2626" stopOpacity="0" />
               </linearGradient>
             </defs>
+            <circle cx="960" cy="410" r="320" fill="url(#spiceSheen)" />
             <circle cx="960" cy="540" r="460" fill="url(#spiceGlow)" />
             <circle cx="960" cy="540" r="680" fill="url(#spiceGlowRim)" />
             <line
@@ -408,8 +414,6 @@ export default function SpicePage() {
         <div className="max-w-[1200px] mx-auto px-6 md:px-12 reveal relative">
           <h2 className="font-display font-bold text-[clamp(36px,5vw,64px)] leading-[1.14]">
             Try it now.
-            <br />
-            <span className="text-anansi-red font-semibold">Sign in with Google.</span>
           </h2>
           <p className="text-[16px] text-anansi-gray mt-6 max-w-[560px] mx-auto leading-[1.7]">
             Open Spice in any browser, see the flow end to end, and understand how commodity-backed
