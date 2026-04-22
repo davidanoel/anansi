@@ -82,6 +82,75 @@ async function migrate() {
     `);
 
     await db.query(`
+      CREATE TABLE IF NOT EXISTS vesting_schedules (
+        id SERIAL PRIMARY KEY,
+        event_key TEXT UNIQUE,
+        schedule_id TEXT,
+        beneficiary TEXT,
+        creator TEXT,
+        total BIGINT,
+        start_ms BIGINT,
+        cliff_ms BIGINT,
+        end_ms BIGINT,
+        revocable BOOLEAN,
+        revoked BOOLEAN,
+        revoked_at_ms BIGINT,
+        balance BIGINT,
+        tx_digest TEXT,
+        timestamp BIGINT
+      )
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS vesting_claims (
+        id SERIAL PRIMARY KEY,
+        event_key TEXT UNIQUE,
+        schedule_id TEXT,
+        beneficiary TEXT,
+        amount BIGINT,
+        new_released_total BIGINT,
+        tx_digest TEXT,
+        timestamp BIGINT
+      )
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS vesting_revokes (
+        id SERIAL PRIMARY KEY,
+        event_key TEXT UNIQUE,
+        schedule_id TEXT,
+        creator TEXT,
+        returned_to_creator BIGINT,
+        already_vested BIGINT,
+        revoked_at_ms BIGINT,
+        tx_digest TEXT,
+        timestamp BIGINT
+      )
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS vesting_transfers (
+        id SERIAL PRIMARY KEY,
+        event_key TEXT UNIQUE,
+        schedule_id TEXT,
+        old_beneficiary TEXT,
+        new_beneficiary TEXT,
+        tx_digest TEXT,
+        timestamp BIGINT
+      )
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS vesting_pauses (
+        id SERIAL PRIMARY KEY,
+        event_key TEXT UNIQUE,
+        paused BOOLEAN,
+        tx_digest TEXT,
+        timestamp BIGINT
+      )
+    `);
+
+    await db.query(`
       CREATE TABLE IF NOT EXISTS fee_collections (
         id SERIAL PRIMARY KEY,
         event_key TEXT UNIQUE,
@@ -203,11 +272,21 @@ async function migrate() {
     await db.query(`CREATE INDEX IF NOT EXISTS idx_lots_status ON lots(status)`);
     await db.query(`CREATE INDEX IF NOT EXISTS idx_lots_symbol ON lots(asset_type_symbol)`);
     await db.query(`CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON user_profiles(email)`);
-    await db.query(`CREATE INDEX IF NOT EXISTS idx_user_profiles_updated_at ON user_profiles(updated_at)`);
-    await db.query(`CREATE INDEX IF NOT EXISTS idx_fee_collections_timestamp ON fee_collections(timestamp DESC)`);
-    await db.query(`CREATE INDEX IF NOT EXISTS idx_staking_events_timestamp ON staking_events(timestamp DESC)`);
-    await db.query(`CREATE INDEX IF NOT EXISTS idx_staking_config_updates_timestamp ON staking_config_updates(timestamp DESC)`);
-    await db.query(`CREATE INDEX IF NOT EXISTS idx_fee_converter_updates_timestamp ON fee_converter_updates(timestamp DESC)`);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_user_profiles_updated_at ON user_profiles(updated_at)`,
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_fee_collections_timestamp ON fee_collections(timestamp DESC)`,
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_staking_events_timestamp ON staking_events(timestamp DESC)`,
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_staking_config_updates_timestamp ON staking_config_updates(timestamp DESC)`,
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_fee_converter_updates_timestamp ON fee_converter_updates(timestamp DESC)`,
+    );
 
     console.log("Database migrated successfully");
   } catch (error) {

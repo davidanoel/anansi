@@ -252,6 +252,109 @@ export async function insertBurn(burn) {
   );
 }
 
+export async function insertVestingSchedule(schedule) {
+  const db = getDb();
+  await db.query(
+    `
+    INSERT INTO vesting_schedules (
+      event_key, schedule_id, beneficiary, creator, total, start_ms, cliff_ms, end_ms, revocable, revoked, revoked_at_ms, balance, tx_digest, timestamp
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+    ON CONFLICT(event_key) DO NOTHING
+  `,
+    [
+      schedule.event_key,
+      schedule.schedule_id,
+      schedule.beneficiary,
+      schedule.creator,
+      schedule.total,
+      schedule.start_ms,
+      schedule.cliff_ms,
+      schedule.end_ms,
+      schedule.revocable,
+      schedule.revoked,
+      schedule.revoked_at_ms,
+      schedule.balance,
+      schedule.tx_digest,
+      schedule.timestamp,
+    ],
+  );
+}
+
+export async function insertVestingClaim(claim) {
+  const db = getDb();
+  await db.query(
+    `
+    INSERT INTO vesting_claims (
+      event_key, schedule_id, beneficiary, amount, new_released_total, tx_digest, timestamp
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+    ON CONFLICT(event_key) DO NOTHING
+  `,
+    [
+      claim.event_key,
+      claim.schedule_id,
+      claim.beneficiary,
+      claim.amount,
+      claim.new_released_total,
+      claim.tx_digest,
+      claim.timestamp,
+    ],
+  );
+}
+
+export async function insertVestingRevoke(revoke) {
+  const db = getDb();
+  await db.query(
+    `
+    INSERT INTO vesting_revokes (
+      event_key, schedule_id, creator, returned_to_creator, already_vested, revoked_at_ms, tx_digest, timestamp
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    ON CONFLICT(event_key) DO NOTHING
+  `,
+    [
+      revoke.event_key,
+      revoke.schedule_id,
+      revoke.creator,
+      revoke.returned_to_creator,
+      revoke.already_vested,
+      revoke.revoked_at_ms,
+      revoke.tx_digest,
+      revoke.timestamp,
+    ],
+  );
+}
+
+export async function insertVestingTransfer(transfer) {
+  const db = getDb();
+  await db.query(
+    `
+    INSERT INTO vesting_transfers (
+      event_key, schedule_id, old_beneficiary, new_beneficiary, tx_digest, timestamp
+    ) VALUES ($1, $2, $3, $4, $5, $6)
+    ON CONFLICT(event_key) DO NOTHING
+  `,
+    [
+      transfer.event_key,
+      transfer.schedule_id,
+      transfer.old_beneficiary,
+      transfer.new_beneficiary,
+      transfer.tx_digest,
+      transfer.timestamp,
+    ],
+  );
+}
+
+export async function insertVestingPause(pause) {
+  const db = getDb();
+  await db.query(
+    `
+    INSERT INTO vesting_pauses (event_key, paused, tx_digest, timestamp)
+    VALUES ($1, $2, $3, $4)
+    ON CONFLICT(event_key) DO NOTHING
+  `,
+    [pause.event_key, pause.paused, pause.tx_digest, pause.timestamp],
+  );
+}
+
 export async function insertFeeCollection(fee) {
   const db = getDb();
   await db.query(
@@ -402,7 +505,6 @@ export async function getAssetTypes() {
   return await db.query("SELECT * FROM asset_types");
 }
 
-
 // ============ User Profiles ============
 
 export async function upsertUserProfile(profile) {
@@ -521,7 +623,6 @@ export async function getStats() {
   };
 }
 
-
 export async function getAnalyticsOverview() {
   const db = getDb();
   return await db.one(`
@@ -563,6 +664,11 @@ export async function getAnalyticsOverview() {
       (SELECT COUNT(*) FROM fee_collections) AS fee_event_count,
       (SELECT COALESCE(SUM(total_fee), 0) FROM fee_collections) AS total_fees_collected,
       (SELECT COALESCE(MAX(total_burned), 0) FROM carib_burns) AS total_carib_burned,
+      (SELECT COUNT(*) FROM vesting_schedules) AS total_vesting_schedules,
+      (SELECT COALESCE(SUM(amount), 0) FROM vesting_claims) AS total_vesting_claimed,
+      (SELECT COUNT(*) FROM vesting_claims) AS total_vesting_claim_events,
+      (SELECT COUNT(*) FROM vesting_revokes) AS total_vesting_revokes,
+      (SELECT COUNT(*) FROM vesting_transfers) AS total_vesting_transfers,
       (SELECT COUNT(*) FROM staking_events WHERE event_type = 'staked') AS staking_stake_count,
       (SELECT COUNT(*) FROM staking_events WHERE event_type = 'unstake_requested') AS staking_unstake_request_count,
       (SELECT COUNT(*) FROM staking_events WHERE event_type = 'unstake_completed') AS staking_unstake_completed_count,
@@ -770,6 +876,81 @@ export async function getRecentActivity(limit = 25) {
         UNION ALL
 
         SELECT
+          vs.timestamp,
+          'vesting_schedule_created' AS kind,
+          vs.event_key AS reference_id,
+          NULL::TEXT AS lot_id,
+          NULL::TEXT AS asset_type_symbol,
+          vs.creator AS actor,
+          vs.tx_digest,
+          NULL::TEXT AS label,
+          vs.total AS amount,
+          vs.balance AS secondary_amount
+        FROM vesting_schedules vs
+
+        UNION ALL
+
+        SELECT
+          vc.timestamp,
+          'vesting_tokens_claimed' AS kind,
+          vc.event_key AS reference_id,
+          NULL::TEXT AS lot_id,
+          NULL::TEXT AS asset_type_symbol,
+          vc.beneficiary AS actor,
+          vc.tx_digest,
+          NULL::TEXT AS label,
+          vc.amount AS amount,
+          vc.new_released_total AS secondary_amount
+        FROM vesting_claims vc
+
+        UNION ALL
+
+        SELECT
+          vr.timestamp,
+          'vesting_schedule_revoked' AS kind,
+          vr.event_key AS reference_id,
+          NULL::TEXT AS lot_id,
+          NULL::TEXT AS asset_type_symbol,
+          vr.creator AS actor,
+          vr.tx_digest,
+          NULL::TEXT AS label,
+          vr.returned_to_creator AS amount,
+          vr.already_vested AS secondary_amount
+        FROM vesting_revokes vr
+
+        UNION ALL
+
+        SELECT
+          vt.timestamp,
+          'vesting_schedule_transferred' AS kind,
+          vt.event_key AS reference_id,
+          NULL::TEXT AS lot_id,
+          NULL::TEXT AS asset_type_symbol,
+          vt.old_beneficiary AS actor,
+          vt.tx_digest,
+          vt.new_beneficiary AS label,
+          NULL::BIGINT AS amount,
+          NULL::BIGINT AS secondary_amount
+        FROM vesting_transfers vt
+
+        UNION ALL
+
+        SELECT
+          vp.timestamp,
+          'vesting_pause_toggled' AS kind,
+          vp.event_key AS reference_id,
+          NULL::TEXT AS lot_id,
+          NULL::TEXT AS asset_type_symbol,
+          NULL::TEXT AS actor,
+          vp.tx_digest,
+          CASE WHEN vp.paused THEN 'paused' ELSE 'unpaused' END AS label,
+          NULL::BIGINT AS amount,
+          NULL::BIGINT AS secondary_amount
+        FROM vesting_pauses vp
+
+        UNION ALL
+
+        SELECT
           fc.timestamp,
           'fee_processed' AS kind,
           fc.event_key AS reference_id,
@@ -887,24 +1068,17 @@ export async function getLotAnalyticsSummary(lotId) {
 
 export async function getRecentFeeCollections(limit = 100) {
   const db = getDb();
-  return await db.query(
-    "SELECT * FROM fee_collections ORDER BY timestamp DESC LIMIT $1",
-    [limit],
-  );
+  return await db.query("SELECT * FROM fee_collections ORDER BY timestamp DESC LIMIT $1", [limit]);
 }
 
 export async function getRecentStakingEvents(limit = 100) {
   const db = getDb();
-  return await db.query(
-    "SELECT * FROM staking_events ORDER BY timestamp DESC LIMIT $1",
-    [limit],
-  );
+  return await db.query("SELECT * FROM staking_events ORDER BY timestamp DESC LIMIT $1", [limit]);
 }
 
 export async function getRecentStakingConfigUpdates(limit = 100) {
   const db = getDb();
-  return await db.query(
-    "SELECT * FROM staking_config_updates ORDER BY timestamp DESC LIMIT $1",
-    [limit],
-  );
+  return await db.query("SELECT * FROM staking_config_updates ORDER BY timestamp DESC LIMIT $1", [
+    limit,
+  ]);
 }

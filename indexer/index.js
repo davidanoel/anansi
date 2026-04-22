@@ -103,6 +103,65 @@ async function processEvent(event, txDigest, timestamp) {
         timestamp,
       });
       console.log(`[BURN] ${Number(data.amount) / 1e9} CARIB burned`);
+    } else if (type === allEventTypes.SCHEDULE_CREATED) {
+      await db.insertVestingSchedule({
+        event_key: `${type}:${txDigest}:${timestamp}`,
+        schedule_id: data.schedule_id,
+        beneficiary: data.beneficiary,
+        creator: data.creator,
+        total: Number(data.total),
+        start_ms: Number(data.start_ms),
+        cliff_ms: Number(data.cliff_ms),
+        end_ms: Number(data.end_ms),
+        revocable: !!data.revocable,
+        revoked: false,
+        revoked_at_ms: 0,
+        balance: Number(data.total),
+        tx_digest: txDigest,
+        timestamp,
+      });
+      console.log(`[VESTING] Schedule created: ${data.schedule_id}`);
+    } else if (type === allEventTypes.TOKENS_CLAIMED) {
+      await db.insertVestingClaim({
+        event_key: `${type}:${txDigest}:${timestamp}`,
+        schedule_id: data.schedule_id,
+        beneficiary: data.beneficiary,
+        amount: Number(data.amount),
+        new_released_total: Number(data.new_released_total),
+        tx_digest: txDigest,
+        timestamp,
+      });
+      console.log(`[VESTING] Claimed ${Number(data.amount) / 1e9} CARIB from ${data.schedule_id}`);
+    } else if (type === allEventTypes.SCHEDULE_REVOKED) {
+      await db.insertVestingRevoke({
+        event_key: `${type}:${txDigest}:${timestamp}`,
+        schedule_id: data.schedule_id,
+        creator: data.creator,
+        returned_to_creator: Number(data.returned_to_creator),
+        already_vested: Number(data.already_vested),
+        revoked_at_ms: Number(data.revoked_at_ms),
+        tx_digest: txDigest,
+        timestamp,
+      });
+      console.log(`[VESTING] Schedule revoked: ${data.schedule_id}`);
+    } else if (type === allEventTypes.SCHEDULE_TRANSFERRED) {
+      await db.insertVestingTransfer({
+        event_key: `${type}:${txDigest}:${timestamp}`,
+        schedule_id: data.schedule_id,
+        old_beneficiary: data.old_beneficiary,
+        new_beneficiary: data.new_beneficiary,
+        tx_digest: txDigest,
+        timestamp,
+      });
+      console.log(`[VESTING] Schedule transferred: ${data.schedule_id}`);
+    } else if (type === allEventTypes.PAUSE_TOGGLED) {
+      await db.insertVestingPause({
+        event_key: `${type}:${txDigest}:${timestamp}`,
+        paused: !!data.paused,
+        tx_digest: txDigest,
+        timestamp,
+      });
+      console.log(`[VESTING] Pause toggled: ${data.paused}`);
     } else if (type === allEventTypes.FEES_COLLECTED) {
       await db.insertFeeCollection({
         event_key: `${type}:${txDigest}:${timestamp}`,
@@ -328,9 +387,7 @@ app.get("/api/lots/:id/holders", async (req, res) => {
 app.get("/api/farmers/directory", async (req, res) => {
   try {
     const requestedLimit = Number.parseInt(req.query.limit, 10);
-    const limit = Number.isFinite(requestedLimit)
-      ? Math.min(Math.max(requestedLimit, 1), 100)
-      : 25;
+    const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 100) : 25;
     const farmers = await db.getFarmerDirectory({
       assetTypeSymbol: req.query.assetTypeSymbol || null,
       search: req.query.search || "",
@@ -377,7 +434,6 @@ app.get("/api/farmers/:address", async (req, res) => {
   }
 });
 
-
 // Asset types
 app.get("/api/asset-types", async (req, res) => {
   try {
@@ -422,9 +478,7 @@ app.get("/api/analytics/by-asset-type", async (req, res) => {
 app.get("/api/analytics/farmers", async (req, res) => {
   try {
     const requestedLimit = Number.parseInt(req.query.limit, 10);
-    const limit = Number.isFinite(requestedLimit)
-      ? Math.min(Math.max(requestedLimit, 1), 100)
-      : 10;
+    const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 100) : 10;
     const farmers = await db.getAnalyticsFarmers(limit);
     res.json(farmers);
   } catch (err) {
@@ -445,9 +499,7 @@ app.get("/api/analytics/lots/:id/summary", async (req, res) => {
 app.get("/api/analytics/recent-activity", async (req, res) => {
   try {
     const requestedLimit = Number.parseInt(req.query.limit, 10);
-    const limit = Number.isFinite(requestedLimit)
-      ? Math.min(Math.max(requestedLimit, 1), 100)
-      : 25;
+    const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 100) : 25;
     const activity = await db.getRecentActivity(limit);
     res.json(activity);
   } catch (err) {

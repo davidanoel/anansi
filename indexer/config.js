@@ -64,5 +64,12 @@ export function getEventTypes(packageId) {
     TOKENS_BURNED: `${packageId}::carib_coin::TokensBurned`,
     TOKENS_MINTED: `${packageId}::carib_coin::TokensMinted`,
     TREASURY_TRANSFERRED: `${packageId}::carib_coin::TreasuryTransferred`,
+
+    // Vesting events
+    SCHEDULE_CREATED: `${packageId}::vesting::ScheduleCreated`,
+    TOKENS_CLAIMED: `${packageId}::vesting::TokensClaimed`,
+    SCHEDULE_REVOKED: `${packageId}::vesting::ScheduleRevoked`,
+    SCHEDULE_TRANSFERRED: `${packageId}::vesting::ScheduleTransferred`,
+    PAUSE_TOGGLED: `${packageId}::vesting::PauseToggled`,
   };
 }

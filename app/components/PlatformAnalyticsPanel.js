@@ -146,6 +146,14 @@ export default function PlatformAnalyticsPanel({ api }) {
           label="CARIB Burned"
           value={formatToken(normalizedOverview.totalCaribBurned, 9)}
         />
+        <MetricCard
+          label="Vesting Schedules"
+          value={formatNumber(normalizedOverview.totalVestingSchedules)}
+        />
+        <MetricCard
+          label="Vesting Claims"
+          value={formatNumber(normalizedOverview.totalVestingClaimEvents)}
+        />
       </div>
 
       <div className="grid lg:grid-cols-[1.4fr,0.8fr] gap-6">
@@ -470,6 +478,8 @@ function normalizeOverview(overview) {
     totalSurplusDistributed,
     totalFeesCollected: toNumber(overview?.total_fees_collected),
     totalCaribBurned: toNumber(overview?.total_carib_burned),
+    totalVestingSchedules: toNumber(overview?.total_vesting_schedules),
+    totalVestingClaimEvents: toNumber(overview?.total_vesting_claim_events),
     claimRate: Number(overview?.claim_rate || 0),
     latestIndexedEventAt: toNumber(overview?.latest_indexed_event_at),
     cursorCount: toNumber(overview?.cursor_count),
@@ -512,6 +522,46 @@ function describeActivity(item) {
     };
   }
 
+  if (item.kind === "vesting_schedule_created") {
+    return {
+      title: "Vesting schedule created",
+      description: `${shortAddress(item.actor)} created schedule ${shortAddress(item.reference_id)}.`,
+      meta: `Total locked: ${formatToken(item.amount, 9)} CARIB`,
+    };
+  }
+
+  if (item.kind === "vesting_tokens_claimed") {
+    return {
+      title: "Vesting claim executed",
+      description: `${shortAddress(item.actor)} claimed ${formatToken(item.amount, 9)} CARIB.`,
+      meta: `Schedule: ${shortAddress(item.reference_id)}`,
+    };
+  }
+
+  if (item.kind === "vesting_schedule_revoked") {
+    return {
+      title: "Vesting schedule revoked",
+      description: `${shortAddress(item.actor)} revoked schedule ${shortAddress(item.reference_id)}.`,
+      meta: `Returned: ${formatToken(item.amount, 9)} CARIB`,
+    };
+  }
+
+  if (item.kind === "vesting_schedule_transferred") {
+    return {
+      title: "Vesting beneficiary transferred",
+      description: `${shortAddress(item.actor)} transferred schedule ${shortAddress(item.reference_id)} to ${shortAddress(item.label)}.`,
+      meta: "Beneficiary change",
+    };
+  }
+
+  if (item.kind === "vesting_pause_toggled") {
+    return {
+      title: "Vesting pause toggled",
+      description: `Vesting module pause set to ${item.label || "unknown"}.`,
+      meta: `Tx: ${shortAddress(item.reference_id)}`,
+    };
+  }
+
   return {
     title: `${assetLabel} lot created`,
     description: `Lot ${item.label ? `#${item.label}` : shortAddress(item.lot_id)} entered the platform lifecycle.`,
@@ -546,9 +596,13 @@ function formatUsd(value) {
 }
 
 function formatToken(value, decimals = 0) {
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
-    toNumber(value) / 10 ** decimals,
-  );
+  const amount = toNumber(value) / 10 ** decimals;
+  const fractionDigits =
+    amount < 1 ? Math.min(9, Math.max(2, Math.ceil(-Math.log10(amount + 1e-18)))) : 2;
+  return new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: fractionDigits,
+    minimumFractionDigits: amount < 1 ? 2 : 0,
+  }).format(amount);
 }
 
 function formatPercent(value) {

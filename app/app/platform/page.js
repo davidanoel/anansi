@@ -60,9 +60,7 @@ function PlatformDashboard({ platformKey, onLogout }) {
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 rounded bg-gradient-to-br from-anansi-red to-anansi-accent" />
             <span className="font-display text-white text-lg tracking-tight">Anansi</span>
-            <span className="badge bg-anansi-red/20 text-anansi-red ring-0 text-[10px]">
-              Platform
-            </span>
+            <span className="badge bg-anansi-red/80 text-white ring-0 text-[10px]">Platform</span>
           </div>
           <div className="flex items-center gap-4">
             {stats && (
@@ -1214,6 +1212,7 @@ function VestingPanel({ api }) {
                   <th className="py-2 pr-3">Claimable</th>
                   <th className="py-2 pr-3">Vested</th>
                   <th className="py-2 pr-3">Total</th>
+                  <th className="py-2 pr-3">Start</th>
                   <th className="py-2 pr-3">Cliff</th>
                   <th className="py-2 pr-3">End</th>
                   <th className="py-2 pr-3">Revoked</th>
@@ -1230,6 +1229,7 @@ function VestingPanel({ api }) {
                     <td className="py-3 pr-3">{schedule.claimableDisplay}</td>
                     <td className="py-3 pr-3">{schedule.vestedDisplay}</td>
                     <td className="py-3 pr-3">{schedule.totalDisplay}</td>
+                    <td className="py-3 pr-3">{formatDate(schedule.startMs)}</td>
                     <td className="py-3 pr-3">{formatDate(schedule.cliffMs)}</td>
                     <td className="py-3 pr-3">{formatDate(schedule.endMs)}</td>
                     <td className="py-3 pr-3">{schedule.revoked ? "Yes" : "No"}</td>

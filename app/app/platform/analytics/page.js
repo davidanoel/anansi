@@ -41,12 +41,13 @@ function PlatformAnalyticsScreen({ platformKey, onLogout }) {
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 rounded bg-gradient-to-br from-anansi-red to-anansi-accent" />
             <span className="font-display text-white text-lg tracking-tight">Anansi</span>
-            <span className="badge bg-anansi-red/20 text-anansi-red ring-0 text-[10px]">
-              Analytics
-            </span>
+            <span className="badge bg-anansi-red/80 text-white ring-0 text-[10px]">Analytics</span>
           </div>
           <div className="flex items-center gap-3">
-            <a href="/platform" className="text-xs text-gray-400 hover:text-white transition-colors">
+            <a
+              href="/platform"
+              className="text-xs text-gray-400 hover:text-white transition-colors"
+            >
               Back to Platform
             </a>
             <button
