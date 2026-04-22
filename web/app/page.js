@@ -170,7 +170,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="relative z-20 min-h-screen flex flex-col items-center pt-[calc(50vh+100px)] md:pt-[calc(50vh+125px)] pb-20 px-6">
+        <div className="relative z-20 min-h-screen flex flex-col items-center pt-[calc(50vh+84px)] sm:pt-[calc(50vh+96px)] md:pt-[calc(50vh+125px)] pb-16 md:pb-20 px-6">
           <h1 className="sr-only">ANANSI</h1>
           <div className="mt-1 md:mt-2 animate-fade-up animate-fade-up-delay-2">
             <Image
@@ -179,43 +179,59 @@ export default function Home() {
               width={1916}
               height={821}
               priority
-              className="w-[min(76vw,420px)] md:w-[min(44vw,500px)] h-auto invert opacity-95 drop-shadow-[0_10px_28px_rgba(0,0,0,0.32)]"
+              className="w-[min(78vw,330px)] sm:w-[min(72vw,380px)] md:w-[min(42vw,470px)] h-auto invert opacity-95 drop-shadow-[0_10px_28px_rgba(0,0,0,0.32)]"
             />
           </div>
 
-          <h2 className="max-w-[860px] text-center font-display font-medium text-[clamp(22px,3.2vw,42px)] leading-[1.15] mt-8 md:mt-9 text-anansi-gray-300 animate-fade-up animate-fade-up-delay-2">
+          <h2 className="max-w-[620px] text-center font-display font-medium text-[clamp(19px,5.4vw,34px)] leading-[1.16] mt-8 sm:mt-9 md:mt-10 text-anansi-gray-300 animate-fade-up animate-fade-up-delay-2">
             We build AI and decentralized software that creates{" "}
             <span className="text-anansi-red font-semibold text-glow-red">economic access</span>.
           </h2>
 
-          <p className="text-[11px] tracking-[0.22em] uppercase text-anansi-gray-400 mt-6 text-center animate-fade-up animate-fade-up-delay-3">
+          <p className="max-w-[340px] sm:max-w-[560px] text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.14em] sm:tracking-[0.18em] uppercase text-anansi-gray-500 mt-5 text-center animate-fade-up animate-fade-up-delay-3">
             Applied AI · Real Assets · Starting in the Caribbean, built for the world
           </p>
 
-          <div className="mt-9 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 animate-fade-up animate-fade-up-delay-3">
+          <div className="mt-8 mx-auto flex w-full max-w-[320px] sm:w-auto sm:max-w-none flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 animate-fade-up animate-fade-up-delay-3">
             <a
               href="#pillars"
-              className="inline-flex items-center justify-center px-6 py-3 bg-anansi-red hover:bg-anansi-red-deep text-white text-[13px] tracking-[0.1em] uppercase font-semibold transition-all duration-200 shadow-red-glow hover:shadow-red-glow-intense min-w-[180px]"
+              className="inline-flex w-full sm:w-auto items-center justify-center px-6 py-3.5 bg-anansi-red hover:bg-anansi-red-deep text-white text-[13px] tracking-[0.1em] uppercase font-semibold transition-all duration-200 shadow-red-glow hover:shadow-red-glow-intense min-w-[180px]"
             >
               See What We Build
             </a>
             <Link
               href="/spice"
-              className="inline-flex items-center justify-center px-6 py-3 border border-white/20 hover:border-anansi-red/60 text-white text-[13px] tracking-[0.1em] uppercase font-semibold transition-all duration-200 min-w-[180px]"
+              className="inline-flex w-full sm:w-auto items-center justify-center px-6 py-3.5 border border-white/20 hover:border-anansi-red/60 text-white text-[13px] tracking-[0.1em] uppercase font-semibold transition-all duration-200 min-w-[180px]"
             >
               Try Spice
             </Link>
           </div>
         </div>
 
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 animate-fade-up animate-fade-up-delay-3">
+        <div className="absolute bottom-8 sm:bottom-10 left-1/2 -translate-x-1/2 z-20 hidden sm:flex flex-col items-center gap-3 animate-fade-up animate-fade-up-delay-3">
           <span className="block w-px h-10 bg-gradient-to-b from-anansi-red/40 to-transparent animate-scroll-pulse" />
         </div>
       </section>
 
       {/* ===== WHY NOW ===== */}
-      <section className="py-20 md:py-24 border-t border-b border-anansi-line">
-        <div className="max-w-[1200px] mx-auto px-6 md:px-12">
+      <section className="relative overflow-hidden py-20 md:py-24 border-t border-b border-anansi-line">
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute top-[-30%] left-1/2 -translate-x-1/2 w-[880px] h-[880px] rounded-full"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0.01) 34%, transparent 72%)",
+            }}
+          />
+          <div
+            className="absolute bottom-[-36%] left-[12%] w-[420px] h-[420px] rounded-full"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(220,38,38,0.045) 0%, rgba(153,27,27,0.012) 40%, transparent 74%)",
+            }}
+          />
+        </div>
+        <div className="max-w-[1200px] mx-auto px-6 md:px-12 relative">
           <div className="reveal mb-14">
             <Eyebrow>Why Now</Eyebrow>
             <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.1] max-w-[760px] text-white">
@@ -229,7 +245,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 reveal-stagger">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4 reveal-stagger">
             <Stat number="$15.7T" label="AI contribution to global GDP by 2030 (PwC)" />
             <Stat number="$16T" label="Projected RWA tokenization market by 2030 (BCG)" />
             <Stat number="$5T" unit="+" label="Trapped value in emerging-market real assets" />
@@ -242,7 +258,10 @@ export default function Home() {
       </section>
 
       {/* ===== SPICE ===== */}
-      <section className="section-light bg-anansi-white text-anansi-black py-28 md:py-32" id="spice">
+      <section
+        className="section-light bg-anansi-white text-anansi-black py-28 md:py-32"
+        id="spice"
+      >
         <div className="max-w-[1200px] mx-auto px-6 md:px-12">
           <div className="reveal">
             <Eyebrow>Flagship Product</Eyebrow>
@@ -253,7 +272,7 @@ export default function Home() {
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-20 mt-16">
+          <div className="grid md:grid-cols-2 gap-14 md:gap-20 mt-14 md:mt-16">
             <div className="reveal">
               <p className="text-[17px] text-[#555] leading-[1.75] max-w-[560px]">
                 Spice tokenizes physical commodities, property, and revenue streams. A farmer
@@ -261,7 +280,7 @@ export default function Home() {
                 wallet setup. No gas fees. Sign in with Google.
               </p>
 
-              <div className="grid grid-cols-2 gap-5 mt-10 max-w-[520px]">
+              <div className="grid grid-cols-2 gap-4 sm:gap-5 mt-8 md:mt-10 max-w-[520px]">
                 {["Google sign-in", "No gas fees", "Live product", "Built on Sui"].map(
                   (item, i) => (
                     <div key={i} className="pt-4 border-t border-black/10">
@@ -271,7 +290,7 @@ export default function Home() {
                 )}
               </div>
 
-              <div className="mt-10 flex flex-wrap items-center gap-6">
+              <div className="mt-8 md:mt-10 flex flex-wrap items-center gap-6">
                 <Link
                   href="/spice"
                   className="font-display font-semibold text-[13px] tracking-[0.1em] uppercase text-anansi-black/55 hover:text-anansi-red transition-colors"
@@ -346,9 +365,25 @@ export default function Home() {
       </section>
 
       {/* ===== ACADEMY ===== */}
-      <section className="py-24 md:py-28 border-b border-anansi-line" id="academy">
-        <div className="max-w-[1200px] mx-auto px-6 md:px-12">
-          <div className="grid md:grid-cols-2 gap-20 items-center reveal">
+      <section className="relative overflow-hidden py-24 md:py-28 border-b border-anansi-line" id="academy">
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute top-[18%] left-[10%] w-[520px] h-[520px] rounded-full"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(220,38,38,0.05) 0%, rgba(153,27,27,0.014) 36%, transparent 74%)",
+            }}
+          />
+          <div
+            className="absolute top-[8%] right-[8%] w-[360px] h-[360px] rounded-full"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0.008) 42%, transparent 74%)",
+            }}
+          />
+        </div>
+        <div className="max-w-[1200px] mx-auto px-6 md:px-12 relative">
+          <div className="grid md:grid-cols-2 gap-14 md:gap-20 items-center reveal">
             <div>
               <Eyebrow>Anansi Academy</Eyebrow>
               <h2 className="font-display font-bold text-[clamp(28px,3.5vw,44px)] leading-[1.15] text-white">
@@ -408,7 +443,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-px bg-anansi-line mt-16 reveal-stagger">
+          <div className="grid md:grid-cols-3 gap-px bg-anansi-line mt-14 md:mt-16 reveal-stagger">
             <Capability
               num="01"
               title={
@@ -493,21 +528,21 @@ export default function Home() {
               burns. No promises — only participation.
             </p>
 
-            <div className="flex items-center justify-center gap-12 mt-14">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-12 mt-12 md:mt-14">
               <div className="text-center">
                 <p className="font-display font-bold text-2xl text-white">10B</p>
                 <p className="text-[10px] text-anansi-gray-500 uppercase tracking-widest mt-1">
                   Fixed Supply
                 </p>
               </div>
-              <div className="w-px h-10 bg-anansi-line" />
+              <div className="hidden sm:block w-px h-10 bg-anansi-line" />
               <div className="text-center">
                 <p className="font-display font-bold text-2xl text-white">50%</p>
                 <p className="text-[10px] text-anansi-gray-500 uppercase tracking-widest mt-1">
                   Fee Burn Rate
                 </p>
               </div>
-              <div className="w-px h-10 bg-anansi-line" />
+              <div className="hidden sm:block w-px h-10 bg-anansi-line" />
               <div className="text-center">
                 <p className="font-display font-bold text-2xl text-anansi-red">∞</p>
                 <p className="text-[10px] text-anansi-gray-500 uppercase tracking-widest mt-1">
@@ -532,9 +567,27 @@ export default function Home() {
       </section>
 
       {/* ===== WHY ANANSI ===== */}
-      <section className="py-28 md:py-32 border-t border-anansi-line">
-        <div className="max-w-[1200px] mx-auto px-6 md:px-12">
-          <div className="grid md:grid-cols-2 gap-20 reveal">
+      <section className="relative overflow-hidden py-28 md:py-32 border-t border-anansi-line">
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute top-[10%] right-[-8%] w-[420px] h-[420px] rounded-full"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(255,255,255,0.024) 0%, rgba(255,255,255,0.008) 38%, transparent 72%)",
+            }}
+          />
+          <div className="absolute top-12 right-10 hidden lg:block opacity-[0.07]">
+            <Image
+              src="/brand/wordmark/anansi-wordmark-dotted.svg"
+              alt=""
+              width={1916}
+              height={821}
+              className="w-[300px] h-auto invert"
+            />
+          </div>
+        </div>
+        <div className="max-w-[1200px] mx-auto px-6 md:px-12 relative">
+          <div className="grid md:grid-cols-2 gap-14 md:gap-20 reveal">
             <div>
               <div className="inline-flex items-center justify-center w-28 h-28 md:w-32 md:h-32 rounded-full border border-white/[0.12] bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(247,248,251,0.98)_48%,rgba(232,236,242,0.98)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.78),inset_0_-14px_22px_rgba(17,19,26,0.08),0_18px_36px_rgba(0,0,0,0.24)] mb-10">
                 <Image
@@ -587,10 +640,10 @@ export default function Home() {
             <br />
             Designed for <span className="text-anansi-red text-glow-red">scale.</span>
           </h2>
-          <div className="flex flex-wrap items-center justify-center gap-5 mt-14">
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 sm:gap-5 mt-12 md:mt-14">
             <a
               href="mailto:hello@anansi.tech"
-              className="inline-flex items-center gap-3 px-9 py-4
+              className="inline-flex w-full max-w-[320px] sm:w-auto items-center justify-center gap-3 px-9 py-4
                          font-display font-semibold text-[13px] tracking-[0.1em] uppercase
                          text-white bg-anansi-red rounded-sm
                          hover:bg-anansi-red-deep hover:shadow-red-glow
@@ -601,7 +654,7 @@ export default function Home() {
             </a>
             <Link
               href="/spice"
-              className="inline-flex items-center gap-3 px-9 py-4
+              className="inline-flex w-full max-w-[320px] sm:w-auto items-center justify-center gap-3 px-9 py-4
                          font-display font-semibold text-[13px] tracking-[0.1em] uppercase
                          text-anansi-gray-300 border border-anansi-line rounded-sm
                          hover:text-white hover:border-anansi-gray-500 transition-all"
@@ -632,7 +685,7 @@ function Eyebrow({ children }) {
 
 function Stat({ number, unit, label }) {
   return (
-    <div className="px-4 md:px-8 border-l border-anansi-line first:border-l-0 first:pl-0">
+    <div className="pt-5 border-t border-anansi-line first:border-t-0 md:pt-0 md:px-8 md:border-t-0 md:border-l md:first:border-l-0 md:first:pl-0">
       <p className="font-display font-bold text-[clamp(32px,3.5vw,52px)] leading-none text-white">
         {number}
         {unit && <span className="text-[0.55em] text-anansi-red">{unit}</span>}
@@ -646,7 +699,7 @@ function Stat({ number, unit, label }) {
 
 function Capability({ num, title, desc, primary, secondary }) {
   return (
-    <div className="bg-anansi-deep p-12 md:p-11 hover:bg-anansi-surface transition-colors duration-300 group relative overflow-hidden">
+    <div className="bg-anansi-deep p-9 sm:p-10 md:p-11 hover:bg-anansi-surface transition-colors duration-300 group relative overflow-hidden">
       {/* Subtle red glow on hover */}
       <div
         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"

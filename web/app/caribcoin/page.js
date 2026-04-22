@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export const metadata = {
@@ -81,6 +82,15 @@ export default function CaribCoinPage() {
         </div>
 
         <div className="max-w-[1200px] mx-auto px-6 md:px-12 pt-40 pb-20 relative">
+          <div className="absolute top-10 right-6 hidden xl:block opacity-[0.06] pointer-events-none">
+            <Image
+              src="/brand/wordmark/anansi-wordmark-dotted.svg"
+              alt=""
+              width={1916}
+              height={821}
+              className="w-[320px] h-auto invert"
+            />
+          </div>
           <div className="reveal">
           <p className="text-[10px] tracking-[0.25em] uppercase text-anansi-red font-medium mb-7">
             CaribCoin (CARIB) — The Charter

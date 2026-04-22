@@ -66,7 +66,7 @@ export default function Header() {
     <header
       ref={navRef}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "py-3" : "py-6"
+        scrolled ? "py-3" : "py-4 md:py-6"
       } ${
         scrolled
           ? overLight
@@ -86,8 +86,8 @@ export default function Header() {
       }
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-anansi-red/60 to-transparent pointer-events-none" />
-      <div className="max-w-[1200px] mx-auto px-6 md:px-12 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3.5 group">
+      <div className="max-w-[1200px] mx-auto px-5 md:px-12 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2.5 md:gap-3.5 group">
           {/* Spider mark - hidden while the hero is visible, fades in on scroll. */}
           <div
             className="transition-all duration-500 overflow-hidden"
@@ -109,7 +109,7 @@ export default function Header() {
             alt="Anansi"
             width={1916}
             height={821}
-            className={`w-[92px] md:w-[102px] h-auto transition-all duration-300 ${
+            className={`w-[84px] md:w-[102px] h-auto transition-all duration-300 ${
               light ? "opacity-95" : "invert opacity-95"
             }`}
           />
@@ -144,7 +144,7 @@ export default function Header() {
         </nav>
 
         <button
-          className={`md:hidden text-xl p-2 transition-colors duration-300 ${
+          className={`md:hidden text-xl p-1.5 transition-colors duration-300 ${
             light ? "text-[#0A0A0A]/70" : "text-white/75"
           }`}
           onClick={() => setMenuOpen(!menuOpen)}
