@@ -96,6 +96,10 @@ try:
                 objects['NEXT_PUBLIC_FEE_CONVERTER_ID'] = obj_id
             elif obj_type.endswith('::staking::StakingConfig'):
                 objects['NEXT_PUBLIC_STAKING_CONFIG_ID'] = obj_id
+            elif obj_type.endswith('::vesting::VestingConfig'):
+                objects['NEXT_PUBLIC_VESTING_CONFIG_ID'] = obj_id
+            elif obj_type.endswith('::vesting::VestingAdmin'):
+                objects['VESTING_ADMIN_CAP_ID'] = obj_id
             elif obj_type.endswith('::fee_discount::FeeDiscountConfig'):
                 objects['NEXT_PUBLIC_FEE_DISCOUNT_CONFIG_ID'] = obj_id
             elif obj_type.endswith('::commodity_registry::CommodityRegistryAdmin'):

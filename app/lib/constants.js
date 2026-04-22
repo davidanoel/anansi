@@ -27,6 +27,7 @@ export const MODULES = {
   COMMODITY_REGISTRY: "commodity_registry",
   FEE_CONVERTER: "fee_converter",
   STAKING: "staking",
+  VESTING: "vesting",
 };
 
 // USDC on Sui
@@ -186,3 +187,6 @@ export const CARIB_TYPE =
 
 // Staking shared config (created at publish of staking.move)
 export const STAKING_CONFIG_ID = process.env.NEXT_PUBLIC_STAKING_CONFIG_ID || "0x0";
+
+// Vesting shared config (created at publish of vesting.move)
+export const VESTING_CONFIG_ID = process.env.NEXT_PUBLIC_VESTING_CONFIG_ID || "0x0";

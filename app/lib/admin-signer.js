@@ -117,6 +117,8 @@ const CARIB_TREASURY_ID = process.env.NEXT_PUBLIC_CARIB_TREASURY_ID;
 const FEE_CONVERTER_ID = process.env.NEXT_PUBLIC_FEE_CONVERTER_ID;
 const CARIB_TYPE = process.env.NEXT_PUBLIC_CARIB_TYPE;
 const STAKING_CONFIG_ID = process.env.NEXT_PUBLIC_STAKING_CONFIG_ID;
+const VESTING_CONFIG_ID = process.env.NEXT_PUBLIC_VESTING_CONFIG_ID;
+const VESTING_ADMIN_CAP_ID = process.env.VESTING_ADMIN_CAP_ID;
 const CARIB_DECIMALS = 9;
 
 // Minimum USDC balance in admin wallet to bother converting.
@@ -167,6 +169,22 @@ export async function getStakingAdminId() {
     options: { showContent: true },
   });
   if (result.data.length === 0) throw new Error("No StakingAdmin found");
+  return result.data[0].data?.objectId;
+}
+
+export async function getVestingAdminId() {
+  if (VESTING_ADMIN_CAP_ID && VESTING_ADMIN_CAP_ID !== "0x0") {
+    return VESTING_ADMIN_CAP_ID;
+  }
+
+  const client = getClient();
+  const type = `${PACKAGE_ID}::vesting::VestingAdmin`;
+  const result = await client.getOwnedObjects({
+    owner: getAdminAddress(),
+    filter: { StructType: type },
+    options: { showContent: true },
+  });
+  if (result.data.length === 0) throw new Error("No VestingAdmin found");
   return result.data[0].data?.objectId;
 }
 
@@ -936,6 +954,34 @@ export async function getStakingStats() {
   };
 }
 
+export async function getVestingStats() {
+  const client = getClient();
+
+  if (!VESTING_CONFIG_ID || VESTING_CONFIG_ID === "0x0") {
+    throw new Error("NEXT_PUBLIC_VESTING_CONFIG_ID not configured");
+  }
+
+  const vestingObj = await client.getObject({
+    id: VESTING_CONFIG_ID,
+    options: { showContent: true },
+  });
+
+  const fields = vestingObj.data?.content?.fields;
+  if (!fields) throw new Error("Vesting config not found");
+
+  return {
+    vestingConfigId: VESTING_CONFIG_ID,
+    paused: !!fields.paused,
+    totalSchedules: Number(fields.total_schedules || 0),
+    totalLockedRaw: fields.total_locked || "0",
+    totalLocked: formatUnitsCompact(fields.total_locked || "0", CARIB_DECIMALS),
+    totalReleasedRaw: fields.total_released || "0",
+    totalReleased: formatUnitsCompact(fields.total_released || "0", CARIB_DECIMALS),
+    totalRevokedRaw: fields.total_revoked || "0",
+    totalRevoked: formatUnitsCompact(fields.total_revoked || "0", CARIB_DECIMALS),
+  };
+}
+
 export async function adminUpdateTreasuryReceiver(newAddress) {
   const feeConverterAdminId = await getFeeConverterAdminId();
   const tx = new Transaction();
@@ -984,6 +1030,86 @@ export async function adminUpdateStakingThresholds({
       tx.pure.u64(feeReductionRaw),
       tx.pure.u64(priorityAccessRaw),
     ],
+  });
+  return adminExecute(tx);
+}
+
+export async function adminSetVestingPaused(paused) {
+  if (!VESTING_CONFIG_ID || VESTING_CONFIG_ID === "0x0") {
+    throw new Error("NEXT_PUBLIC_VESTING_CONFIG_ID not configured");
+  }
+  const vestingAdminId = await getVestingAdminId();
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${PACKAGE_ID}::vesting::set_paused`,
+    arguments: [tx.object(vestingAdminId), tx.object(VESTING_CONFIG_ID), tx.pure.bool(paused)],
+  });
+  return adminExecute(tx);
+}
+
+export async function adminCreateVestingSchedule({
+  beneficiary,
+  amountRaw,
+  startMs,
+  cliffMs,
+  endMs,
+  revocable,
+}) {
+  const client = getClient();
+  const address = getAdminAddress();
+
+  if (!CARIB_TYPE) throw new Error("NEXT_PUBLIC_CARIB_TYPE not configured");
+  if (!VESTING_CONFIG_ID || VESTING_CONFIG_ID === "0x0") {
+    throw new Error("NEXT_PUBLIC_VESTING_CONFIG_ID not configured");
+  }
+
+  const { data: caribCoins } = await client.getCoins({
+    owner: address,
+    coinType: CARIB_TYPE,
+  });
+  if (!caribCoins.length) throw new Error("No CARIB in admin wallet");
+
+  const required = BigInt(amountRaw);
+  const totalBalance = caribCoins.reduce((sum, c) => sum + BigInt(c.balance), 0n);
+  if (totalBalance < required) {
+    throw new Error(
+      `Insufficient CARIB: need ${formatUnitsCompact(amountRaw, CARIB_DECIMALS)}, have ${formatUnitsCompact(totalBalance.toString(), CARIB_DECIMALS)}`,
+    );
+  }
+
+  const tx = new Transaction();
+
+  if (caribCoins.length > 1) {
+    const others = caribCoins.slice(1).map((c) => tx.object(c.coinObjectId));
+    tx.mergeCoins(tx.object(caribCoins[0].coinObjectId), others);
+  }
+
+  const [vestingCoin] = tx.splitCoins(tx.object(caribCoins[0].coinObjectId), [tx.pure.u64(amountRaw)]);
+
+  tx.moveCall({
+    target: `${PACKAGE_ID}::vesting::create_schedule`,
+    arguments: [
+      tx.object(VESTING_CONFIG_ID),
+      vestingCoin,
+      tx.pure.address(beneficiary),
+      tx.pure.u64(startMs),
+      tx.pure.u64(cliffMs),
+      tx.pure.u64(endMs),
+      tx.pure.bool(revocable),
+    ],
+  });
+
+  return adminExecute(tx);
+}
+
+export async function adminRevokeVestingSchedule(scheduleId) {
+  if (!VESTING_CONFIG_ID || VESTING_CONFIG_ID === "0x0") {
+    throw new Error("NEXT_PUBLIC_VESTING_CONFIG_ID not configured");
+  }
+  const tx = new Transaction();
+  tx.moveCall({
+    target: `${PACKAGE_ID}::vesting::revoke`,
+    arguments: [tx.object(VESTING_CONFIG_ID), tx.object(scheduleId), tx.object("0x6")],
   });
   return adminExecute(tx);
 }
