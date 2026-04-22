@@ -4,6 +4,7 @@ import {
   adminRevokeVestingSchedule,
   adminSetVestingPaused,
   getAdminAddress,
+  getVestingSchedules,
   getVestingStats,
 } from "../../../../lib/admin-signer";
 
@@ -35,8 +36,8 @@ export async function GET(req) {
   if (authError) return Response.json({ error: authError.error }, { status: authError.status });
 
   try {
-    const stats = await getVestingStats();
-    return Response.json({ ...stats, adminAddress: getAdminAddress() });
+    const [stats, schedules] = await Promise.all([getVestingStats(), getVestingSchedules()]);
+    return Response.json({ ...stats, adminAddress: getAdminAddress(), schedules });
   } catch (err) {
     console.error("Failed to get vesting stats:", err);
     return Response.json({ error: err.message }, { status: 500 });
@@ -88,8 +89,9 @@ export async function POST(req) {
       revocable,
     });
 
-    const created = result.objectChanges?.find((change) =>
-      change.type === "created" && change.objectType?.includes("::vesting::VestingSchedule"),
+    const created = result.objectChanges?.find(
+      (change) =>
+        change.type === "created" && change.objectType?.includes("::vesting::VestingSchedule"),
     );
 
     return Response.json({

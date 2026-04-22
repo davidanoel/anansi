@@ -1,0 +1,72 @@
+<svg width="512" height="640" viewBox="0 0 512 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Background -->
+  <rect width="512" height="640" fill="#F5F5F5"/>
+
+  <!-- HALO (thinner, tighter, more aggressive arc) -->
+  <path d="M192 150 A128 128 0 0 1 320 150"
+        stroke="#E50914"
+        stroke-width="6"
+        fill="none"
+        stroke-linecap="round"/>
+
+  <!-- CENTRAL SPINE (stronger presence) -->
+  <path d="M256 200 L242 340 L256 420 L270 340 Z"
+        fill="#0A0E11"/>
+
+  <!-- INNER A STRUCTURE (more acute angles) -->
+  <path d="M256 200 L205 380"
+        stroke="#0A0E11"
+        stroke-width="16"
+        stroke-linecap="butt"/>
+
+  <path d="M256 200 L307 380"
+        stroke="#0A0E11"
+        stroke-width="16"
+        stroke-linecap="butt"/>
+
+  <!-- UPPER LEGS (sharper, more vertical tension) -->
+  <path d="M185 210 L135 150 L150 80"
+        stroke="#0A0E11"
+        stroke-width="20"
+        fill="none"
+        stroke-linejoin="miter"/>
+
+  <path d="M327 210 L377 150 L362 80"
+        stroke="#0A0E11"
+        stroke-width="20"
+        fill="none"
+        stroke-linejoin="miter"/>
+
+  <!-- MID LEGS (cleaner, reduced bend complexity) -->
+  <path d="M170 300 L110 285"
+        stroke="#0A0E11"
+        stroke-width="14"
+        fill="none"/>
+
+  <path d="M342 300 L402 285"
+        stroke="#0A0E11"
+        stroke-width="14"
+        fill="none"/>
+
+  <!-- LOWER LEGS (longer, sharper, more predatory stance) -->
+  <path d="M210 360 L170 520"
+        stroke="#0A0E11"
+        stroke-width="12"
+        fill="none"/>
+
+  <path d="M302 360 L342 520"
+        stroke="#0A0E11"
+        stroke-width="12"
+        fill="none"/>
+
+  <!-- WORDMARK (tighter, more futuristic spacing) -->
+  <text x="50%" y="610" text-anchor="middle"
+        font-family="Orbitron, Arial, sans-serif"
+        font-size="60"
+        letter-spacing="10"
+        fill="#0A0E11">
+    ANANSI
+  </text>
+
+</svg>

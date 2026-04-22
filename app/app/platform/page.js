@@ -49,6 +49,7 @@ function PlatformDashboard({ platformKey, onLogout }) {
     { id: "dex", label: "DEX Pools" },
     { id: "treasury", label: "Treasury" },
     { id: "staking", label: "Staking" },
+    { id: "vesting", label: "Vesting" },
     { id: "overview", label: "Overview" },
   ];
 
@@ -128,6 +129,7 @@ function PlatformDashboard({ platformKey, onLogout }) {
         {tab === "dex" && <DexPanel api={api} />}
         {tab === "treasury" && <TreasuryPanel api={api} />}
         {tab === "staking" && <StakingPanel api={api} />}
+        {tab === "vesting" && <VestingPanel api={api} />}
         {tab === "overview" && <OverviewPanel stats={stats} />}
       </div>
     </div>
@@ -977,6 +979,350 @@ function DepositsPanel({ api }) {
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function VestingPanel({ api }) {
+  const [stats, setStats] = useState(null);
+  const [schedules, setSchedules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState(null);
+  const [form, setForm] = useState({
+    beneficiary: "",
+    amount: "",
+    revocable: true,
+    startAt: toInputValue(new Date()),
+    cliffAt: toInputValue(addMonths(new Date(), 12)),
+    endAt: toInputValue(addMonths(new Date(), 48)),
+  });
+  const [revokeId, setRevokeId] = useState("");
+  const [refresh, setRefresh] = useState(0);
+
+  function toInputValue(date) {
+    const pad = (n) => String(n).padStart(2, "0");
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  function addMonths(date, months) {
+    const next = new Date(date);
+    next.setMonth(next.getMonth() + months);
+    return next;
+  }
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    api("vesting")
+      .then((data) => {
+        setStats(data);
+        setSchedules(data.schedules || []);
+      })
+      .catch((err) => setError(err.message || "Failed to load vesting stats"))
+      .finally(() => setLoading(false));
+  }, [api, refresh]);
+
+  const formatDate = (ms) => (ms ? new Date(ms).toLocaleString() : "—");
+  const shorten = (value, length = 8) =>
+    value ? `${value.slice(0, length)}…${value.slice(-4)}` : "";
+
+  const reload = () => setRefresh((current) => current + 1);
+
+  const handleTogglePause = async () => {
+    if (!stats) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const action = stats.paused ? "Unpause" : "Pause";
+      await api("vesting", {
+        method: "PATCH",
+        body: JSON.stringify({ action: "set_paused", paused: !stats.paused }),
+      });
+      setMessage({
+        success: true,
+        text: `Vesting ${stats.paused ? "unpaused" : "paused"} successfully.`,
+      });
+      reload();
+    } catch (err) {
+      setMessage({ success: false, text: err.message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleCreateSchedule = async (event) => {
+    event.preventDefault();
+    setBusy(true);
+    setMessage(null);
+    try {
+      await api("vesting", {
+        method: "POST",
+        body: JSON.stringify({
+          beneficiary: form.beneficiary,
+          amount: form.amount,
+          revocable: form.revocable,
+          startMs: Date.parse(form.startAt),
+          cliffMs: Date.parse(form.cliffAt),
+          endMs: Date.parse(form.endAt),
+        }),
+      });
+      setMessage({ success: true, text: "Vesting schedule created." });
+      setForm((prev) => ({ ...prev, beneficiary: "", amount: "" }));
+      reload();
+    } catch (err) {
+      setMessage({ success: false, text: err.message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleRevokeSchedule = async () => {
+    if (!revokeId) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      await api("vesting", {
+        method: "PATCH",
+        body: JSON.stringify({ action: "revoke_schedule", scheduleId: revokeId }),
+      });
+      setMessage({ success: true, text: "Vesting schedule revoke submitted." });
+      setRevokeId("");
+      reload();
+    } catch (err) {
+      setMessage({ success: false, text: err.message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="card p-6 text-sm text-anansi-muted">Loading vesting stats...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="card p-6 rounded-xl border border-red-200 bg-red-50 text-red-800">
+        <p className="font-semibold">Failed to load vesting stats</p>
+        <p className="text-sm mt-2">{error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {message && (
+        <div
+          className={`rounded-xl p-4 text-sm border ${message.success ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-red-50 text-red-800 border-red-200"}`}
+        >
+          {message.text}
+        </div>
+      )}
+      <div className="grid gap-4 md:grid-cols-4">
+        <div className="card p-5">
+          <p className="stat-label">Paused</p>
+          <p className="stat-value text-3xl font-bold">{stats.paused ? "Yes" : "No"}</p>
+        </div>
+        <div className="card p-5">
+          <p className="stat-label">Total schedules</p>
+          <p className="stat-value text-3xl font-bold">{stats.totalSchedules ?? "—"}</p>
+        </div>
+        <div className="card p-5">
+          <p className="stat-label">Total locked</p>
+          <p className="stat-value text-3xl font-bold">{stats.totalLocked ?? "—"}</p>
+        </div>
+        <div className="card p-5">
+          <p className="stat-label">Total released</p>
+          <p className="stat-value text-3xl font-bold">{stats.totalReleased ?? "—"}</p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="card p-6">
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div>
+              <h2 className="font-semibold text-lg">Vesting controls</h2>
+              <p className="text-sm text-anansi-muted mt-1">
+                Pause or unpause the vesting module for claims and schedule creation.
+              </p>
+            </div>
+            <button
+              onClick={handleTogglePause}
+              disabled={busy}
+              className={stats.paused ? "btn-primary" : "btn-ghost"}
+            >
+              {busy ? "Updating..." : stats.paused ? "Unpause Vesting" : "Pause Vesting"}
+            </button>
+          </div>
+          <p className="text-sm text-anansi-muted">
+            When paused, new schedules and claims are blocked, but revoke operations still work.
+          </p>
+        </div>
+
+        <div className="card p-6">
+          <h2 className="font-semibold text-lg">Revoke schedule</h2>
+          <p className="text-sm text-anansi-muted mt-1 mb-4">
+            Revoke the unvested portion of an existing schedule by ID.
+          </p>
+          <input
+            type="text"
+            value={revokeId}
+            onChange={(e) => setRevokeId(e.target.value)}
+            placeholder="0x... schedule id"
+            className="input-field w-full mb-3"
+          />
+          <button
+            type="button"
+            disabled={busy || !revokeId}
+            onClick={handleRevokeSchedule}
+            className="btn-ghost w-full"
+          >
+            {busy ? "Submitting..." : "Revoke Schedule"}
+          </button>
+        </div>
+      </div>
+
+      <div className="card p-6">
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <div>
+            <h2 className="font-semibold text-lg">Vesting schedules</h2>
+            <p className="text-sm text-anansi-muted mt-1">
+              Review all CARIB vesting schedules created through the platform.
+            </p>
+          </div>
+          <button type="button" onClick={reload} className="btn-ghost">
+            Refresh
+          </button>
+        </div>
+        {schedules.length === 0 ? (
+          <p className="text-sm text-anansi-muted">No vesting schedules found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="table-auto w-full text-sm border-collapse">
+              <thead>
+                <tr className="text-left text-xs uppercase text-anansi-muted border-b border-anansi-black/10">
+                  <th className="py-2 pr-3">Schedule</th>
+                  <th className="py-2 pr-3">Beneficiary</th>
+                  <th className="py-2 pr-3">Creator</th>
+                  <th className="py-2 pr-3">Claimable</th>
+                  <th className="py-2 pr-3">Vested</th>
+                  <th className="py-2 pr-3">Total</th>
+                  <th className="py-2 pr-3">Cliff</th>
+                  <th className="py-2 pr-3">End</th>
+                  <th className="py-2 pr-3">Revoked</th>
+                </tr>
+              </thead>
+              <tbody>
+                {schedules.map((schedule) => (
+                  <tr key={schedule.scheduleId} className="border-b border-anansi-black/5">
+                    <td className="py-3 pr-3 font-mono text-xs text-anansi-black/70">
+                      {shorten(schedule.scheduleId, 10)}
+                    </td>
+                    <td className="py-3 pr-3">{shorten(schedule.beneficiary)}</td>
+                    <td className="py-3 pr-3">{shorten(schedule.creator)}</td>
+                    <td className="py-3 pr-3">{schedule.claimableDisplay}</td>
+                    <td className="py-3 pr-3">{schedule.vestedDisplay}</td>
+                    <td className="py-3 pr-3">{schedule.totalDisplay}</td>
+                    <td className="py-3 pr-3">{formatDate(schedule.cliffMs)}</td>
+                    <td className="py-3 pr-3">{formatDate(schedule.endMs)}</td>
+                    <td className="py-3 pr-3">{schedule.revoked ? "Yes" : "No"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="card p-6">
+        <h2 className="font-semibold text-lg mb-4">Create vesting schedule</h2>
+        <form onSubmit={handleCreateSchedule} className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1">
+              Beneficiary
+            </label>
+            <input
+              value={form.beneficiary}
+              onChange={(e) => setForm((prev) => ({ ...prev, beneficiary: e.target.value }))}
+              placeholder="0x..."
+              className="input-field w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1">
+              Amount (CARIB)
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.000000001"
+              value={form.amount}
+              onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))}
+              placeholder="1000"
+              className="input-field w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1">
+              Start
+            </label>
+            <input
+              type="datetime-local"
+              value={form.startAt}
+              onChange={(e) => setForm((prev) => ({ ...prev, startAt: e.target.value }))}
+              className="input-field w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1">
+              Cliff
+            </label>
+            <input
+              type="datetime-local"
+              value={form.cliffAt}
+              onChange={(e) => setForm((prev) => ({ ...prev, cliffAt: e.target.value }))}
+              className="input-field w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1">
+              End
+            </label>
+            <input
+              type="datetime-local"
+              value={form.endAt}
+              onChange={(e) => setForm((prev) => ({ ...prev, endAt: e.target.value }))}
+              className="input-field w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-anansi-muted uppercase tracking-wider mb-1">
+              Revocable
+            </label>
+            <select
+              value={form.revocable ? "true" : "false"}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, revocable: e.target.value === "true" }))
+              }
+              className="input-field w-full"
+            >
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <button type="submit" disabled={busy} className="btn-primary w-full">
+              {busy ? "Creating..." : "Create Schedule"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

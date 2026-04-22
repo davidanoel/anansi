@@ -49,12 +49,25 @@ sui move build 2>&1 | tail -3
 
 echo ""
 echo "👉 Publishing to testnet (this may take a few seconds)..."
-sui client publish --gas-budget 200000000 --json > "$OUTPUT_JSON"
+PUBLISH_ERR="$OUTPUT_JSON.err"
+if ! sui client publish --gas-budget 1000000000 --json > "$OUTPUT_JSON" 2> "$PUBLISH_ERR"; then
+    echo "❌ Error: 'sui client publish' command failed."
+    echo "STDERR output:"
+    cat "$PUBLISH_ERR"
+    echo "STDOUT/JSON output:"
+    cat "$OUTPUT_JSON"
+    exit 1
+fi
 
 if [ ! -s "$OUTPUT_JSON" ]; then
     echo "❌ Error: Deployment failed or output is empty. Check Sui CLI."
     cat "$OUTPUT_JSON"
     exit 1
+fi
+
+if [ -s "$PUBLISH_ERR" ]; then
+    echo "⚠️ Warning: 'sui client publish' wrote messages to stderr. This may be normal compiler/linter warnings."
+    cat "$PUBLISH_ERR"
 fi
 
 echo "👉 Extraction & Environment Update starting..."

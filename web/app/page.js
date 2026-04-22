@@ -365,7 +365,10 @@ export default function Home() {
       </section>
 
       {/* ===== ACADEMY ===== */}
-      <section className="relative overflow-hidden py-24 md:py-28 border-b border-anansi-line" id="academy">
+      <section
+        className="relative overflow-hidden py-24 md:py-28 border-b border-anansi-line"
+        id="academy"
+      >
         <div className="absolute inset-0 pointer-events-none">
           <div
             className="absolute top-[18%] left-[10%] w-[520px] h-[520px] rounded-full"

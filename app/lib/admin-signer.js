@@ -945,7 +945,10 @@ export async function getStakingStats() {
     premiumThresholdRaw: fields.premium_threshold || "0",
     premiumThreshold: formatUnitsCompact(fields.premium_threshold || "0", CARIB_DECIMALS),
     feeReductionThresholdRaw: fields.fee_reduction_threshold || "0",
-    feeReductionThreshold: formatUnitsCompact(fields.fee_reduction_threshold || "0", CARIB_DECIMALS),
+    feeReductionThreshold: formatUnitsCompact(
+      fields.fee_reduction_threshold || "0",
+      CARIB_DECIMALS,
+    ),
     priorityAccessThresholdRaw: fields.priority_access_threshold || "0",
     priorityAccessThreshold: formatUnitsCompact(
       fields.priority_access_threshold || "0",
@@ -982,12 +985,132 @@ export async function getVestingStats() {
   };
 }
 
+async function queryEventsServer(eventType, limit = 200) {
+  const client = getClient();
+  return client.queryEvents({
+    query: { MoveEventType: eventType },
+    limit,
+    order: "descending",
+  });
+}
+
+function parseRawValue(value) {
+  if (value == null) return 0n;
+  if (typeof value === "bigint") return value;
+  if (typeof value === "number") return BigInt(Math.trunc(value));
+  if (typeof value === "string") return BigInt(value || "0");
+  if (typeof value === "object") {
+    if ("value" in value) return parseRawValue(value.value);
+    if ("balance" in value) return parseRawValue(value.balance);
+    if ("fields" in value) {
+      return parseRawValue(value.fields?.value ?? value.fields?.balance ?? 0);
+    }
+  }
+  return 0n;
+}
+
+function formatRawAmount(raw, decimals = CARIB_DECIMALS, maxFractionDigits = 4) {
+  const amount = parseRawValue(raw);
+  const negative = amount < 0n;
+  const abs = negative ? -amount : amount;
+  const base = 10n ** BigInt(decimals);
+  const whole = abs / base;
+  const fraction = abs % base;
+  if (fraction === 0n) return `${negative ? "-" : ""}${whole.toString()}`;
+  let fractionText = fraction.toString().padStart(decimals, "0").slice(0, maxFractionDigits);
+  fractionText = fractionText.replace(/0+$/, "");
+  return `${negative ? "-" : ""}${whole.toString()}${fractionText ? `.${fractionText}` : ""}`;
+}
+
+function computeVestedRaw(fields, nowMs = Date.now()) {
+  const total = parseRawValue(fields.total);
+  const released = parseRawValue(fields.released);
+  const startMs = parseRawValue(fields.start_ms);
+  const cliffMs = parseRawValue(fields.cliff_ms);
+  const endMs = parseRawValue(fields.end_ms);
+  const revoked = !!fields.revoked;
+  const revokedAtMs = parseRawValue(fields.revoked_at_ms);
+
+  const now = BigInt(nowMs);
+  const effectiveNow = revoked ? revokedAtMs : now;
+  if (effectiveNow < cliffMs) return 0n;
+  if (effectiveNow >= endMs) return total;
+  if (endMs <= startMs) return released > total ? released : total;
+  const elapsed = effectiveNow - startMs;
+  const duration = endMs - startMs;
+  return (total * elapsed) / duration;
+}
+
+function toVestingScheduleSummary(fields, objectId, nowMs = Date.now()) {
+  const totalRaw = parseRawValue(fields.total);
+  const releasedRaw = parseRawValue(fields.released);
+  const vestedRaw = computeVestedRaw(fields, nowMs);
+  const claimableRaw = vestedRaw > releasedRaw ? vestedRaw - releasedRaw : 0n;
+
+  return {
+    scheduleId: objectId,
+    beneficiary: fields.beneficiary,
+    creator: fields.creator,
+    totalRaw: totalRaw.toString(),
+    totalDisplay: formatRawAmount(totalRaw),
+    releasedRaw: releasedRaw.toString(),
+    releasedDisplay: formatRawAmount(releasedRaw),
+    remainingRaw: parseRawValue(fields.balance).toString(),
+    remainingDisplay: formatRawAmount(fields.balance),
+    vestedRaw: vestedRaw.toString(),
+    vestedDisplay: formatRawAmount(vestedRaw),
+    claimableRaw: claimableRaw.toString(),
+    claimableDisplay: formatRawAmount(claimableRaw),
+    startMs: Number(fields.start_ms || 0),
+    cliffMs: Number(fields.cliff_ms || 0),
+    endMs: Number(fields.end_ms || 0),
+    revocable: !!fields.revocable,
+    revoked: !!fields.revoked,
+    revokedAtMs: Number(fields.revoked_at_ms || 0),
+  };
+}
+
+export async function getVestingSchedules() {
+  const client = getClient();
+  const createdType = `${PACKAGE_ID}::vesting::ScheduleCreated`;
+  const events = await queryEventsServer(createdType, 200);
+  const scheduleIds = [
+    ...new Set((events.data || []).map((event) => event.parsedJson?.schedule_id).filter(Boolean)),
+  ];
+  if (scheduleIds.length === 0) return [];
+
+  const objects = await Promise.all(
+    scheduleIds.map((id) =>
+      client.getObject({
+        id,
+        options: { showContent: true, showType: true },
+      }),
+    ),
+  );
+
+  const nowMs = Date.now();
+  return objects
+    .map((obj) => {
+      const objectId = obj.data?.objectId;
+      const fields = obj.data?.content?.fields;
+      const objectType = obj.data?.type || obj.data?.content?.type || "";
+      if (!objectId || !fields || !String(objectType).includes("::vesting::VestingSchedule"))
+        return null;
+      return toVestingScheduleSummary(fields, objectId, nowMs);
+    })
+    .filter(Boolean);
+}
+
 export async function adminUpdateTreasuryReceiver(newAddress) {
   const feeConverterAdminId = await getFeeConverterAdminId();
   const tx = new Transaction();
   tx.moveCall({
     target: `${PACKAGE_ID}::fee_converter::update_treasury_address`,
-    arguments: [tx.object(feeConverterAdminId), tx.object(FEE_CONVERTER_ID), tx.pure.address(newAddress)],
+    arguments: [
+      tx.object(feeConverterAdminId),
+      tx.object(FEE_CONVERTER_ID),
+      tx.pure.address(newAddress),
+    ],
   });
   return adminExecute(tx);
 }
@@ -997,7 +1120,11 @@ export async function adminUpdateBurnRate(newBurnBps) {
   const tx = new Transaction();
   tx.moveCall({
     target: `${PACKAGE_ID}::fee_converter::update_burn_rate`,
-    arguments: [tx.object(feeConverterAdminId), tx.object(FEE_CONVERTER_ID), tx.pure.u64(newBurnBps)],
+    arguments: [
+      tx.object(feeConverterAdminId),
+      tx.object(FEE_CONVERTER_ID),
+      tx.pure.u64(newBurnBps),
+    ],
   });
   return adminExecute(tx);
 }
@@ -1007,7 +1134,11 @@ export async function adminUpdateStakingCooldown(newCooldownMs) {
   const tx = new Transaction();
   tx.moveCall({
     target: `${PACKAGE_ID}::staking::update_cooldown`,
-    arguments: [tx.object(stakingAdminId), tx.object(STAKING_CONFIG_ID), tx.pure.u64(newCooldownMs)],
+    arguments: [
+      tx.object(stakingAdminId),
+      tx.object(STAKING_CONFIG_ID),
+      tx.pure.u64(newCooldownMs),
+    ],
   });
   return adminExecute(tx);
 }
@@ -1084,7 +1215,9 @@ export async function adminCreateVestingSchedule({
     tx.mergeCoins(tx.object(caribCoins[0].coinObjectId), others);
   }
 
-  const [vestingCoin] = tx.splitCoins(tx.object(caribCoins[0].coinObjectId), [tx.pure.u64(amountRaw)]);
+  const [vestingCoin] = tx.splitCoins(tx.object(caribCoins[0].coinObjectId), [
+    tx.pure.u64(amountRaw),
+  ]);
 
   tx.moveCall({
     target: `${PACKAGE_ID}::vesting::create_schedule`,
