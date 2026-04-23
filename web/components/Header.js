@@ -97,11 +97,11 @@ export default function Header() {
             }}
           >
             <Image
-              src="/brand/symbol/anansi-symbol-primary-darksite.png"
+              src={light ? "/brand/symbol/anansi-symbol-dark.svg" : "/brand/symbol/anansi-symbol-white.svg"}
               alt="Anansi"
-              width={32}
-              height={32}
-              className="transition-transform group-hover:scale-105"
+              width={622}
+              height={905}
+              className="h-8 w-auto transition-transform group-hover:scale-105"
             />
           </div>
           <Image

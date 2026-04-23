@@ -158,10 +158,10 @@ export default function Home() {
               </svg>
               <div className="hero-orbit-core">
                 <Image
-                  src="/brand/symbol/anansi-symbol-primary-darksite.png"
+                  src="/brand/symbol/anansi-symbol-color.svg"
                   alt="Anansi"
-                  width={280}
-                  height={280}
+                  width={622}
+                  height={905}
                   priority
                   className="hero-orbit-logo relative z-10 drop-shadow-[0_12px_28px_rgba(0,0,0,0.38)]"
                 />
@@ -594,10 +594,10 @@ export default function Home() {
             <div>
               <div className="inline-flex items-center justify-center w-28 h-28 md:w-32 md:h-32 rounded-full border border-white/[0.12] bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(247,248,251,0.98)_48%,rgba(232,236,242,0.98)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.78),inset_0_-14px_22px_rgba(17,19,26,0.08),0_18px_36px_rgba(0,0,0,0.24)] mb-10">
                 <Image
-                  src="/brand/symbol/anansi-symbol-primary-transparent.png"
+                  src="/brand/symbol/anansi-symbol-dark.svg"
                   alt=""
-                  width={610}
-                  height={872}
+                  width={622}
+                  height={905}
                   className="w-[66px] md:w-[80px] h-auto opacity-[0.98] drop-shadow-[0_8px_18px_rgba(0,0,0,0.12)]"
                 />
               </div>
