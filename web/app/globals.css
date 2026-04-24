@@ -275,7 +275,7 @@ body {
    =================================================================== */
 
 .hero-symbol-position {
-  transform: translateY(-78px);
+  transform: translateY(-26px);
 }
 
 .hero-symbol-wrap {
@@ -300,7 +300,7 @@ body {
 
 @media (min-width: 768px) {
   .hero-symbol-position {
-    transform: translateY(-78px);
+    transform: translateY(-26px);
   }
 
   .hero-symbol-wrap {

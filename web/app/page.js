@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <>
       {/* ===== HERO ===== */}
-      <section className="hero-section min-h-screen relative overflow-hidden">
+      <section className="hero-section min-h-[85svh] md:min-h-[87svh] relative overflow-hidden">
         {/* ===== Layer 1: V1-style web atmosphere + orbit system ===== */}
         <div className="absolute inset-0 pointer-events-none">
           <svg
@@ -38,7 +38,7 @@ export default function Home() {
 
             <rect x="0" y="0" width="1920" height="1080" fill="#06080B" />
 
-            <g transform="translate(0 -220)">
+            <g transform="translate(0 -134)">
               <g className="hero-web-layer">
                 <path
                   d="M 0 110 C 290 140, 560 180, 920 340 C 1250 485, 1530 445, 1920 300"
@@ -82,28 +82,28 @@ export default function Home() {
                 <circle cx="1615" cy="666" r="2.4" className="hero-web-node" />
               </g>
 
-              <circle cx="960" cy="526" r="300" fill="url(#heroGlow)" className="hero-red-bloom" />
-              <circle cx="960" cy="526" r="286" className="hero-orbit-outer" />
+              <circle cx="960" cy="566" r="300" fill="url(#heroGlow)" className="hero-red-bloom" />
+              <circle cx="960" cy="566" r="286" className="hero-orbit-outer" />
 
               <path
-                d="M 819.2 334 A 238 238 0 0 0 819.2 718"
+                d="M 819.2 374 A 238 238 0 0 0 819.2 758"
                 stroke="url(#heroArcLeft)"
                 strokeWidth="1.8"
                 fill="none"
                 className="hero-arc"
               />
-              <circle cx="819.2" cy="334" r="3.2" className="hero-arc-endpoint" />
-              <circle cx="819.2" cy="718" r="3.2" className="hero-arc-endpoint" />
+              <circle cx="819.2" cy="374" r="3.2" className="hero-arc-endpoint" />
+              <circle cx="819.2" cy="758" r="3.2" className="hero-arc-endpoint" />
 
               <path
-                d="M 1100.8 334 A 238 238 0 0 1 1100.8 718"
+                d="M 1100.8 374 A 238 238 0 0 1 1100.8 758"
                 stroke="url(#heroArcRight)"
                 strokeWidth="1.8"
                 fill="none"
                 className="hero-arc"
               />
-              <circle cx="1100.8" cy="334" r="3.2" className="hero-arc-endpoint" />
-              <circle cx="1100.8" cy="718" r="3.2" className="hero-arc-endpoint" />
+              <circle cx="1100.8" cy="374" r="3.2" className="hero-arc-endpoint" />
+              <circle cx="1100.8" cy="758" r="3.2" className="hero-arc-endpoint" />
 
               <rect x="0" y="580" width="1920" height="500" fill="url(#heroCopyFade)" />
             </g>
@@ -111,7 +111,7 @@ export default function Home() {
         </div>
 
         {/* ===== Layer 2: Embossed symbol ===== */}
-        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none -translate-y-[20vh]">
+        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none -translate-y-[11vh] md:-translate-y-[10vh]">
           <div className="hero-symbol-position">
             <div className="hero-symbol-wrap animate-fade-up animate-fade-up-delay-1">
               <Image
@@ -126,28 +126,30 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="relative z-20 min-h-screen flex flex-col items-center pt-[calc(50vh+8px)] sm:pt-[calc(50vh+18px)] md:pt-[calc(50vh+42px)] pb-16 md:pb-20 px-6 -translate-y-[10vh]">
+        <div className="relative z-20 min-h-[85svh] md:min-h-[87svh] flex flex-col items-center pt-[calc(46vh+8px)] sm:pt-[calc(46vh+14px)] md:pt-[calc(46vh+28px)] pb-6 md:pb-10 px-6 -translate-y-[2vh]">
           <h1 className="sr-only">ANANSI</h1>
-          <div className="mt-10 md:mt-12 translate-y-[10px] md:translate-y-[12px] animate-fade-up animate-fade-up-delay-2">
-            <Image
-              src="/brand/wordmark/anansi-wordmark-primary.svg"
-              alt="ANANSI"
-              width={1916}
-              height={821}
-              priority
-              className="hero-wordmark-v1 w-[min(78vw,330px)] sm:w-[min(72vw,380px)] md:w-[min(42vw,470px)] h-auto"
-            />
+          <div className="mt-10 md:mt-12 animate-fade-up animate-fade-up-delay-2">
+            <div style={{ transform: "translateY(56px)" }}>
+              <Image
+                src="/brand/wordmark/anansi-wordmark-primary.svg"
+                alt="ANANSI"
+                width={1916}
+                height={821}
+                priority
+                className="hero-wordmark-v1 w-[min(78vw,330px)] sm:w-[min(72vw,380px)] md:w-[min(42vw,470px)] h-auto"
+              />
+            </div>
           </div>
 
-          <div className="-translate-y-[20px] md:-translate-y-[28px]">
+          <div className="translate-y-[6px] md:translate-y-[10px]">
             <h2 className="max-w-[920px] text-center font-display font-medium text-[clamp(24px,4.8vw,38px)] leading-[1.08] mt-4 sm:mt-5 md:mt-6 text-anansi-gray-300 animate-fade-up animate-fade-up-delay-2">
               Technology for markets the world has{" "}
-              <span className="inline-block whitespace-nowrap text-anansi-red font-semibold text-glow-red">
+              <span className="inline-block whitespace-nowrap text-[#b3262d] font-semibold">
                 ignored.
               </span>
             </h2>
 
-            <p className="mx-auto max-w-[420px] sm:max-w-[660px] text-[11px] sm:text-[12px] md:text-[13px] tracking-[0.1em] sm:tracking-[0.14em] uppercase text-anansi-gray-400 mt-5 text-center animate-fade-up animate-fade-up-delay-3">
+            <p className="mx-auto max-w-[420px] sm:max-w-[660px] text-[11px] sm:text-[12px] md:text-[13px] tracking-[0.1em] sm:tracking-[0.14em] uppercase text-anansi-gray-300/90 mt-5 text-center animate-fade-up animate-fade-up-delay-3">
               Applied AI · Real Assets · Caribbean-first, global from day one
             </p>
 
