@@ -187,37 +187,37 @@ body {
    =================================================================== */
 
 .hero-web-layer {
-  opacity: 0.68;
+  opacity: 0.82;
 }
 
 .hero-web-line {
   fill: none;
-  stroke: rgba(214, 220, 228, 0.095);
-  stroke-width: 0.88;
+  stroke: rgba(214, 220, 228, 0.14);
+  stroke-width: 1.05;
   stroke-linecap: round;
   animation: webFlicker 10.6s ease-in-out infinite;
 }
 
 .hero-web-line-soft {
-  stroke: rgba(214, 220, 228, 0.058);
+  stroke: rgba(214, 220, 228, 0.09);
   animation-duration: 12.4s;
 }
 
 .hero-web-line-fine {
-  stroke: rgba(214, 220, 228, 0.072);
-  stroke-width: 0.7;
+  stroke: rgba(214, 220, 228, 0.11);
+  stroke-width: 0.88;
   animation-duration: 9.2s;
 }
 
 .hero-web-line-diag {
-  stroke: rgba(220, 48, 54, 0.11);
-  stroke-width: 0.64;
+  stroke: rgba(220, 48, 54, 0.14);
+  stroke-width: 0.78;
   animation-duration: 8.8s;
 }
 
 .hero-web-line-diag-soft {
-  stroke: rgba(220, 48, 54, 0.072);
-  stroke-width: 0.54;
+  stroke: rgba(220, 48, 54, 0.1);
+  stroke-width: 0.68;
   animation-duration: 11.8s;
 }
 
