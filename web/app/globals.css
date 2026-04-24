@@ -162,14 +162,6 @@ body {
     opacity: 1;
   }
 }
-@keyframes orbitSpin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
 .animate-fade-up {
   opacity: 0;
   animation: fadeUp 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -190,113 +182,128 @@ body {
   animation: pulseGlow 3s ease-in-out infinite;
 }
 
-/* ===== Subtle grid pattern overlay for hero ===== */
-.hero-grid-bg::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-  background-size: 80px 80px;
-  pointer-events: none;
-  mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 30%, transparent 70%);
-  -webkit-mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 30%, transparent 70%);
+/* ===================================================================
+   Hero — Layer 1: v1 web atmosphere + orbit system
+   =================================================================== */
+
+.hero-web-layer {
+  opacity: 0.48;
 }
 
-/* ===== Landing logo orbit system ===== */
-.hero-orbit-position {
-  transform: translateY(-116px);
+.hero-web-line {
+  fill: none;
+  stroke: rgba(220, 225, 232, 0.084);
+  stroke-width: 0.92;
+  stroke-linecap: round;
+  animation: webFlicker 9.8s ease-in-out infinite;
 }
 
-.hero-orbit-wrap {
-  width: min(78vw, 360px);
-  aspect-ratio: 1;
+.hero-web-line-soft {
+  stroke: rgba(220, 225, 232, 0.052);
+  animation-duration: 11.6s;
+}
+
+.hero-web-node {
+  fill: rgba(227, 35, 43, 0.72);
+  filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.36));
+  animation: webNodePulse 5.2s ease-in-out infinite;
+}
+
+.hero-red-bloom {
+  animation: bloomPulse 9s ease-in-out infinite;
+}
+
+.hero-orbit-outer {
+  fill: none;
+  stroke: rgba(175, 53, 60, 0.095);
+  stroke-width: 0.92;
+}
+
+.hero-arc {
+  filter: drop-shadow(0 0 4px rgba(196, 20, 28, 0.14));
+  stroke-linecap: round;
+  animation: arcPulse 6.8s ease-in-out infinite;
+}
+
+.hero-arc-endpoint {
+  fill: #b71a22;
+  filter: drop-shadow(0 0 3px rgba(225, 27, 34, 0.28));
+}
+
+@keyframes webFlicker {
+  0%,
+  100% {
+    opacity: 0.64;
+  }
+  50% {
+    opacity: 0.32;
+  }
+}
+
+@keyframes webNodePulse {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+  50% {
+    opacity: 0.24;
+  }
+}
+
+@keyframes bloomPulse {
+  0%,
+  100% {
+    opacity: 0.82;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes arcPulse {
+  0%,
+  100% {
+    opacity: 0.94;
+  }
+  50% {
+    opacity: 0.56;
+  }
+}
+
+/* ===================================================================
+   Hero — Layer 2: Symbol (graphite embossed)
+   =================================================================== */
+
+.hero-symbol-position {
+  transform: translateY(-78px);
+}
+
+.hero-symbol-wrap {
+  width: min(48vw, 210px);
+  aspect-ratio: auto;
   position: relative;
 }
 
-.hero-orbit-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  pointer-events: none;
-}
-
-.hero-orbit-rotation-slow {
-  transform-origin: 210px 210px;
-  animation: orbitSpin 24s linear infinite;
-}
-
-.hero-orbit-ring-faint {
-  stroke: rgba(255, 255, 255, 0.1);
-  stroke-width: 0.9;
-}
-
-.hero-orbit-arc {
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.05));
-}
-
-.hero-orbit-arc-red {
-  stroke: url(#heroOrbitRed);
-}
-
-.hero-orbit-arc-white {
-  stroke: url(#heroOrbitWhite);
-}
-
-.hero-orbit-node {
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.16));
-}
-
-.hero-orbit-node-red {
-  fill: #f87171;
-}
-
-.hero-orbit-core {
-  position: absolute;
-  inset: 50% auto auto 50%;
-  z-index: 3;
-  width: 68%;
-  height: 68%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.hero-orbit-logo {
+.hero-symbol {
   width: 100%;
   height: auto;
-  filter:
-    contrast(1.16)
-    saturate(1.01)
-    brightness(0.92)
-    drop-shadow(0 18px 32px rgba(0, 0, 0, 0.3))
-    drop-shadow(0 0 28px rgba(220, 38, 38, 0.08));
-  transform: translateY(-0.15%) scale(0.9);
-  transform-origin: center;
+  filter: drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.08))
+    drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.58)) drop-shadow(0 12px 20px rgba(0, 0, 0, 0.52))
+    drop-shadow(0 0 14px rgba(115, 19, 24, 0.13));
+}
+
+.hero-wordmark-v1 {
+  filter: invert(1) brightness(0.78) contrast(0.83) saturate(0.22)
+    drop-shadow(0 7px 16px rgba(0, 0, 0, 0.26));
+  opacity: 0.78;
 }
 
 @media (min-width: 768px) {
-  .hero-orbit-position {
-    transform: translateY(-176px);
+  .hero-symbol-position {
+    transform: translateY(-78px);
   }
 
-  .hero-orbit-wrap {
-    width: min(72vw, 440px);
-  }
-}
-
-@keyframes orbit3D {
-  from {
-    transform: rotateY(0deg);
-  }
-  to {
-    transform: rotateY(360deg);
+  .hero-symbol-wrap {
+    width: min(38vw, 236px);
   }
 }

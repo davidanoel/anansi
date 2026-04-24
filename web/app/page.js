@@ -5,8 +5,8 @@ export default function Home() {
   return (
     <>
       {/* ===== HERO ===== */}
-      <section className="hero-section hero-grid-bg min-h-screen relative overflow-hidden">
-        {/* Deep radial glow behind the logo — now bolder */}
+      <section className="hero-section min-h-screen relative overflow-hidden">
+        {/* ===== Layer 1: V1-style web atmosphere + orbit system ===== */}
         <div className="absolute inset-0 pointer-events-none">
           <svg
             className="w-full h-full"
@@ -14,165 +14,161 @@ export default function Home() {
             preserveAspectRatio="xMidYMid slice"
           >
             <defs>
-              {/* Primary glow — warm command red, significantly stronger than before */}
-              <radialGradient id="glow" cx="50%" cy="50%" r="40%">
-                <stop offset="0%" stopColor="#DC2626" stopOpacity="0.16" />
-                <stop offset="40%" stopColor="#991B1B" stopOpacity="0.055" />
-                <stop offset="100%" stopColor="#991B1B" stopOpacity="0" />
+              <radialGradient id="heroGlow" cx="50%" cy="50%" r="42%">
+                <stop offset="0%" stopColor="#C4141C" stopOpacity="0.46" />
+                <stop offset="30%" stopColor="#911219" stopOpacity="0.24" />
+                <stop offset="65%" stopColor="#42090E" stopOpacity="0.08" />
+                <stop offset="100%" stopColor="#1A0407" stopOpacity="0" />
               </radialGradient>
-              <linearGradient id="thread" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="white" stopOpacity="0.10" />
-                <stop offset="100%" stopColor="white" stopOpacity="0" />
+              <linearGradient id="heroArcLeft" x1="0%" y1="50%" x2="100%" y2="50%">
+                <stop offset="0%" stopColor="#C4141C" stopOpacity="0" />
+                <stop offset="50%" stopColor="#E11B22" stopOpacity="0.72" />
+                <stop offset="100%" stopColor="#C4141C" stopOpacity="0.04" />
               </linearGradient>
-              <linearGradient id="thread-bright" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#EF4444" stopOpacity="0.16" />
-                <stop offset="100%" stopColor="#DC2626" stopOpacity="0" />
+              <linearGradient id="heroArcRight" x1="100%" y1="50%" x2="0%" y2="50%">
+                <stop offset="0%" stopColor="#C4141C" stopOpacity="0" />
+                <stop offset="50%" stopColor="#E11B22" stopOpacity="0.72" />
+                <stop offset="100%" stopColor="#C4141C" stopOpacity="0.04" />
+              </linearGradient>
+              <linearGradient id="heroCopyFade" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#05070B" stopOpacity="0" />
+                <stop offset="100%" stopColor="#05070B" stopOpacity="0.9" />
               </linearGradient>
             </defs>
 
-            <circle cx="960" cy="540" r="480" fill="url(#glow)" />
+            <rect x="0" y="0" width="1920" height="1080" fill="#06080B" />
 
-            {/* Thread lines — brighter, with two accented in red */}
-            <line
-              x1="960"
-              y1="540"
-              x2="150"
-              y2="80"
-              stroke="url(#thread-bright)"
-              strokeWidth="0.6"
-            />
-            <line x1="960" y1="540" x2="1770" y2="120" stroke="url(#thread)" strokeWidth="0.6" />
-            <line x1="960" y1="540" x2="80" y2="750" stroke="url(#thread)" strokeWidth="0.6" />
-            <line
-              x1="960"
-              y1="540"
-              x2="1840"
-              y2="850"
-              stroke="url(#thread-bright)"
-              strokeWidth="0.6"
-            />
-            <line x1="960" y1="540" x2="300" y2="30" stroke="url(#thread)" strokeWidth="0.4" />
-            <line x1="960" y1="540" x2="1620" y2="1000" stroke="url(#thread)" strokeWidth="0.4" />
-            <line x1="960" y1="540" x2="50" y2="400" stroke="url(#thread)" strokeWidth="0.4" />
-            <line x1="960" y1="540" x2="1870" y2="500" stroke="url(#thread)" strokeWidth="0.4" />
+            <g transform="translate(0 -220)">
+              <g className="hero-web-layer">
+                <path
+                  d="M 0 110 C 290 140, 560 180, 920 340 C 1250 485, 1530 445, 1920 300"
+                  className="hero-web-line hero-web-line-soft"
+                />
+                <path
+                  d="M 0 290 C 280 310, 620 360, 940 500 C 1280 650, 1580 620, 1920 500"
+                  className="hero-web-line"
+                />
+                <path
+                  d="M 0 486 C 290 506, 640 556, 960 668 C 1325 792, 1600 770, 1920 666"
+                  className="hero-web-line"
+                />
+                <path
+                  d="M 0 736 C 320 752, 660 786, 980 878 C 1310 970, 1585 964, 1920 914"
+                  className="hero-web-line hero-web-line-soft"
+                />
+                <path
+                  d="M 220 0 C 320 250, 320 540, 254 1080"
+                  className="hero-web-line hero-web-line-soft"
+                />
+                <path d="M 456 0 C 540 250, 548 540, 510 1080" className="hero-web-line" />
+                <path
+                  d="M 724 0 C 770 250, 785 540, 774 1080"
+                  className="hero-web-line hero-web-line-soft"
+                />
+                <path
+                  d="M 1198 0 C 1154 250, 1138 540, 1148 1080"
+                  className="hero-web-line hero-web-line-soft"
+                />
+                <path d="M 1458 0 C 1378 260, 1368 560, 1418 1080" className="hero-web-line" />
+                <path
+                  d="M 1708 0 C 1602 262, 1578 560, 1652 1080"
+                  className="hero-web-line hero-web-line-soft"
+                />
+                <circle cx="522" cy="362" r="2.4" className="hero-web-node" />
+                <circle cx="782" cy="234" r="2.4" className="hero-web-node" />
+                <circle cx="1388" cy="286" r="2.4" className="hero-web-node" />
+                <circle cx="1168" cy="736" r="2.4" className="hero-web-node" />
+                <circle cx="330" cy="664" r="2.4" className="hero-web-node" />
+                <circle cx="1615" cy="666" r="2.4" className="hero-web-node" />
+              </g>
 
-            {/* Concentric rings — slightly more visible than before */}
-            <circle
-              cx="960"
-              cy="540"
-              r="210"
-              fill="none"
-              stroke="white"
-              strokeOpacity="0.04"
-              strokeWidth="0.5"
-            />
-            <circle
-              cx="960"
-              cy="540"
-              r="350"
-              fill="none"
-              stroke="white"
-              strokeOpacity="0.03"
-              strokeWidth="0.5"
-            />
-            <circle
-              cx="960"
-              cy="540"
-              r="500"
-              fill="none"
-              stroke="white"
-              strokeOpacity="0.02"
-              strokeWidth="0.5"
-            />
+              <circle cx="960" cy="526" r="300" fill="url(#heroGlow)" className="hero-red-bloom" />
+              <circle cx="960" cy="526" r="286" className="hero-orbit-outer" />
+
+              <path
+                d="M 819.2 334 A 238 238 0 0 0 819.2 718"
+                stroke="url(#heroArcLeft)"
+                strokeWidth="1.8"
+                fill="none"
+                className="hero-arc"
+              />
+              <circle cx="819.2" cy="334" r="3.2" className="hero-arc-endpoint" />
+              <circle cx="819.2" cy="718" r="3.2" className="hero-arc-endpoint" />
+
+              <path
+                d="M 1100.8 334 A 238 238 0 0 1 1100.8 718"
+                stroke="url(#heroArcRight)"
+                strokeWidth="1.8"
+                fill="none"
+                className="hero-arc"
+              />
+              <circle cx="1100.8" cy="334" r="3.2" className="hero-arc-endpoint" />
+              <circle cx="1100.8" cy="718" r="3.2" className="hero-arc-endpoint" />
+
+              <rect x="0" y="580" width="1920" height="500" fill="url(#heroCopyFade)" />
+            </g>
           </svg>
         </div>
 
-        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-          <div className="hero-orbit-position">
-            <div className="hero-orbit-wrap animate-fade-up animate-fade-up-delay-1">
-              <svg className="hero-orbit-svg" viewBox="0 0 420 420" fill="none" aria-hidden="true">
-                <defs>
-                  <linearGradient id="heroOrbitRed" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#f87171" stopOpacity="0.95" />
-                    <stop offset="100%" stopColor="#dc2626" stopOpacity="0.25" />
-                  </linearGradient>
-                  <linearGradient id="heroOrbitWhite" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
-                    <stop offset="100%" stopColor="#ffffff" stopOpacity="0.08" />
-                  </linearGradient>
-                </defs>
-
-                <g className="hero-orbit-rotation-slow">
-                  <circle cx="210" cy="210" r="198" className="hero-orbit-ring-faint" />
-                  <path
-                    d="M210 12 A198 198 0 0 1 364 86"
-                    className="hero-orbit-arc hero-orbit-arc-red"
-                  />
-                  <path
-                    d="M395 245 A198 198 0 0 1 320 365"
-                    className="hero-orbit-arc hero-orbit-arc-white"
-                  />
-                  <circle
-                    cx="210"
-                    cy="12"
-                    r="4.5"
-                    className="hero-orbit-node hero-orbit-node-red"
-                  />
-                </g>
-              </svg>
-              <div className="hero-orbit-core">
-                <Image
-                  src="/brand/symbol/anansi-symbol-color.svg"
-                  alt="Anansi"
-                  width={622}
-                  height={905}
-                  priority
-                  className="hero-orbit-logo relative z-10 drop-shadow-[0_12px_28px_rgba(0,0,0,0.38)]"
-                />
-              </div>
+        {/* ===== Layer 2: Embossed symbol ===== */}
+        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none -translate-y-[20vh]">
+          <div className="hero-symbol-position">
+            <div className="hero-symbol-wrap animate-fade-up animate-fade-up-delay-1">
+              <Image
+                src="/brand/symbol/anansi-symbol-color1.svg"
+                alt="Anansi"
+                width={622}
+                height={905}
+                priority
+                className="hero-symbol"
+              />
             </div>
           </div>
         </div>
 
-        <div className="relative z-20 min-h-screen flex flex-col items-center pt-[calc(50vh+84px)] sm:pt-[calc(50vh+96px)] md:pt-[calc(50vh+125px)] pb-16 md:pb-20 px-6">
+        <div className="relative z-20 min-h-screen flex flex-col items-center pt-[calc(50vh+8px)] sm:pt-[calc(50vh+18px)] md:pt-[calc(50vh+42px)] pb-16 md:pb-20 px-6 -translate-y-[10vh]">
           <h1 className="sr-only">ANANSI</h1>
-          <div className="mt-1 md:mt-2 animate-fade-up animate-fade-up-delay-2">
+          <div className="mt-10 md:mt-12 translate-y-[10px] md:translate-y-[12px] animate-fade-up animate-fade-up-delay-2">
             <Image
               src="/brand/wordmark/anansi-wordmark-primary.svg"
               alt="ANANSI"
               width={1916}
               height={821}
               priority
-              className="w-[min(78vw,330px)] sm:w-[min(72vw,380px)] md:w-[min(42vw,470px)] h-auto invert opacity-95 drop-shadow-[0_10px_28px_rgba(0,0,0,0.32)]"
+              className="hero-wordmark-v1 w-[min(78vw,330px)] sm:w-[min(72vw,380px)] md:w-[min(42vw,470px)] h-auto"
             />
           </div>
 
-          <h2 className="max-w-[720px] text-center font-display font-medium text-[clamp(24px,5.8vw,42px)] leading-[1.08] mt-8 sm:mt-9 md:mt-10 text-anansi-gray-300 animate-fade-up animate-fade-up-delay-2">
-            Technology for markets the world has{" "}
-            <span className="text-anansi-red font-semibold text-glow-red">ignored.</span>
-          </h2>
+          <div className="-translate-y-[20px] md:-translate-y-[28px]">
+            <h2 className="max-w-[920px] text-center font-display font-medium text-[clamp(24px,4.8vw,38px)] leading-[1.08] mt-4 sm:mt-5 md:mt-6 text-anansi-gray-300 animate-fade-up animate-fade-up-delay-2">
+              Technology for markets the world has{" "}
+              <span className="inline-block whitespace-nowrap text-anansi-red font-semibold text-glow-red">
+                ignored.
+              </span>
+            </h2>
 
-          <p className="max-w-[420px] sm:max-w-[660px] text-[11px] sm:text-[12px] md:text-[13px] tracking-[0.1em] sm:tracking-[0.14em] uppercase text-anansi-gray-400 mt-5 text-center animate-fade-up animate-fade-up-delay-3">
-            Applied AI · Real Assets · Caribbean-first, global from day one
-          </p>
+            <p className="mx-auto max-w-[420px] sm:max-w-[660px] text-[11px] sm:text-[12px] md:text-[13px] tracking-[0.1em] sm:tracking-[0.14em] uppercase text-anansi-gray-400 mt-5 text-center animate-fade-up animate-fade-up-delay-3">
+              Applied AI · Real Assets · Caribbean-first, global from day one
+            </p>
 
-          <div className="mt-8 mx-auto flex w-full max-w-[320px] sm:w-auto sm:max-w-none flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 animate-fade-up animate-fade-up-delay-3">
-            <a
-              href="#pillars"
-              className="inline-flex w-full sm:w-auto items-center justify-center px-6 py-3.5 bg-anansi-red hover:bg-anansi-red-deep text-white text-[13px] tracking-[0.1em] uppercase font-semibold transition-all duration-200 shadow-red-glow hover:shadow-red-glow-intense min-w-[180px]"
-            >
-              What We Build
-            </a>
-            <Link
-              href="/spice"
-              className="inline-flex w-full sm:w-auto items-center justify-center px-6 py-3.5 border border-white/20 hover:border-anansi-red/60 text-white text-[13px] tracking-[0.1em] uppercase font-semibold transition-all duration-200 min-w-[180px]"
-            >
-              Explore Spice
-            </Link>
+            <div className="mt-8 mx-auto flex w-full max-w-[320px] sm:w-auto sm:max-w-none flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 animate-fade-up animate-fade-up-delay-3">
+              <a
+                href="#pillars"
+                className="inline-flex w-full sm:w-auto items-center justify-center px-6 py-3.5 bg-anansi-red hover:bg-anansi-red-deep text-white text-[13px] tracking-[0.1em] uppercase font-semibold transition-all duration-200 shadow-red-glow hover:shadow-red-glow-intense min-w-[180px]"
+              >
+                What We Build
+              </a>
+              <Link
+                href="/spice"
+                className="inline-flex w-full sm:w-auto items-center justify-center px-6 py-3.5 border border-white/20 hover:border-anansi-red/60 text-white text-[13px] tracking-[0.1em] uppercase font-semibold transition-all duration-200 min-w-[180px]"
+              >
+                Explore Spice
+              </Link>
+            </div>
           </div>
         </div>
 
-        <div className="absolute bottom-8 sm:bottom-10 left-1/2 -translate-x-1/2 z-20 hidden sm:flex flex-col items-center gap-3 animate-fade-up animate-fade-up-delay-3">
+        <div className="absolute bottom-8 sm:bottom-10 left-1/2 -translate-x-1/2 z-20 hidden sm:flex flex-col items-center gap-3 animate-fade-up animate-fade-up-delay-3 -translate-y-[10vh]">
           <span className="block w-px h-10 bg-gradient-to-b from-anansi-red/40 to-transparent animate-scroll-pulse" />
         </div>
       </section>
