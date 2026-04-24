@@ -40,32 +40,68 @@ export default function Home() {
 
             <g transform="translate(0 -134)">
               <g className="hero-web-layer">
-                <path d="M -30 240 L 182 336 L 328 486 L 512 474 L 736 536" className="hero-web-line hero-web-line-fine" />
-                <path d="M 58 118 L 182 336 L 328 486 L 468 662 L 710 742" className="hero-web-line hero-web-line-soft" />
+                <path
+                  d="M -30 240 L 182 336 L 328 486 L 512 474 L 736 536"
+                  className="hero-web-line hero-web-line-fine"
+                />
+                <path
+                  d="M 58 118 L 182 336 L 328 486 L 468 662 L 710 742"
+                  className="hero-web-line hero-web-line-soft"
+                />
                 <path d="M 18 566 L 328 486 L 512 474 L 710 742" className="hero-web-line" />
-                <path d="M -20 742 L 194 700 L 468 662 L 710 742" className="hero-web-line hero-web-line-soft" />
+                <path
+                  d="M -20 742 L 194 700 L 468 662 L 710 742"
+                  className="hero-web-line hero-web-line-soft"
+                />
                 <path d="M 182 336 L 194 700" className="hero-web-line hero-web-line-fine" />
                 <path d="M 328 486 L 194 700" className="hero-web-line hero-web-line-diag-soft" />
                 <path d="M 328 486 L 468 662" className="hero-web-line hero-web-line-diag" />
-                <path d="M 512 474 L 726 396 L 876 404" className="hero-web-line hero-web-line-soft" />
+                <path
+                  d="M 512 474 L 726 396 L 876 404"
+                  className="hero-web-line hero-web-line-soft"
+                />
                 <path d="M 736 536 L 876 404" className="hero-web-line hero-web-line-fine" />
                 <path d="M 710 742 L 892 668" className="hero-web-line hero-web-line-fine" />
 
-                <path d="M 1950 238 L 1738 334 L 1592 484 L 1408 472 L 1184 534" className="hero-web-line hero-web-line-fine" />
-                <path d="M 1862 116 L 1738 334 L 1592 484 L 1452 660 L 1210 740" className="hero-web-line hero-web-line-soft" />
+                <path
+                  d="M 1950 238 L 1738 334 L 1592 484 L 1408 472 L 1184 534"
+                  className="hero-web-line hero-web-line-fine"
+                />
+                <path
+                  d="M 1862 116 L 1738 334 L 1592 484 L 1452 660 L 1210 740"
+                  className="hero-web-line hero-web-line-soft"
+                />
                 <path d="M 1902 564 L 1592 484 L 1408 472 L 1210 740" className="hero-web-line" />
-                <path d="M 1940 740 L 1726 698 L 1452 660 L 1210 740" className="hero-web-line hero-web-line-soft" />
+                <path
+                  d="M 1940 740 L 1726 698 L 1452 660 L 1210 740"
+                  className="hero-web-line hero-web-line-soft"
+                />
                 <path d="M 1738 334 L 1726 698" className="hero-web-line hero-web-line-fine" />
                 <path d="M 1592 484 L 1726 698" className="hero-web-line hero-web-line-diag-soft" />
                 <path d="M 1592 484 L 1452 660" className="hero-web-line hero-web-line-diag" />
-                <path d="M 1408 472 L 1194 394 L 1044 402" className="hero-web-line hero-web-line-soft" />
+                <path
+                  d="M 1408 472 L 1194 394 L 1044 402"
+                  className="hero-web-line hero-web-line-soft"
+                />
                 <path d="M 1184 534 L 1044 402" className="hero-web-line hero-web-line-fine" />
                 <path d="M 1210 740 L 1028 666" className="hero-web-line hero-web-line-fine" />
 
-                <path d="M 18 566 L 194 700 L 468 662" className="hero-web-line hero-web-line-diag-soft" />
-                <path d="M 1902 564 L 1726 698 L 1452 660" className="hero-web-line hero-web-line-diag-soft" />
-                <path d="M 58 118 L 328 166 L 726 192 L 1038 198" className="hero-web-line hero-web-line-soft" />
-                <path d="M 1862 116 L 1592 164 L 1194 190 L 882 196" className="hero-web-line hero-web-line-soft" />
+                <path
+                  d="M 18 566 L 194 700 L 468 662"
+                  className="hero-web-line hero-web-line-diag-soft"
+                />
+                <path
+                  d="M 1902 564 L 1726 698 L 1452 660"
+                  className="hero-web-line hero-web-line-diag-soft"
+                />
+                <path
+                  d="M 58 118 L 328 166 L 726 192 L 1038 198"
+                  className="hero-web-line hero-web-line-soft"
+                />
+                <path
+                  d="M 1862 116 L 1592 164 L 1194 190 L 882 196"
+                  className="hero-web-line hero-web-line-soft"
+                />
 
                 <circle cx="58" cy="118" r="1.8" className="hero-web-node hero-web-node-soft" />
                 <circle cx="182" cy="336" r="2.1" className="hero-web-node" />
@@ -220,7 +256,7 @@ export default function Home() {
               <div className="space-y-5">
                 <Signal
                   title="AI cost curve"
-                  text="Models are cheap enough to deploy into real workflows, not just demos."
+                  text="Cheap enough to deploy in production, not demos."
                 />
                 <Signal
                   title="On-chain rails"
@@ -472,17 +508,8 @@ export default function Home() {
                 Three <span className="text-anansi-red">engines.</span>
               </h2>
               <p className="text-[16px] text-anansi-gray-400 max-w-[580px] mt-6 leading-[1.75]">
-                Anansi builds across applied AI, financial rails, and custom engineering — with
-                each engine reinforcing the others in product, data, and distribution.
-              </p>
-            </div>
-            <div className="bg-[linear-gradient(180deg,rgba(255,255,255,0.025)_0%,rgba(255,255,255,0.01)_100%)] border border-white/[0.06] rounded-sm p-6">
-              <p className="text-[10px] tracking-[0.2em] uppercase text-anansi-red font-semibold mb-4">
-                Operating Model
-              </p>
-              <p className="text-[14px] text-anansi-gray-400 leading-[1.7]">
-                Products generate real user behavior. Infrastructure turns that learning into rails.
-                Client work sharpens execution at enterprise grade.
+                Anansi builds across applied AI, financial rails, and custom engineering — with each
+                engine reinforcing the others in product, data, and distribution.
               </p>
             </div>
           </div>
@@ -563,7 +590,7 @@ export default function Home() {
             <p className="text-[10px] tracking-[0.4em] uppercase text-anansi-red font-semibold mb-8">
               Coming Soon
             </p>
-            <h2 className="font-display text-[clamp(48px,8vw,96px)] leading-[0.95] tracking-tight">
+            <h2 className="font-display text-[clamp(28px,3.5vw,44px)] leading-[0.95] tracking-tight">
               CARIB
               <span className="text-anansi-red text-glow-red">COIN</span>
             </h2>
@@ -643,7 +670,9 @@ export default function Home() {
                   className="w-[66px] md:w-[80px] h-auto opacity-[0.98] drop-shadow-[0_8px_18px_rgba(0,0,0,0.12)]"
                 />
               </div>
-              <h2 className="font-display font-bold text-4xl leading-[1.2] text-white">Why Anansi</h2>
+              <h2 className="font-display font-bold text-4xl leading-[1.2] text-white">
+                Why Anansi
+              </h2>
               <p className="text-[16px] text-anansi-gray-400 leading-[1.8] mt-6">
                 Anansi — the spider from West African and Caribbean folklore. The trickster who
                 outsmarts larger powers through cleverness, not force. He builds webs that connect
@@ -699,8 +728,8 @@ export default function Home() {
             Designed for <span className="text-anansi-red text-glow-red">scale.</span>
           </h2>
           <p className="text-[16px] text-anansi-gray-400 max-w-[560px] mx-auto mt-6 leading-[1.75]">
-            We partner selectively on products, infrastructure, and systems that need both
-            technical depth and real-world deployment judgment.
+            We partner selectively on products, infrastructure, and systems that need both technical
+            depth and real-world deployment judgment.
           </p>
           <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 sm:gap-5 mt-12 md:mt-14">
             <a
