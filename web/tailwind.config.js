@@ -49,9 +49,9 @@ module.exports = {
         mono: ["var(--font-mono)", "monospace"],
       },
       boxShadow: {
-        "red-glow": "0 0 40px rgba(220, 38, 38, 0.35)",
-        "red-glow-soft": "0 0 60px rgba(220, 38, 38, 0.18)",
-        "red-glow-intense": "0 0 80px rgba(220, 38, 38, 0.55), 0 0 20px rgba(239, 68, 68, 0.8)",
+        "red-glow": "0 10px 24px rgba(0, 0, 0, 0.24)",
+        "red-glow-soft": "0 8px 18px rgba(0, 0, 0, 0.18)",
+        "red-glow-intense": "0 14px 28px rgba(0, 0, 0, 0.28)",
         "surface-lift": "0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 0 0 1px rgba(255, 255, 255, 0.02)",
       },
       backgroundImage: {
