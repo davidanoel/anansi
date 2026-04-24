@@ -187,26 +187,50 @@ body {
    =================================================================== */
 
 .hero-web-layer {
-  opacity: 0.48;
+  opacity: 0.68;
 }
 
 .hero-web-line {
   fill: none;
-  stroke: rgba(220, 225, 232, 0.084);
-  stroke-width: 0.92;
+  stroke: rgba(214, 220, 228, 0.095);
+  stroke-width: 0.88;
   stroke-linecap: round;
-  animation: webFlicker 9.8s ease-in-out infinite;
+  animation: webFlicker 10.6s ease-in-out infinite;
 }
 
 .hero-web-line-soft {
-  stroke: rgba(220, 225, 232, 0.052);
-  animation-duration: 11.6s;
+  stroke: rgba(214, 220, 228, 0.058);
+  animation-duration: 12.4s;
+}
+
+.hero-web-line-fine {
+  stroke: rgba(214, 220, 228, 0.072);
+  stroke-width: 0.7;
+  animation-duration: 9.2s;
+}
+
+.hero-web-line-diag {
+  stroke: rgba(220, 48, 54, 0.11);
+  stroke-width: 0.64;
+  animation-duration: 8.8s;
+}
+
+.hero-web-line-diag-soft {
+  stroke: rgba(220, 48, 54, 0.072);
+  stroke-width: 0.54;
+  animation-duration: 11.8s;
 }
 
 .hero-web-node {
-  fill: rgba(227, 35, 43, 0.72);
-  filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.36));
-  animation: webNodePulse 5.2s ease-in-out infinite;
+  fill: rgba(220, 44, 50, 0.82);
+  filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.28));
+  animation: webNodePulse 4.8s ease-in-out infinite;
+}
+
+.hero-web-node-soft {
+  fill: rgba(220, 44, 50, 0.46);
+  filter: drop-shadow(0 0 3px rgba(220, 38, 38, 0.16));
+  animation-duration: 6.2s;
 }
 
 .hero-red-bloom {
@@ -233,10 +257,10 @@ body {
 @keyframes webFlicker {
   0%,
   100% {
-    opacity: 0.64;
+    opacity: 0.52;
   }
   50% {
-    opacity: 0.32;
+    opacity: 0.2;
   }
 }
 
@@ -244,9 +268,15 @@ body {
   0%,
   100% {
     opacity: 0.72;
+    transform: scale(1);
   }
   50% {
-    opacity: 0.24;
+    opacity: 0.18;
+    transform: scale(0.82);
+  }
+  72% {
+    opacity: 0.86;
+    transform: scale(1.16);
   }
 }
 
