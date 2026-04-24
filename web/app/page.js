@@ -20,11 +20,6 @@ export default function Home() {
                 <stop offset="40%" stopColor="#991B1B" stopOpacity="0.055" />
                 <stop offset="100%" stopColor="#991B1B" stopOpacity="0" />
               </radialGradient>
-              <radialGradient id="heroGloss" cx="50%" cy="34%" r="28%">
-                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.08" />
-                <stop offset="42%" stopColor="#ffffff" stopOpacity="0.02" />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-              </radialGradient>
               <linearGradient id="thread" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="white" stopOpacity="0.10" />
                 <stop offset="100%" stopColor="white" stopOpacity="0" />
@@ -35,7 +30,6 @@ export default function Home() {
               </linearGradient>
             </defs>
 
-            <circle cx="960" cy="420" r="290" fill="url(#heroGloss)" />
             <circle cx="960" cy="540" r="480" fill="url(#glow)" />
 
             {/* Thread lines — brighter, with two accented in red */}
@@ -125,36 +119,6 @@ export default function Home() {
                     className="hero-orbit-node hero-orbit-node-red"
                   />
                 </g>
-
-                <g className="hero-orbit-rotation-reverse">
-                  <circle cx="210" cy="210" r="158" className="hero-orbit-ring-mid" />
-                  <path
-                    d="M60 165 A158 158 0 0 1 145 80"
-                    className="hero-orbit-arc hero-orbit-arc-white"
-                  />
-                  <path
-                    d="M278 356 A158 158 0 0 0 365 245"
-                    className="hero-orbit-arc hero-orbit-arc-red"
-                  />
-                  <circle
-                    cx="365"
-                    cy="245"
-                    r="3.5"
-                    className="hero-orbit-node hero-orbit-node-pink"
-                  />
-                </g>
-
-                <g className="hero-orbit-rotation-fast">
-                  <circle cx="210" cy="210" r="118" className="hero-orbit-ring-dashed" />
-                  <path
-                    d="M118 135 A118 118 0 0 1 210 92"
-                    className="hero-orbit-arc hero-orbit-arc-soft"
-                  />
-                  <path
-                    d="M236 325 A118 118 0 0 1 136 308"
-                    className="hero-orbit-arc hero-orbit-arc-white"
-                  />
-                </g>
               </svg>
               <div className="hero-orbit-core">
                 <Image
@@ -183,13 +147,13 @@ export default function Home() {
             />
           </div>
 
-          <h2 className="max-w-[620px] text-center font-display font-medium text-[clamp(19px,5.4vw,34px)] leading-[1.16] mt-8 sm:mt-9 md:mt-10 text-anansi-gray-300 animate-fade-up animate-fade-up-delay-2">
-            We build AI and decentralized software that creates{" "}
-            <span className="text-anansi-red font-semibold text-glow-red">economic access</span>.
+          <h2 className="max-w-[720px] text-center font-display font-medium text-[clamp(24px,5.8vw,42px)] leading-[1.08] mt-8 sm:mt-9 md:mt-10 text-anansi-gray-300 animate-fade-up animate-fade-up-delay-2">
+            Technology for markets the world has{" "}
+            <span className="text-anansi-red font-semibold text-glow-red">ignored.</span>
           </h2>
 
-          <p className="max-w-[340px] sm:max-w-[560px] text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.14em] sm:tracking-[0.18em] uppercase text-anansi-gray-500 mt-5 text-center animate-fade-up animate-fade-up-delay-3">
-            Applied AI · Real Assets · Starting in the Caribbean, built for the world
+          <p className="max-w-[420px] sm:max-w-[660px] text-[11px] sm:text-[12px] md:text-[13px] tracking-[0.1em] sm:tracking-[0.14em] uppercase text-anansi-gray-400 mt-5 text-center animate-fade-up animate-fade-up-delay-3">
+            Applied AI · Real Assets · Caribbean-first, global from day one
           </p>
 
           <div className="mt-8 mx-auto flex w-full max-w-[320px] sm:w-auto sm:max-w-none flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 animate-fade-up animate-fade-up-delay-3">
@@ -197,13 +161,13 @@ export default function Home() {
               href="#pillars"
               className="inline-flex w-full sm:w-auto items-center justify-center px-6 py-3.5 bg-anansi-red hover:bg-anansi-red-deep text-white text-[13px] tracking-[0.1em] uppercase font-semibold transition-all duration-200 shadow-red-glow hover:shadow-red-glow-intense min-w-[180px]"
             >
-              See What We Build
+              What We Build
             </a>
             <Link
               href="/spice"
               className="inline-flex w-full sm:w-auto items-center justify-center px-6 py-3.5 border border-white/20 hover:border-anansi-red/60 text-white text-[13px] tracking-[0.1em] uppercase font-semibold transition-all duration-200 min-w-[180px]"
             >
-              Try Spice
+              Explore Spice
             </Link>
           </div>
         </div>

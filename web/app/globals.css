@@ -170,14 +170,6 @@ body {
     transform: rotate(360deg);
   }
 }
-@keyframes orbitSpinReverse {
-  from {
-    transform: rotate(360deg);
-  }
-  to {
-    transform: rotate(0deg);
-  }
-}
 .animate-fade-up {
   opacity: 0;
   animation: fadeUp 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -214,11 +206,11 @@ body {
 
 /* ===== Landing logo orbit system ===== */
 .hero-orbit-position {
-  transform: translateY(-120px);
+  transform: translateY(-116px);
 }
 
 .hero-orbit-wrap {
-  width: min(88vw, 420px);
+  width: min(78vw, 360px);
   aspect-ratio: 1;
   position: relative;
 }
@@ -237,36 +229,15 @@ body {
   animation: orbitSpin 24s linear infinite;
 }
 
-.hero-orbit-rotation-reverse {
-  transform-origin: 210px 210px;
-  animation: orbitSpinReverse 18s linear infinite;
-}
-
-.hero-orbit-rotation-fast {
-  transform-origin: 210px 210px;
-  animation: orbitSpin 11s linear infinite;
-}
-
 .hero-orbit-ring-faint {
-  stroke: rgba(255, 255, 255, 0.14);
-  stroke-width: 1.1;
-}
-
-.hero-orbit-ring-mid {
-  stroke: rgba(255, 255, 255, 0.16);
-  stroke-width: 1;
-}
-
-.hero-orbit-ring-dashed {
-  stroke: rgba(255, 255, 255, 0.18);
-  stroke-width: 1;
-  stroke-dasharray: 7 10;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 0.9;
 }
 
 .hero-orbit-arc {
-  stroke-width: 2.2;
+  stroke-width: 1.8;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.08));
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.05));
 }
 
 .hero-orbit-arc-red {
@@ -277,91 +248,47 @@ body {
   stroke: url(#heroOrbitWhite);
 }
 
-.hero-orbit-arc-soft {
-  stroke: rgba(255, 255, 255, 0.36);
-}
-
 .hero-orbit-node {
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.25));
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.16));
 }
 
 .hero-orbit-node-red {
   fill: #f87171;
 }
 
-.hero-orbit-node-pink {
-  fill: #fecaca;
-}
-
 .hero-orbit-core {
   position: absolute;
   inset: 50% auto auto 50%;
   z-index: 3;
-  width: 84%;
-  height: 84%;
+  width: 68%;
+  height: 68%;
   transform: translate(-50%, -50%);
-  border-radius: 9999px;
-  overflow: hidden;
-  box-sizing: border-box;
-  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #eef1f5;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(245, 247, 250, 0.98) 0%,
-      rgba(238, 241, 246, 0.98) 44%,
-      rgba(223, 228, 236, 0.99) 100%
-    ),
-    radial-gradient(
-      circle at 50% 24%,
-      rgba(255, 255, 255, 0.68) 0%,
-      rgba(255, 255, 255, 0.14) 34%,
-      transparent 70%
-    ),
-    radial-gradient(
-      circle at 50% 76%,
-      rgba(17, 19, 26, 0.08) 0%,
-      rgba(17, 19, 26, 0.035) 42%,
-      transparent 72%
-    ),
-    radial-gradient(
-      circle at 50% 50%,
-      transparent 56%,
-      rgba(20, 24, 32, 0.035) 82%,
-      rgba(20, 24, 32, 0.09) 100%
-    ),
-    radial-gradient(
-      circle at 50% 42%,
-      rgba(255, 255, 255, 0.16) 0%,
-      transparent 74%
-    );
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.44),
-    inset 0 14px 18px rgba(255, 255, 255, 0.12),
-    inset 0 -22px 30px rgba(17, 19, 26, 0.11),
-    inset 0 0 24px rgba(17, 19, 26, 0.04),
-    0 18px 60px rgba(0, 0, 0, 0.34),
-    0 0 42px rgba(220, 38, 38, 0.03);
+  pointer-events: none;
 }
 
 .hero-orbit-logo {
-  width: 79%;
+  width: 100%;
   height: auto;
-  filter: contrast(1.24) saturate(1.02) brightness(0.82);
-  transform: translateY(-0.15%) scale(0.81);
+  filter:
+    contrast(1.16)
+    saturate(1.01)
+    brightness(0.92)
+    drop-shadow(0 18px 32px rgba(0, 0, 0, 0.3))
+    drop-shadow(0 0 28px rgba(220, 38, 38, 0.08));
+  transform: translateY(-0.15%) scale(0.9);
   transform-origin: center;
 }
 
 @media (min-width: 768px) {
   .hero-orbit-position {
-    transform: translateY(-188px);
+    transform: translateY(-176px);
   }
 
   .hero-orbit-wrap {
-    width: min(84vw, 520px);
+    width: min(72vw, 440px);
   }
 }
 
