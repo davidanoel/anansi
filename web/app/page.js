@@ -543,14 +543,8 @@ export default function Home() {
             />
             <Capability
               num="03"
-              title={
-                <>
-                  AI Agents &amp;
-                  <br />
-                  Applied Engineering
-                </>
-              }
-              desc="Senior production work on AI agents, LLM evaluation, and AI safety — built inside one of the world's largest financial institutions. Selective, premium, by inbound only."
+              title={<>Applied AI Research</>}
+              desc="Production AI agents, LLM evaluation, and AI safety — backed by published R&D inside a global financial institution. Selective, premium, by inbound only."
               primary="Agent Portfolio"
               secondary="LLM Evaluation & Safety"
             />
@@ -689,7 +683,7 @@ export default function Home() {
               <div className="mt-8 pt-6 border-t border-anansi-line space-y-4">
                 <Principle
                   title="Edge-first"
-                  text="We start where legacy software ignored the market and where infrastructure still has leverage."
+                  text="Real leverage lives where legacy software didn't reach."
                 />
                 <Principle
                   title="Systems over slogans"
