@@ -22,12 +22,12 @@ export default function Home() {
               </radialGradient>
               <linearGradient id="heroArcLeft" x1="0%" y1="50%" x2="100%" y2="50%">
                 <stop offset="0%" stopColor="#C4141C" stopOpacity="0" />
-                <stop offset="50%" stopColor="#E11B22" stopOpacity="0.72" />
+                <stop offset="50%" stopColor="#DC2626" stopOpacity="0.72" />
                 <stop offset="100%" stopColor="#C4141C" stopOpacity="0.04" />
               </linearGradient>
               <linearGradient id="heroArcRight" x1="100%" y1="50%" x2="0%" y2="50%">
                 <stop offset="0%" stopColor="#C4141C" stopOpacity="0" />
-                <stop offset="50%" stopColor="#E11B22" stopOpacity="0.72" />
+                <stop offset="50%" stopColor="#DC2626" stopOpacity="0.72" />
                 <stop offset="100%" stopColor="#C4141C" stopOpacity="0.04" />
               </linearGradient>
               <linearGradient id="heroCopyFade" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -167,7 +167,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="relative z-20 min-h-[85svh] md:min-h-[87svh] flex flex-col items-center pt-[calc(46vh+8px)] sm:pt-[calc(46vh+14px)] md:pt-[calc(46vh+28px)] pb-6 md:pb-10 px-6 -translate-y-[2vh]">
+        <div className="relative z-20 min-h-[85svh] md:min-h-[87svh] flex flex-col items-center pt-[calc(36vh+8px)] sm:pt-[calc(40vh+14px)] md:pt-[calc(46vh+28px)] pb-6 md:pb-10 px-6 -translate-y-[2vh]">
           <h1 className="sr-only">ANANSI</h1>
           <div className="mt-10 md:mt-12 animate-fade-up animate-fade-up-delay-2">
             <div style={{ transform: "translateY(56px)" }}>
@@ -185,7 +185,7 @@ export default function Home() {
           <div className="translate-y-[6px] md:translate-y-[10px]">
             <h2 className="max-w-[920px] text-center font-display font-medium text-[clamp(24px,4.8vw,38px)] leading-[1.08] mt-4 sm:mt-5 md:mt-6 text-anansi-gray-300 animate-fade-up animate-fade-up-delay-2">
               Technology for markets the world has{" "}
-              <span className="inline-block whitespace-nowrap text-[#b3262d] font-semibold">
+              <span className="inline-block whitespace-nowrap text-anansi-red font-semibold">
                 ignored.
               </span>
             </h2>
@@ -301,8 +301,8 @@ export default function Home() {
             <div className="reveal">
               <p className="text-[17px] text-[#555] leading-[1.75] max-w-[560px]">
                 Spice tokenizes physical commodities, property, and revenue streams. A farmer in St.
-                Mark delivers nutmeg, receives tokens on a phone, and can exit into USDC instantly.
-                No wallet setup. No gas fees. Sign in with Google.
+                Mark, Grenada delivers nutmeg, receives tokens on a phone, and can exit into USDC
+                instantly. No wallet setup. No gas fees. Sign in with Google.
               </p>
 
               <div className="mt-7 flex flex-wrap gap-3">
