@@ -191,7 +191,7 @@ export default function Home() {
             </h2>
 
             <p className="mx-auto max-w-[420px] sm:max-w-[660px] text-[11px] sm:text-[12px] md:text-[13px] tracking-[0.1em] sm:tracking-[0.14em] uppercase text-anansi-gray-300/90 mt-5 text-center animate-fade-up animate-fade-up-delay-3">
-              Applied AI · Real Assets · Caribbean-first, global from day one
+              Applied AI · Real Assets · Real Markets
             </p>
 
             <div className="mt-8 mx-auto flex w-full max-w-[320px] sm:w-auto sm:max-w-none flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 animate-fade-up animate-fade-up-delay-3">
@@ -260,11 +260,11 @@ export default function Home() {
                 />
                 <Signal
                   title="On-chain rails"
-                  text="Settlement and tokenization infrastructure are finally usable at product speed."
+                  text="Settlement and tokenization, finally fast enough to ship."
                 />
                 <Signal
                   title="Ignored demand"
-                  text="Operators in overlooked markets still need financial software, intelligence, and access."
+                  text="Overlooked markets still need software built for them."
                 />
               </div>
             </div>
@@ -300,9 +300,9 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-14 md:gap-20 mt-14 md:mt-16 items-start">
             <div className="reveal">
               <p className="text-[17px] text-[#555] leading-[1.75] max-w-[560px]">
-                Spice tokenizes physical commodities, property, and revenue streams. A farmer
-                delivers nutmeg, receives tokens on a phone, and can exit into USDC instantly. No
-                wallet setup. No gas fees. Sign in with Google.
+                Spice tokenizes physical commodities, property, and revenue streams. A farmer in St.
+                Mark delivers nutmeg, receives tokens on a phone, and can exit into USDC instantly.
+                No wallet setup. No gas fees. Sign in with Google.
               </p>
 
               <div className="mt-7 flex flex-wrap gap-3">
@@ -475,7 +475,7 @@ export default function Home() {
                   { label: "Format", value: "In-person" },
                   { label: "Duration", value: "2-3 days" },
                   { label: "Audience", value: "Working professionals" },
-                  { label: "Location", value: "Miami / Caribbean" },
+                  { label: "Location", value: "Cohorts in Miami" },
                 ].map((d, i) => (
                   <div key={i} className="pt-5 border-t border-anansi-line">
                     <p className="text-[10px] tracking-[0.15em] uppercase text-anansi-gray-500 mb-1.5">
@@ -545,14 +545,14 @@ export default function Home() {
               num="03"
               title={
                 <>
-                  Custom AI &amp;
+                  AI Agents &amp;
                   <br />
-                  Software
+                  Applied Engineering
                 </>
               }
-              desc="Senior-level engagements for enterprise clients and institutions who need AI, data, or Web3 systems built right. Selective, premium, by inbound only."
-              primary="Custom AI Solutions"
-              secondary="Enterprise Partnerships"
+              desc="Senior production work on AI agents, LLM evaluation, and AI safety — built inside one of the world's largest financial institutions. Selective, premium, by inbound only."
+              primary="Agent Portfolio"
+              secondary="LLM Evaluation & Safety"
             />
           </div>
         </div>
